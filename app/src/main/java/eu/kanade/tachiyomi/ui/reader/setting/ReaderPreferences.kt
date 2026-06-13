@@ -48,7 +48,7 @@ class ReaderPreferences(
 
     val defaultReadingMode: Preference<Int> = preferenceStore.getInt(
         "pref_default_reading_mode_key",
-        ReadingMode.RIGHT_TO_LEFT.flagValue,
+        ReadingMode.WEBTOON.flagValue,
     )
 
     val defaultOrientationType: Preference<Int> = preferenceStore.getInt(
@@ -157,9 +157,9 @@ class ReaderPreferences(
         false,
     )
 
-    val navigationModePager: Preference<Int> = preferenceStore.getInt("reader_navigation_mode_pager", 0)
+    val navigationModePager: Preference<Int> = preferenceStore.getInt("reader_navigation_mode_pager", 1)
 
-    val navigationModeWebtoon: Preference<Int> = preferenceStore.getInt("reader_navigation_mode_webtoon", 0)
+    val navigationModeWebtoon: Preference<Int> = preferenceStore.getInt("reader_navigation_mode_webtoon", 1)
 
     val pagerNavInverted: Preference<TappingInvertMode> = preferenceStore.getEnum(
         "reader_tapping_inverted",

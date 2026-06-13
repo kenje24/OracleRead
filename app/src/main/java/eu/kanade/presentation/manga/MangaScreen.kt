@@ -2,6 +2,7 @@ package eu.kanade.presentation.manga
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,7 +24,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallExtendedFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -34,6 +37,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +66,7 @@ import eu.kanade.tachiyomi.source.getNameForMangaInfo
 import eu.kanade.tachiyomi.ui.manga.ChapterList
 import eu.kanade.tachiyomi.ui.manga.MangaScreenModel
 import eu.kanade.tachiyomi.util.system.copyToClipboard
+import kotlinx.coroutines.launch
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.service.missingChaptersCount
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -328,23 +333,42 @@ private fun MangaScreenSmallImpl(
             val isFABVisible = remember(chapters) {
                 chapters.fastAny { !it.chapter.read } && !isAnySelected
             }
-            SmallExtendedFloatingActionButton(
-                text = {
-                    val isReading = remember(state.chapters) {
-                        state.chapters.fastAny { it.chapter.read }
-                    }
-                    Text(
-                        text = stringResource(if (isReading) MR.strings.action_resume else MR.strings.action_start),
-                    )
-                },
-                icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
-                onClick = onContinueReading,
-                expanded = chapterListState.shouldExpandFAB(),
+            val pickUpIndex = remember(listItem) {
+                listItem.indexOfFirst {
+                    it is ChapterList.Item && (it.chapter.lastPageRead > 0L || it.chapter.read)
+                }.takeIf { it >= 0 }
+            }
+            val scope = rememberCoroutineScope()
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
                 modifier = Modifier.animateFloatingActionButton(
                     visible = isFABVisible,
                     alignment = Alignment.BottomEnd,
                 ),
-            )
+            ) {
+                if (pickUpIndex != null) {
+                    SmallExtendedFloatingActionButton(
+                        text = { Text(text = stringResource(MR.strings.action_pick_up_reading)) },
+                        icon = { Icon(imageVector = Icons.Outlined.Bookmark, contentDescription = null) },
+                        onClick = { scope.launch { chapterListState.animateScrollToItem(4 + pickUpIndex) } },
+                        expanded = chapterListState.shouldExpandFAB(),
+                    )
+                }
+                SmallExtendedFloatingActionButton(
+                    text = {
+                        val isReading = remember(state.chapters) {
+                            state.chapters.fastAny { it.chapter.read }
+                        }
+                        Text(
+                            text = stringResource(if (isReading) MR.strings.action_resume else MR.strings.action_start),
+                        )
+                    },
+                    icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
+                    onClick = onContinueReading,
+                    expanded = chapterListState.shouldExpandFAB(),
+                )
+            }
         },
     ) { contentPadding ->
         val topPadding = contentPadding.calculateTopPadding()
@@ -391,6 +415,7 @@ private fun MangaScreenSmallImpl(
                     ) {
                         MangaActionRow(
                             favorite = state.manga.favorite,
+                            status = state.manga.status,
                             trackingCount = state.trackingCount,
                             nextUpdate = nextUpdate,
                             isUserIntervalMode = state.manga.fetchInterval < 0,
@@ -428,6 +453,7 @@ private fun MangaScreenSmallImpl(
                         ChapterHeader(
                             enabled = !isAnySelected,
                             chapterCount = chapters.size,
+                            readChapterCount = chapters.count { it.chapter.read },
                             missingChapterCount = missingChapterCount,
                             onClick = onFilterClicked,
                         )
@@ -568,25 +594,44 @@ fun MangaScreenLargeImpl(
             val isFABVisible = remember(chapters) {
                 chapters.fastAny { !it.chapter.read } && !isAnySelected
             }
-            SmallExtendedFloatingActionButton(
-                text = {
-                    val isReading = remember(state.chapters) {
-                        state.chapters.fastAny { it.chapter.read }
-                    }
-                    Text(
-                        text = stringResource(
-                            if (isReading) MR.strings.action_resume else MR.strings.action_start,
-                        ),
-                    )
-                },
-                icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
-                onClick = onContinueReading,
-                expanded = chapterListState.shouldExpandFAB(),
+            val pickUpIndex = remember(listItem) {
+                listItem.indexOfFirst {
+                    it is ChapterList.Item && (it.chapter.lastPageRead > 0L || it.chapter.read)
+                }.takeIf { it >= 0 }
+            }
+            val scope = rememberCoroutineScope()
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
                 modifier = Modifier.animateFloatingActionButton(
                     visible = isFABVisible,
                     alignment = Alignment.BottomEnd,
                 ),
-            )
+            ) {
+                if (pickUpIndex != null) {
+                    SmallExtendedFloatingActionButton(
+                        text = { Text(text = stringResource(MR.strings.action_pick_up_reading)) },
+                        icon = { Icon(imageVector = Icons.Outlined.Bookmark, contentDescription = null) },
+                        onClick = { scope.launch { chapterListState.animateScrollToItem(1 + pickUpIndex) } },
+                        expanded = chapterListState.shouldExpandFAB(),
+                    )
+                }
+                SmallExtendedFloatingActionButton(
+                    text = {
+                        val isReading = remember(state.chapters) {
+                            state.chapters.fastAny { it.chapter.read }
+                        }
+                        Text(
+                            text = stringResource(
+                                if (isReading) MR.strings.action_resume else MR.strings.action_start,
+                            ),
+                        )
+                    },
+                    icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
+                    onClick = onContinueReading,
+                    expanded = chapterListState.shouldExpandFAB(),
+                )
+            }
         },
     ) { contentPadding ->
         PullRefresh(
@@ -621,6 +666,7 @@ fun MangaScreenLargeImpl(
                         )
                         MangaActionRow(
                             favorite = state.manga.favorite,
+                            status = state.manga.status,
                             trackingCount = state.trackingCount,
                             nextUpdate = nextUpdate,
                             isUserIntervalMode = state.manga.fetchInterval < 0,
@@ -665,6 +711,7 @@ fun MangaScreenLargeImpl(
                                 ChapterHeader(
                                     enabled = !isAnySelected,
                                     chapterCount = chapters.size,
+                                    readChapterCount = chapters.count { it.chapter.read },
                                     missingChapterCount = missingChapterCount,
                                     onClick = onFilterButtonClicked,
                                 )

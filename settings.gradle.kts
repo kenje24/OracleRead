@@ -24,7 +24,7 @@ dependencyResolutionManagement {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-rootProject.name = "Mihon"
+rootProject.name = "OracleRead"
 include(":app")
 include(":core-metadata")
 include(":core:archive")

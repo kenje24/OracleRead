@@ -15,6 +15,7 @@ import eu.kanade.presentation.browse.SourceOptionsDialog
 import eu.kanade.presentation.browse.SourcesScreen
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.TabContent
+import eu.kanade.tachiyomi.ui.browse.BrowseTab
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import kotlinx.coroutines.flow.collectLatest
@@ -51,6 +52,7 @@ fun Screen.sourcesTab(): TabContent {
                 },
                 onClickPin = screenModel::togglePin,
                 onLongClickItem = screenModel::showSourceDialog,
+                onClickExtensions = BrowseTab::showExtension,
             )
 
             state.dialog?.let { dialog ->

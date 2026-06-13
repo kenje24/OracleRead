@@ -38,9 +38,7 @@ import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Pause
-import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -173,6 +171,7 @@ fun MangaInfoBox(
 @Composable
 fun MangaActionRow(
     favorite: Boolean,
+    status: Long,
     trackingCount: Int,
     nextUpdate: Instant?,
     isUserIntervalMode: Boolean,
@@ -223,24 +222,11 @@ fun MangaActionRow(
             onClick = { onEditIntervalClicked?.invoke() },
         )
         MangaActionButton(
-            title = if (trackingCount == 0) {
-                stringResource(MR.strings.manga_tracking_tab)
-            } else {
-                pluralStringResource(MR.plurals.num_trackers, count = trackingCount, trackingCount)
-            },
-            icon = if (trackingCount == 0) Icons.Outlined.Sync else Icons.Outlined.Done,
-            color = if (trackingCount == 0) defaultActionButtonColor else MaterialTheme.colorScheme.primary,
-            onClick = onTrackingClicked,
+            title = mangaStatusText(status),
+            icon = mangaStatusIcon(status),
+            color = MaterialTheme.colorScheme.primary,
+            onClick = {},
         )
-        if (onWebViewClicked != null) {
-            MangaActionButton(
-                title = stringResource(MR.strings.action_web_view),
-                icon = Icons.Outlined.Public,
-                color = defaultActionButtonColor,
-                onClick = onWebViewClicked,
-                onLongClick = onWebViewLongClicked,
-            )
-        }
     }
 }
 
@@ -262,21 +248,16 @@ fun ExpandableMangaDescription(
         val desc =
             description.takeIf { !it.isNullOrBlank() } ?: stringResource(MR.strings.description_placeholder)
 
-        MangaSummary(
-            description = desc,
-            expanded = expanded,
-            notes = notes,
-            onEditNotesClicked = onEditNotes,
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .padding(horizontal = 16.dp)
-                .clickableNoIndication { onExpanded(!expanded) },
-        )
         val tags = tagsProvider()
         if (!tags.isNullOrEmpty()) {
+            Text(
+                text = stringResource(MR.strings.manga_genre_label),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+            )
             Box(
                 modifier = Modifier
-                    .padding(top = 8.dp)
+                    .padding(top = 4.dp)
                     .padding(vertical = 12.dp)
                     .animateContentSize(animationSpec = spring())
                     .fillMaxWidth(),
@@ -337,6 +318,21 @@ fun ExpandableMangaDescription(
                 }
             }
         }
+        Text(
+            text = stringResource(MR.strings.manga_summary_label),
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp),
+        )
+        MangaSummary(
+            description = desc,
+            expanded = expanded,
+            notes = notes,
+            onEditNotesClicked = onEditNotes,
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .padding(horizontal = 16.dp)
+                .clickableNoIndication { onExpanded(!expanded) },
+        )
     }
 }
 
@@ -513,15 +509,7 @@ private fun ColumnScope.MangaContentInfo(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = when (status) {
-                SManga.ONGOING.toLong() -> Icons.Outlined.Schedule
-                SManga.COMPLETED.toLong() -> Icons.Outlined.DoneAll
-                SManga.LICENSED.toLong() -> Icons.Outlined.AttachMoney
-                SManga.PUBLISHING_FINISHED.toLong() -> Icons.Outlined.Done
-                SManga.CANCELLED.toLong() -> Icons.Outlined.Close
-                SManga.ON_HIATUS.toLong() -> Icons.Outlined.Pause
-                else -> Icons.Outlined.Block
-            },
+            imageVector = mangaStatusIcon(status),
             contentDescription = null,
             modifier = Modifier
                 .padding(end = 4.dp)
@@ -529,15 +517,7 @@ private fun ColumnScope.MangaContentInfo(
         )
         ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
             Text(
-                text = when (status) {
-                    SManga.ONGOING.toLong() -> stringResource(MR.strings.ongoing)
-                    SManga.COMPLETED.toLong() -> stringResource(MR.strings.completed)
-                    SManga.LICENSED.toLong() -> stringResource(MR.strings.licensed)
-                    SManga.PUBLISHING_FINISHED.toLong() -> stringResource(MR.strings.publishing_finished)
-                    SManga.CANCELLED.toLong() -> stringResource(MR.strings.cancelled)
-                    SManga.ON_HIATUS.toLong() -> stringResource(MR.strings.on_hiatus)
-                    else -> stringResource(MR.strings.unknown)
-                },
+                text = mangaStatusText(status),
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
             )
@@ -565,6 +545,27 @@ private fun ColumnScope.MangaContentInfo(
             )
         }
     }
+}
+
+private fun mangaStatusIcon(status: Long): ImageVector = when (status) {
+    SManga.ONGOING.toLong() -> Icons.Outlined.Schedule
+    SManga.COMPLETED.toLong() -> Icons.Outlined.DoneAll
+    SManga.LICENSED.toLong() -> Icons.Outlined.AttachMoney
+    SManga.PUBLISHING_FINISHED.toLong() -> Icons.Outlined.Done
+    SManga.CANCELLED.toLong() -> Icons.Outlined.Close
+    SManga.ON_HIATUS.toLong() -> Icons.Outlined.Pause
+    else -> Icons.Outlined.Block
+}
+
+@Composable
+private fun mangaStatusText(status: Long): String = when (status) {
+    SManga.ONGOING.toLong() -> stringResource(MR.strings.ongoing)
+    SManga.COMPLETED.toLong() -> stringResource(MR.strings.completed)
+    SManga.LICENSED.toLong() -> stringResource(MR.strings.licensed)
+    SManga.PUBLISHING_FINISHED.toLong() -> stringResource(MR.strings.publishing_finished)
+    SManga.CANCELLED.toLong() -> stringResource(MR.strings.cancelled)
+    SManga.ON_HIATUS.toLong() -> stringResource(MR.strings.on_hiatus)
+    else -> stringResource(MR.strings.unknown)
 }
 
 @Composable

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -33,6 +34,7 @@ import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.components.material.topSmallPaddingValues
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
+import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.theme.header
 import tachiyomi.presentation.core.util.plus
@@ -45,12 +47,20 @@ fun SourcesScreen(
     onClickItem: (Source, Listing) -> Unit,
     onClickPin: (Source) -> Unit,
     onLongClickItem: (Source) -> Unit,
+    onClickExtensions: () -> Unit,
 ) {
     when {
         state.isLoading -> LoadingScreen(Modifier.padding(contentPadding))
         state.isEmpty -> EmptyScreen(
-            stringRes = MR.strings.source_empty_screen,
+            stringRes = MR.strings.sources_empty_go_extensions,
             modifier = Modifier.padding(contentPadding),
+            actions = listOf(
+                EmptyScreenAction(
+                    stringRes = MR.strings.action_go_to_extensions,
+                    icon = Icons.Outlined.Public,
+                    onClick = onClickExtensions,
+                ),
+            ),
         )
         else -> {
             ScrollbarLazyColumn(

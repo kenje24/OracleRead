@@ -1,13 +1,16 @@
 package eu.kanade.presentation.library
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,12 +31,10 @@ import tachiyomi.domain.library.model.LibrarySort
 import tachiyomi.domain.library.model.sort
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.BaseSortItem
 import tachiyomi.presentation.core.components.CheckboxItem
 import tachiyomi.presentation.core.components.HeadingItem
 import tachiyomi.presentation.core.components.SettingsChipRow
 import tachiyomi.presentation.core.components.SliderItem
-import tachiyomi.presentation.core.components.SortItem
 import tachiyomi.presentation.core.components.TriStateItem
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
@@ -158,62 +159,141 @@ private fun ColumnScope.SortPage(
     category: Category?,
     screenModel: LibrarySettingsScreenModel,
 ) {
-    val trackers by screenModel.trackersFlow.collectAsState()
     val sortingMode = category.sort.type
-    val sortDescending = !category.sort.isAscending
+    val sortAscending = category.sort.isAscending
 
-    val options = remember(trackers.isEmpty()) {
-        val trackerMeanPair = if (trackers.isNotEmpty()) {
-            MR.strings.action_sort_tracker_score to LibrarySort.Type.TrackerMean
+    SortCard(
+        title = if (sortingMode == LibrarySort.Type.Alphabetical && !sortAscending) "Z-A" else "A-Z",
+        selected = sortingMode == LibrarySort.Type.Alphabetical,
+        onClick = {
+            screenModel.setSort(
+                category,
+                LibrarySort.Type.Alphabetical,
+                toggledDirection(
+                    sortingMode,
+                    sortAscending,
+                    LibrarySort.Type.Alphabetical,
+                    LibrarySort.Direction.Ascending,
+                ),
+            )
+        },
+    )
+    SortCard(
+        title = if (sortingMode == LibrarySort.Type.LastRead && sortAscending) "Last Read: oldest" else "Last Read",
+        selected = sortingMode == LibrarySort.Type.LastRead,
+        onClick = {
+            screenModel.setSort(
+                category,
+                LibrarySort.Type.LastRead,
+                toggledDirection(
+                    sortingMode,
+                    sortAscending,
+                    LibrarySort.Type.LastRead,
+                    LibrarySort.Direction.Descending,
+                ),
+            )
+        },
+    )
+    SortCard(
+        title = if (sortingMode == LibrarySort.Type.TotalChapters && sortAscending) {
+            "Least Chapters"
         } else {
-            null
-        }
-        listOfNotNull(
-            MR.strings.action_sort_alpha to LibrarySort.Type.Alphabetical,
-            MR.strings.action_sort_total to LibrarySort.Type.TotalChapters,
-            MR.strings.action_sort_last_read to LibrarySort.Type.LastRead,
-            MR.strings.action_sort_last_manga_update to LibrarySort.Type.LastUpdate,
-            MR.strings.action_sort_unread_count to LibrarySort.Type.UnreadCount,
-            MR.strings.action_sort_latest_chapter to LibrarySort.Type.LatestChapter,
-            MR.strings.action_sort_chapter_fetch_date to LibrarySort.Type.ChapterFetchDate,
-            MR.strings.action_sort_date_added to LibrarySort.Type.DateAdded,
-            trackerMeanPair,
-            MR.strings.action_sort_random to LibrarySort.Type.Random,
-        )
-    }
+            "Most Chapters"
+        },
+        selected = sortingMode == LibrarySort.Type.TotalChapters,
+        onClick = {
+            screenModel.setSort(
+                category,
+                LibrarySort.Type.TotalChapters,
+                toggledDirection(
+                    sortingMode,
+                    sortAscending,
+                    LibrarySort.Type.TotalChapters,
+                    LibrarySort.Direction.Descending,
+                ),
+            )
+        },
+    )
+    SortCard(
+        title = if (sortingMode == LibrarySort.Type.DateAdded &&
+            !sortAscending
+        ) {
+            "Date Added Last"
+        } else {
+            "Date Added First"
+        },
+        selected = sortingMode == LibrarySort.Type.DateAdded,
+        onClick = {
+            screenModel.setSort(
+                category,
+                LibrarySort.Type.DateAdded,
+                toggledDirection(
+                    sortingMode,
+                    sortAscending,
+                    LibrarySort.Type.DateAdded,
+                    LibrarySort.Direction.Ascending,
+                ),
+            )
+        },
+    )
+}
 
-    options.map { (titleRes, mode) ->
-        if (mode == LibrarySort.Type.Random) {
-            BaseSortItem(
-                label = stringResource(titleRes),
-                icon = Icons.Default.Refresh
-                    .takeIf { sortingMode == LibrarySort.Type.Random },
-                onClick = {
-                    screenModel.setSort(category, mode, LibrarySort.Direction.Ascending)
+@Composable
+private fun SortCard(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHighest
+            },
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
                 },
             )
-            return@map
+            if (selected) {
+                Text(
+                    text = "Active",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
         }
-        SortItem(
-            label = stringResource(titleRes),
-            sortDescending = sortDescending.takeIf { sortingMode == mode },
-            onClick = {
-                val isTogglingDirection = sortingMode == mode
-                val direction = when {
-                    isTogglingDirection -> if (sortDescending) {
-                        LibrarySort.Direction.Ascending
-                    } else {
-                        LibrarySort.Direction.Descending
-                    }
-                    else -> if (sortDescending) {
-                        LibrarySort.Direction.Descending
-                    } else {
-                        LibrarySort.Direction.Ascending
-                    }
-                }
-                screenModel.setSort(category, mode, direction)
-            },
-        )
+    }
+}
+
+private fun toggledDirection(
+    currentMode: LibrarySort.Type,
+    currentAscending: Boolean,
+    targetMode: LibrarySort.Type,
+    initialDirection: LibrarySort.Direction,
+): LibrarySort.Direction {
+    if (currentMode != targetMode) return initialDirection
+    return if (currentAscending) {
+        LibrarySort.Direction.Descending
+    } else {
+        LibrarySort.Direction.Ascending
     }
 }
 

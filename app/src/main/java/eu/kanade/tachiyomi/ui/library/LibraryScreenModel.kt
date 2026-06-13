@@ -330,17 +330,23 @@ class LibraryScreenModel(
         }
 
         return mapValues { (key, value) ->
-            if (key.sort.type == LibrarySort.Type.Random) {
-                return@mapValues value.shuffled(Random(libraryPreferences.randomSortSeed.get()))
-            }
-
             val manga = value.mapNotNull { favoritesById[it] }
+
+            if (key.sort.type == LibrarySort.Type.Random) {
+                val (pinned, others) = manga.partition { it.isPinned }
+                return@mapValues pinned.sortedWith(sortAlphabetically)
+                    .plus(others.shuffled(Random(libraryPreferences.randomSortSeed.get())))
+                    .map { it.id }
+            }
 
             val comparator = key.sort.comparator()
                 .let { if (key.sort.isAscending) it else it.reversed() }
                 .thenComparator(sortAlphabetically)
 
-            manga.sortedWith(comparator).map { it.id }
+            manga.sortedWith(
+                compareByDescending<LibraryItem> { it.isPinned }
+                    .then(comparator),
+            ).map { it.id }
         }
     }
 
@@ -381,14 +387,16 @@ class LibraryScreenModel(
         return combine(
             getLibraryManga.subscribe(),
             getLibraryItemPreferencesFlow(),
+            libraryPreferences.pinnedMangaIds.changes(),
             downloadCache.changes,
-        ) { libraryManga, preferences, _ ->
+        ) { libraryManga, preferences, pinnedMangaIds, _ ->
             libraryManga.map { manga ->
                 LibraryItem(
                     libraryManga = manga,
                     downloadCount = downloadManager.getDownloadCount(manga.manga),
                     unreadCount = manga.unreadCount,
                     isLocal = manga.manga.isLocal(),
+                    isPinned = manga.id.toString() in pinnedMangaIds,
                     badges = LibraryItem.Badges(
                         downloadCount = if (preferences.downloadBadge) {
                             downloadManager.getDownloadCount(manga.manga)
@@ -532,6 +540,20 @@ class LibraryScreenModel(
                 )
             }
         }
+        clearSelection()
+    }
+
+    fun togglePinSelection() {
+        val selection = state.value.selection
+        val current = libraryPreferences.pinnedMangaIds.get().toMutableSet()
+        val selectedIds = selection.map { it.toString() }
+        val allPinned = selectedIds.all { it in current }
+        if (allPinned) {
+            current.removeAll(selectedIds.toSet())
+        } else {
+            current.addAll(selectedIds)
+        }
+        libraryPreferences.pinnedMangaIds.set(current)
         clearSelection()
     }
 

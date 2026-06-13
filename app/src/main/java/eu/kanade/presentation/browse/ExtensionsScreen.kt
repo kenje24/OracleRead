@@ -152,6 +152,13 @@ private fun ExtensionContent(
     FastScrollLazyColumn(
         contentPadding = contentPadding + topSmallPaddingValues,
     ) {
+        item(key = "recommended-extensions") {
+            ExtensionHeader(
+                text = stringResource(MR.strings.recommended_extensions),
+                modifier = Modifier.animateItemFastScroll(),
+            )
+        }
+
         if (!installGranted && state.installer?.requiresSystemPermission == true) {
             item(key = "extension-permissions-warning") {
                 WarningBanner(

@@ -21,6 +21,7 @@ import tachiyomi.presentation.core.i18n.stringResource
 fun ChapterHeader(
     enabled: Boolean,
     chapterCount: Int?,
+    readChapterCount: Int?,
     missingChapterCount: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -44,6 +45,16 @@ fun ChapterHeader(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
         )
+
+        if (chapterCount != null && readChapterCount != null) {
+            Text(
+                text = stringResource(MR.strings.chapter_read_total, readChapterCount, chapterCount),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = SECONDARY_ALPHA),
+            )
+        }
 
         MissingChaptersWarning(missingChapterCount)
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Mihon</string>
+    <string name="app_name" translatable="false">OracleRead</string>
 
     <!-- Generic strings -->
     <string name="on">On</string>
@@ -12,7 +12,7 @@
 
     <!-- Models -->
     <string name="name">Name</string>
-    <string name="categories">Categories</string>
+    <string name="categories">Folders</string>
     <string name="manga">Library entries</string>
     <string name="chapters">Chapters</string>
     <string name="track">Tracking</string>
@@ -90,14 +90,14 @@
     <string name="action_disable_all">Disable all</string>
     <string name="action_edit">Edit</string>
     <string name="action_add">Add</string>
-    <string name="action_update_category">Update category</string>
+    <string name="action_update_category">Update folder</string>
     <string name="action_open_random_manga">Open random entry</string>
-    <string name="action_add_category">Add category</string>
-    <string name="action_edit_categories">Edit categories</string>
-    <string name="action_rename_category">Rename category</string>
-    <string name="action_move_category">Set categories</string>
-    <string name="delete_category_confirmation">Do you wish to delete the category \"%s\"?</string>
-    <string name="delete_category">Delete category</string>
+    <string name="action_add_category">Add folder</string>
+    <string name="action_edit_categories">Edit folders</string>
+    <string name="action_rename_category">Rename folder</string>
+    <string name="action_move_category">Set folders</string>
+    <string name="delete_category_confirmation">Do you wish to delete the folder \"%s\"?</string>
+    <string name="delete_category">Delete folder</string>
     <string name="action_edit_cover">Edit cover</string>
     <string name="action_view_chapters">View chapters</string>
     <string name="action_pause">Pause</string>
@@ -126,7 +126,7 @@
     <string name="action_display_unread_badge">Unread chapters</string>
     <string name="action_display_local_badge">Local source</string>
     <string name="action_display_language_badge">Language</string>
-    <string name="action_display_show_tabs">Show category tabs</string>
+    <string name="action_display_show_tabs">Show folder tabs</string>
     <string name="action_display_show_number_of_items">Show number of items</string>
     <string name="action_display_show_continue_reading_button">Continue reading button</string>
     <string name="action_disable">Disable</string>
@@ -242,6 +242,11 @@
     <string name="theme_yinyang">Yin &amp; Yang</string>
     <string name="theme_yotsuba">Yotsuba</string>
     <string name="theme_tidalwave">Tidal Wave</string>
+    <string name="theme_fire_spirits">Fire Spirits</string>
+    <string name="theme_moon_wisps">Moon Wisps</string>
+    <string name="theme_sea_lanterns">Sea Lanterns</string>
+    <string name="theme_sakura_drift">Sakura Drift</string>
+    <string name="theme_aurora_motes">Aurora Motes</string>
     <string name="pref_dark_theme_pure_black">Pure black dark mode</string>
     <string name="pref_relative_format">Relative timestamps</string>
     <!-- "Today" instead of "2023-12-31" -->
@@ -302,10 +307,10 @@
     <string name="pref_library_update_refresh_metadata">Automatically refresh metadata</string>
     <string name="pref_library_update_refresh_metadata_summary">Check for new cover and details when updating library</string>
 
-    <string name="default_category">Default category</string>
+    <string name="default_category">Default folder</string>
     <string name="default_category_summary">Always ask</string>
-    <string name="categorized_display_settings">Per-category settings for sort</string>
-    <string name="pref_library_update_categories_details">Entries in excluded categories will not be updated even if they are also in included categories.</string>
+    <string name="categorized_display_settings">Per-folder settings for sort</string>
+    <string name="pref_library_update_categories_details">Entries in excluded folders will not be updated even if they are also in included folders.</string>
     <string name="all">All</string>
     <string name="none">None</string>
     <string name="include">Include: %s</string>
@@ -678,7 +683,7 @@
     <string name="unknown_error">Unknown error</string>
 
     <!-- Library -->
-    <string name="updating_category">Updating category</string>
+    <string name="updating_category">Updating folder</string>
     <string name="manga_from_library">From library</string>
     <string name="downloaded_chapters">Downloaded chapters</string>
     <string name="intervals_header">Intervals</string>
@@ -814,9 +819,9 @@
     <string name="track_delete_remote_text">Also remove from %s</string>
 
     <!-- Category activity -->
-    <string name="error_category_exists">A category with this name already exists!</string>
+    <string name="error_category_exists">A folder with this name already exists!</string>
     <!-- missing undo feature after Compose rewrite #7454 -->
-    <string name="snack_categories_deleted">Categories deleted</string>
+    <string name="snack_categories_deleted">Folders deleted</string>
 
     <!-- Dialog option with checkbox view -->
     <string name="dialog_with_checkbox_remove_description">This will remove the read date of this chapter. Are you sure?</string>
@@ -955,11 +960,18 @@
     <string name="information_no_recent">No recent updates</string>
     <string name="information_no_recent_manga">Nothing read recently</string>
     <string name="information_empty_library">Your library is empty</string>
-    <string name="information_no_manga_category">Category is empty</string>
-    <string name="information_no_entries_found">No entries found in this category</string>
+    <string name="information_no_manga_category">Folder is empty</string>
+    <string name="information_no_entries_found">No entries found in this folder</string>
     <string name="getting_started_guide">Getting started guide</string>
-    <string name="information_empty_category">You have no categories. Tap the plus button to create one for organizing your library.</string>
-    <string name="information_empty_category_dialog">You don\'t have any categories yet.</string>
+    <string name="information_empty_category">You have no folders. Tap the plus button to create one for organizing your library.</string>
+    <string name="information_empty_category_dialog">You don\'t have any folders yet.</string>
+    <string name="action_pick_up_reading">Pick up</string>
+    <string name="chapter_read_total">Read %1$d/%2$d chapters</string>
+    <string name="manga_genre_label">Genre:</string>
+    <string name="manga_summary_label">Summary:</string>
+    <string name="sources_empty_go_extensions">No sources yet. Install an extension to start browsing.</string>
+    <string name="action_go_to_extensions">Go to Extensions</string>
+    <string name="recommended_extensions">Recommended: Asura Scans, MangaFire, Rolia Scan, MangaDex</string>
     <string name="information_cloudflare_bypass_failure">Failed to bypass Cloudflare</string>
     <string name="information_cloudflare_help">Tap here for help with Cloudflare</string>
     <string name="information_required_plain">*required</string>
@@ -1050,14 +1062,14 @@
     <string name="supportUsScreen.perks">Patrons get access to exclusive channels, with more perks to come.</string>
     <string name="supportUsScreen.donationPlatform.patreon">Patreon (preferred)</string>
     <string name="supportUsScreen.donationPlatform.opencollective">OpenCollective</string>
-    <string name="supportUsScreen.currentlySupportedBy">Mihon is currently backed by %d+ patrons. We want to thank each and everyone of you. Let's make Mihon even better together.</string>
+    <string name="supportUsScreen.currentlySupportedBy">OracleRead is built on the work of Mihon, Tachiyomi, extension developers, and open source contributors. Thank you to the %d+ upstream patrons and everyone supporting open source manga readers.</string>
     <string name="supportUsScreen.contactForDetailsMessage">For alternative options or any related questions, join our Discord server.</string>
     <string name="supportUsScreen.contactPlatform">Discord</string>
 
     <string name="donationCampaign.title">Enjoying the app?</string>
-    <string name="donationCampaign.paragraph1">Hi! I’m the main developer behind Mihon, and I’d like to ask you to consider supporting its development financially. With enough support, I’ll be able to work on Mihon full-time and focus on long-standing issues as well as highly requested features.</string>
-    <string name="donationCampaign.paragraph2">You can donate through either Patreon (preferred) or OpenCollective. If you have questions or would like to support using alternative methods, feel free to reach out to me through Mihon's Discord server.</string>
-    <string name="donationCampaign.paragraph3">Regardless, Mihon will continue to be maintained by me and the volunteers, and it will stay open source.</string>
+    <string name="donationCampaign.paragraph1">OracleRead is an independent open-source fork built upon Mihon.</string>
+    <string name="donationCampaign.paragraph2">Please support the open-source projects, extension developers, and contributors that make this ecosystem possible.</string>
+    <string name="donationCampaign.paragraph3">OracleRead does not host, store, or distribute any content.</string>
     <string name="donationCampaign.contactPlatform">Discord</string>
     <string name="donationCampaign.dismiss">Dismiss</string>
 </resources>

@@ -28,6 +28,8 @@ class LibraryPreferences(
 
     val randomSortSeed: Preference<Int> = preferenceStore.getInt("library_random_sort_seed", 0)
 
+    val pinnedMangaIds: Preference<Set<String>> = preferenceStore.getStringSet("library_pinned_manga_ids", emptySet())
+
     val portraitColumns: Preference<Int> = preferenceStore.getInt("pref_library_columns_portrait_key", 0)
 
     val landscapeColumns: Preference<Int> = preferenceStore.getInt("pref_library_columns_landscape_key", 0)

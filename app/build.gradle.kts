@@ -24,10 +24,10 @@ android {
     namespace = "eu.kanade.tachiyomi"
 
     defaultConfig {
-        applicationId = "app.mihon"
+        applicationId = "io.github.kenje24.oracleread"
 
-        versionCode = 22
-        versionName = "0.19.9"
+        versionCode = 100
+        versionName = "1.0.0"
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getLatestCommitCount()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"${getLatestCommitSha()}\"")

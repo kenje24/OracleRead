@@ -144,6 +144,7 @@ data object LibraryTab : Tab {
                 LibraryBottomActionMenu(
                     visible = state.selectionMode,
                     onChangeCategoryClicked = screenModel::openChangeCategoryDialog,
+                    onPinClicked = screenModel::togglePinSelection,
                     onMarkAsReadClicked = { screenModel.markReadSelection(true) },
                     onMarkAsUnreadClicked = { screenModel.markReadSelection(false) },
                     onDownloadClicked = screenModel::performDownloadAction

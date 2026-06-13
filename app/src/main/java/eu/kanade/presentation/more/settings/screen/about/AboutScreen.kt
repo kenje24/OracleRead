@@ -2,14 +2,8 @@ package eu.kanade.presentation.more.settings.screen.about
 
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,22 +35,14 @@ import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.util.system.updaterEnabled
 import kotlinx.coroutines.launch
 import logcat.LogPriority
-import tachiyomi.core.common.Constants
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.release.interactor.GetApplicationRelease
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.LinkIcon
 import tachiyomi.presentation.core.components.ScrollbarLazyColumn
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.icons.CustomIcons
-import tachiyomi.presentation.core.icons.Discord
-import tachiyomi.presentation.core.icons.Facebook
-import tachiyomi.presentation.core.icons.Github
-import tachiyomi.presentation.core.icons.Reddit
-import tachiyomi.presentation.core.icons.X
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.time.Instant
@@ -160,49 +146,61 @@ object AboutScreen : Screen() {
 
                 item {
                     TextPreferenceWidget(
-                        title = stringResource(MR.strings.privacy_policy),
-                        onPreferenceClick = { uriHandler.openUri("https://mihon.app/privacy/") },
+                        title = "Credits",
+                        subtitle = """
+                            OracleRead
+                            Community Manga Reader
+
+                            Built upon the Mihon open-source project.
+
+                            Special thanks to:
+                            - Mihon Open Source Project
+                            - Original Tachiyomi contributors
+                            - Extension developers
+                            - Open source contributors
+                        """.trimIndent(),
                     )
                 }
 
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        LinkIcon(
-                            label = stringResource(MR.strings.website),
-                            icon = Icons.Outlined.Public,
-                            url = "https://mihon.app",
-                        )
-                        LinkIcon(
-                            label = "Discord",
-                            icon = CustomIcons.Discord,
-                            url = Constants.URL_DISCORD,
-                        )
-                        LinkIcon(
-                            label = "X",
-                            icon = CustomIcons.X,
-                            url = "https://x.com/mihonapp",
-                        )
-                        LinkIcon(
-                            label = "Facebook",
-                            icon = CustomIcons.Facebook,
-                            url = "https://facebook.com/mihonapp",
-                        )
-                        LinkIcon(
-                            label = "Reddit",
-                            icon = CustomIcons.Reddit,
-                            url = "https://www.reddit.com/r/mihonapp",
-                        )
-                        LinkIcon(
-                            label = "GitHub",
-                            icon = CustomIcons.Github,
-                            url = "https://github.com/mihonapp",
-                        )
-                    }
+                    TextPreferenceWidget(
+                        title = "Fork identity",
+                        subtitle = """
+                            A community-driven fork of Mihon focused on providing a clean, stable, and modern manga reading experience.
+
+                            Project lineage:
+                            Tachiyomi -> Mihon -> OracleRead
+                        """.trimIndent(),
+                    )
+                }
+
+                item {
+                    TextPreferenceWidget(
+                        title = "Legal",
+                        subtitle = """
+                            OracleRead does not host, store, or distribute any content.
+
+                            All content is provided by third-party sources and extensions.
+
+                            OracleRead is an independent open-source project and is not affiliated with content providers.
+                        """.trimIndent(),
+                    )
+                }
+
+                item {
+                    TextPreferenceWidget(
+                        title = "Mihon GitHub",
+                        subtitle = "github.com/mihonapp/mihon",
+                        onPreferenceClick = { uriHandler.openUri("https://github.com/mihonapp/mihon") },
+                    )
+                }
+
+                item {
+                    TextPreferenceWidget(
+                        title = "OracleRead Repository",
+                        subtitle = "github.com/kenje24/OracleRead.git",
+                        onPreferenceClick = { uriHandler.openUri("https://github.com/kenje24/OracleRead.git") },
+                    )
                 }
             }
         }

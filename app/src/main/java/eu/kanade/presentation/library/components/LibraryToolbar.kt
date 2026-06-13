@@ -6,23 +6,33 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.FlipToBack
 import androidx.compose.material.icons.outlined.SelectAll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.sp
+import eu.kanade.domain.base.BasePreferences
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.components.SearchToolbar
+import eu.kanade.tachiyomi.R
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.Pill
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.theme.active
+import tachiyomi.presentation.core.util.collectAsState
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 @Composable
 fun LibraryToolbar(
@@ -72,14 +82,20 @@ private fun LibraryRegularToolbar(
     scrollBehavior: TopAppBarScrollBehavior?,
 ) {
     val pillAlpha = if (isSystemInDarkTheme()) 0.12f else 0.08f
+    val incognitoPref = remember { Injekt.get<BasePreferences>().incognitoMode }
+    val incognitoMode by incognitoPref.collectAsState()
     SearchToolbar(
         titleContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = title.text,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f, false),
-                    overflow = TextOverflow.Ellipsis,
+                Switch(
+                    checked = incognitoMode,
+                    onCheckedChange = incognitoPref::set,
+                    thumbContent = {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_glasses_24dp),
+                            contentDescription = null,
+                        )
+                    },
                 )
                 if (title.numberOfManga != null) {
                     Pill(
