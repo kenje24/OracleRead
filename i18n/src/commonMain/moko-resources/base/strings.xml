@@ -972,6 +972,8 @@
     <string name="sources_empty_go_extensions">No sources yet. Install an extension to start browsing.</string>
     <string name="action_go_to_extensions">Go to Extensions</string>
     <string name="recommended_extensions">Recommended: Asura Scans, MangaFire, Rolia Scan, MangaDex</string>
+    <string name="folder_color">Folder color</string>
+    <string name="folder_icon">Folder icon</string>
     <string name="information_cloudflare_bypass_failure">Failed to bypass Cloudflare</string>
     <string name="information_cloudflare_help">Tap here for help with Cloudflare</string>
     <string name="information_required_plain">*required</string>

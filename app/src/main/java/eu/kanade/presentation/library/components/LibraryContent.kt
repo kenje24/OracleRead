@@ -55,11 +55,13 @@ fun LibraryContent(
     val appTheme by remember { Injekt.get<UiPreferences>().appTheme }.collectAsState()
 
     Box(
-        modifier = Modifier.padding(
-            top = contentPadding.calculateTopPadding(),
-            start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-            end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-        ),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(
+                top = contentPadding.calculateTopPadding(),
+                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+            ),
     ) {
         LibraryAmbientBackground(
             appTheme = appTheme,

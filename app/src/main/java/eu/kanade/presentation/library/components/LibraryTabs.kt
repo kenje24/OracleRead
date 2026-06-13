@@ -5,21 +5,27 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import eu.kanade.presentation.category.folderAccentColor
+import eu.kanade.presentation.category.folderIconForKey
+import eu.kanade.presentation.category.folderIconKey
 import eu.kanade.presentation.category.visualName
 import tachiyomi.domain.category.model.Category
+import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.presentation.core.components.material.TabText
+import tachiyomi.presentation.core.util.collectAsState
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 @Composable
 internal fun LibraryTabs(
@@ -28,6 +34,7 @@ internal fun LibraryTabs(
     getItemCountForCategory: (Category) -> Int?,
     onTabItemClick: (Int) -> Unit,
 ) {
+    val folderStyles by remember { Injekt.get<LibraryPreferences>().folderStyles }.collectAsState()
     val currentPageIndex = pagerState.currentPage.coerceAtMost(categories.lastIndex)
     Column(modifier = Modifier.zIndex(2f)) {
         PrimaryScrollableTabRow(
@@ -38,7 +45,7 @@ internal fun LibraryTabs(
             divider = {},
         ) {
             categories.forEachIndexed { index, category ->
-                val folderColor = category.folderAccentColor()
+                val folderColor = category.folderAccentColor(folderStyles)
                 Tab(
                     selected = currentPageIndex == index,
                     onClick = { onTabItemClick(index) },
@@ -48,7 +55,7 @@ internal fun LibraryTabs(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Folder,
+                                imageVector = folderIconForKey(category.folderIconKey(folderStyles)),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
                             )

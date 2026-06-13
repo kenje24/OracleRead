@@ -4,17 +4,20 @@ import androidx.compose.runtime.Immutable
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import dev.icerock.moko.resources.StringResource
+import eu.kanade.presentation.category.FolderStyle
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.domain.category.interactor.CreateCategoryWithName
 import tachiyomi.domain.category.interactor.DeleteCategory
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.interactor.RenameCategory
 import tachiyomi.domain.category.interactor.ReorderCategory
 import tachiyomi.domain.category.model.Category
+import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -25,6 +28,7 @@ class CategoryScreenModel(
     private val deleteCategory: DeleteCategory = Injekt.get(),
     private val reorderCategory: ReorderCategory = Injekt.get(),
     private val renameCategory: RenameCategory = Injekt.get(),
+    private val libraryPreferences: LibraryPreferences = Injekt.get(),
 ) : StateScreenModel<CategoryScreenState>(CategoryScreenState.Loading) {
 
     private val _events: Channel<CategoryEvent> = Channel()
@@ -44,11 +48,15 @@ class CategoryScreenModel(
         }
     }
 
-    fun createCategory(name: String) {
+    fun createCategory(name: String, color: Long, icon: String) {
         screenModelScope.launch {
-            when (createCategoryWithName.await(name)) {
+            when (val result = createCategoryWithName.await(name)) {
+                is CreateCategoryWithName.Result.Success -> {
+                    if (result.categoryId > 0) {
+                        setFolderStyle(result.categoryId, color, icon)
+                    }
+                }
                 is CreateCategoryWithName.Result.InternalError -> _events.send(CategoryEvent.InternalError)
-                else -> {}
             }
         }
     }
@@ -71,12 +79,25 @@ class CategoryScreenModel(
         }
     }
 
-    fun renameCategory(category: Category, name: String) {
+    fun renameCategory(category: Category, name: String, color: Long, icon: String) {
         screenModelScope.launch {
             when (renameCategory.await(category, name)) {
-                is RenameCategory.Result.InternalError -> _events.send(CategoryEvent.InternalError)
-                else -> {}
+                is RenameCategory.Result.InternalError -> {
+                    _events.send(CategoryEvent.InternalError)
+                }
+                is RenameCategory.Result.Success -> {
+                    setFolderStyle(category.id, color, icon)
+                }
             }
+        }
+    }
+
+    private fun setFolderStyle(categoryId: Long, color: Long, icon: String) {
+        libraryPreferences.folderStyles.getAndSet { styles ->
+            styles
+                .filterNot { FolderStyle.parse(it)?.categoryId == categoryId }
+                .plus(FolderStyle(categoryId, color, icon).serialize())
+                .toSet()
         }
     }
 

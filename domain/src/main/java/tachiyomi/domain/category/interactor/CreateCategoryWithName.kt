@@ -30,7 +30,11 @@ class CreateCategoryWithName(
 
         try {
             categoryRepository.insert(newCategory)
-            Result.Success
+            val categoryId = categoryRepository.getAll()
+                .firstOrNull { it.name == name && it.order == nextOrder }
+                ?.id
+                ?: 0L
+            Result.Success(categoryId)
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             Result.InternalError(e)
@@ -38,7 +42,7 @@ class CreateCategoryWithName(
     }
 
     sealed interface Result {
-        data object Success : Result
+        data class Success(val categoryId: Long) : Result
         data class InternalError(val error: Throwable) : Result
     }
 }

@@ -1,15 +1,24 @@
 package eu.kanade.presentation.category.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -25,7 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import eu.kanade.core.preference.asToggleableState
+import eu.kanade.presentation.category.FolderStyleDefaults
+import eu.kanade.presentation.category.folderIconForKey
 import eu.kanade.presentation.category.visualName
 import kotlinx.coroutines.delay
 import tachiyomi.core.common.preference.CheckboxState
@@ -38,10 +51,12 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun CategoryCreateDialog(
     onDismissRequest: () -> Unit,
-    onCreate: (String) -> Unit,
+    onCreate: (String, Long, String) -> Unit,
     categories: List<String>,
 ) {
     var name by remember { mutableStateOf("") }
+    var selectedColor by remember { mutableStateOf(FolderStyleDefaults.colorOptions.first()) }
+    var selectedIcon by remember { mutableStateOf(FolderStyleDefaults.DEFAULT_ICON) }
 
     val focusRequester = remember { FocusRequester() }
     val nameAlreadyExists = remember(name) { categories.contains(name) }
@@ -52,7 +67,7 @@ fun CategoryCreateDialog(
             TextButton(
                 enabled = name.isNotEmpty() && !nameAlreadyExists,
                 onClick = {
-                    onCreate(name)
+                    onCreate(name, selectedColor, selectedIcon)
                     onDismissRequest()
                 },
             ) {
@@ -68,24 +83,15 @@ fun CategoryCreateDialog(
             Text(text = stringResource(MR.strings.action_add_category))
         },
         text = {
-            OutlinedTextField(
-                modifier = Modifier
-                    .focusRequester(focusRequester),
-                value = name,
-                onValueChange = { name = it },
-                label = {
-                    Text(text = stringResource(MR.strings.name))
-                },
-                supportingText = {
-                    val msgRes = if (name.isNotEmpty() && nameAlreadyExists) {
-                        MR.strings.error_category_exists
-                    } else {
-                        MR.strings.information_required_plain
-                    }
-                    Text(text = stringResource(msgRes))
-                },
-                isError = name.isNotEmpty() && nameAlreadyExists,
-                singleLine = true,
+            FolderForm(
+                name = name,
+                onNameChange = { name = it },
+                nameAlreadyExists = nameAlreadyExists,
+                focusRequester = focusRequester,
+                selectedColor = selectedColor,
+                onColorSelected = { selectedColor = it },
+                selectedIcon = selectedIcon,
+                onIconSelected = { selectedIcon = it },
             )
         },
     )
@@ -100,23 +106,28 @@ fun CategoryCreateDialog(
 @Composable
 fun CategoryRenameDialog(
     onDismissRequest: () -> Unit,
-    onRename: (String) -> Unit,
+    onRename: (String, Long, String) -> Unit,
     categories: List<String>,
     category: String,
+    initialColor: Long,
+    initialIcon: String,
 ) {
     var name by remember { mutableStateOf(category) }
     var valueHasChanged by remember { mutableStateOf(false) }
+    var selectedColor by remember { mutableStateOf(initialColor) }
+    var selectedIcon by remember { mutableStateOf(initialIcon) }
 
     val focusRequester = remember { FocusRequester() }
     val nameAlreadyExists = remember(name) { categories.contains(name) }
+    val styleHasChanged = selectedColor != initialColor || selectedIcon != initialIcon
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(
-                enabled = valueHasChanged && !nameAlreadyExists,
+                enabled = (valueHasChanged || styleHasChanged) && !nameAlreadyExists,
                 onClick = {
-                    onRename(name)
+                    onRename(name, selectedColor, selectedIcon)
                     onDismissRequest()
                 },
             ) {
@@ -132,24 +143,18 @@ fun CategoryRenameDialog(
             Text(text = stringResource(MR.strings.action_rename_category))
         },
         text = {
-            OutlinedTextField(
-                modifier = Modifier.focusRequester(focusRequester),
-                value = name,
-                onValueChange = {
+            FolderForm(
+                name = name,
+                onNameChange = {
                     valueHasChanged = name != it
                     name = it
                 },
-                label = { Text(text = stringResource(MR.strings.name)) },
-                supportingText = {
-                    val msgRes = if (valueHasChanged && nameAlreadyExists) {
-                        MR.strings.error_category_exists
-                    } else {
-                        MR.strings.information_required_plain
-                    }
-                    Text(text = stringResource(msgRes))
-                },
-                isError = valueHasChanged && nameAlreadyExists,
-                singleLine = true,
+                nameAlreadyExists = valueHasChanged && nameAlreadyExists,
+                focusRequester = focusRequester,
+                selectedColor = selectedColor,
+                onColorSelected = { selectedColor = it },
+                selectedIcon = selectedIcon,
+                onIconSelected = { selectedIcon = it },
             )
         },
     )
@@ -158,6 +163,92 @@ fun CategoryRenameDialog(
         // TODO: https://issuetracker.google.com/issues/204502668
         delay(0.1.seconds)
         focusRequester.requestFocus()
+    }
+}
+
+@Composable
+private fun FolderForm(
+    name: String,
+    onNameChange: (String) -> Unit,
+    nameAlreadyExists: Boolean,
+    focusRequester: FocusRequester,
+    selectedColor: Long,
+    onColorSelected: (Long) -> Unit,
+    selectedIcon: String,
+    onIconSelected: (String) -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
+    ) {
+        OutlinedTextField(
+            modifier = Modifier.focusRequester(focusRequester),
+            value = name,
+            onValueChange = onNameChange,
+            label = {
+                Text(text = stringResource(MR.strings.name))
+            },
+            supportingText = {
+                val msgRes = if (name.isNotEmpty() && nameAlreadyExists) {
+                    MR.strings.error_category_exists
+                } else {
+                    MR.strings.information_required_plain
+                }
+                Text(text = stringResource(msgRes))
+            },
+            isError = name.isNotEmpty() && nameAlreadyExists,
+            singleLine = true,
+        )
+
+        Text(
+            text = stringResource(MR.strings.folder_color),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+        ) {
+            FolderStyleDefaults.colorOptions.forEach { color ->
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(Color(color), CircleShape)
+                        .border(
+                            width = if (selectedColor == color) 3.dp else 1.dp,
+                            color = if (selectedColor == color) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant
+                            },
+                            shape = CircleShape,
+                        )
+                        .clickable { onColorSelected(color) },
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(MR.strings.folder_icon),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+        ) {
+            FolderStyleDefaults.iconOptions.forEach { icon ->
+                FilterChip(
+                    selected = selectedIcon == icon,
+                    onClick = { onIconSelected(icon) },
+                    label = { Text(icon.replaceFirstChar { it.titlecase() }) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = folderIconForKey(icon),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                )
+            }
+        }
     }
 }
 

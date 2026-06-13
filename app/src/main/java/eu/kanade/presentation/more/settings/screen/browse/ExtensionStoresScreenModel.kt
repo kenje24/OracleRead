@@ -12,6 +12,7 @@ import mihon.domain.extension.interactor.GetExtensionStores
 import mihon.domain.extension.interactor.RemoveExtensionStore
 import mihon.domain.extension.interactor.UpdateExtensionStores
 import mihon.domain.extension.model.ExtensionStore
+import mihon.domain.extension.repository.ExtensionStoreRepository
 import tachiyomi.core.common.util.lang.launchIO
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -22,6 +23,7 @@ class ExtensionStoresScreenModel(
     private val removeExtensionStore: RemoveExtensionStore = Injekt.get(),
     private val updateExtensionStores: UpdateExtensionStores = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
+    private val extensionStoreRepository: ExtensionStoreRepository = Injekt.get(),
 ) : StateScreenModel<ExtensionStoreScreenState>(ExtensionStoreScreenState.Loading) {
 
     private inline fun updateSuccessState(
@@ -37,6 +39,7 @@ class ExtensionStoresScreenModel(
 
     init {
         screenModelScope.launchIO {
+            extensionStoreRepository.getAll()
             getExtensionStores.subscribe()
                 .collectLatest { stores ->
                     mutableState.update {

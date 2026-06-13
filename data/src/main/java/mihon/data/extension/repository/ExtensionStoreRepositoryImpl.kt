@@ -37,6 +37,7 @@ class ExtensionStoreRepositoryImpl(
 
     override suspend fun refreshAll() {
         try {
+            ensureDefaultStore()
             database.extension_storeQueries.getAll().awaitAsList().forEach { store ->
                 service.fetch(store.index_url)
                     .mapCatching { upsert(it) }
@@ -65,6 +66,7 @@ class ExtensionStoreRepositoryImpl(
 
     override suspend fun fetchExtensions(): List<Extension.Available> {
         return try {
+            ensureDefaultStore()
             supervisorScope {
                 database.extension_storeQueries.getAll(::extensionStoreMapper).awaitAsList().map { store ->
                     async {
@@ -85,6 +87,7 @@ class ExtensionStoreRepositoryImpl(
     }
 
     override suspend fun getAll(): List<ExtensionStore> {
+        ensureDefaultStore()
         return database.extension_storeQueries.getAll(::extensionStoreMapper).awaitAsList()
     }
 
@@ -100,6 +103,19 @@ class ExtensionStoreRepositoryImpl(
 
     override suspend fun remove(indexUrl: String) {
         database.extension_storeQueries.delete(indexUrl)
+    }
+
+    private suspend fun ensureDefaultStore() {
+        val hasDefaultStore = database.extension_storeQueries
+            .getAll()
+            .awaitAsList()
+            .any { it.index_url == DEFAULT_EXTENSION_STORE_URL }
+        if (hasDefaultStore) return
+
+        insertFromPreference(
+            indexUrl = DEFAULT_EXTENSION_STORE_URL,
+            name = DEFAULT_EXTENSION_STORE_NAME,
+        )
     }
 
     private fun extensionStoreMapper(
@@ -122,3 +138,6 @@ class ExtensionStoreRepositoryImpl(
         isLegacy = isLegacy,
     )
 }
+
+private const val DEFAULT_EXTENSION_STORE_NAME = "Keiyoushi"
+private const val DEFAULT_EXTENSION_STORE_URL = "https://raw.githubusercontent.com/keiyoushi/extensions/repo/repo.json"

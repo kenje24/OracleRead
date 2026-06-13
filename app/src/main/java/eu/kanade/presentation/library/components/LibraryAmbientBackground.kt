@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import eu.kanade.domain.ui.model.AppTheme
 import kotlin.math.sin
@@ -43,18 +44,35 @@ internal fun LibraryAmbientBackground(
     Canvas(modifier = modifier) {
         val width = size.width
         val height = size.height
-        repeat(34) { index ->
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    palette[0].copy(alpha = 0.10f),
+                    Color.Transparent,
+                    palette[1].copy(alpha = 0.05f),
+                ),
+            ),
+        )
+
+        repeat(58) { index ->
             val seed = index + 1
-            val cycle = (progress + (seed * 0.071f)) % 1f
+            val cycle = (progress + (seed * 0.047f)) % 1f
             val baseX = ((seed * 73) % 100) / 100f * width
-            val drift = sin((cycle * 6.28f) + seed) * width * (0.015f + (seed % 5) * 0.004f)
-            val y = height * (1.05f - cycle * 1.18f)
-            val radius = 1.4f + (seed % 4) * 0.85f
-            val alpha = (1f - cycle).coerceIn(0f, 1f) * (0.08f + (seed % 3) * 0.035f)
+            val drift = sin((cycle * 6.28f) + seed) * width * (0.025f + (seed % 7) * 0.006f)
+            val y = height * (1.08f - cycle * 1.22f)
+            val radius = 2.2f + (seed % 5) * 0.9f
+            val alpha = (1f - cycle).coerceIn(0f, 1f) * (0.18f + (seed % 4) * 0.04f)
+            val color = palette[index % palette.size]
+            val center = Offset(baseX + drift, y)
             drawCircle(
-                color = palette[index % palette.size].copy(alpha = alpha),
+                color = color.copy(alpha = alpha * 0.22f),
+                radius = radius * 3.2f,
+                center = center,
+            )
+            drawCircle(
+                color = color.copy(alpha = alpha),
                 radius = radius,
-                center = Offset(baseX + drift, y),
+                center = center,
             )
         }
     }

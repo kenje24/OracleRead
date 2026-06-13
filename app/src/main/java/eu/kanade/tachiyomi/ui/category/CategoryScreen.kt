@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import cafe.adriel.voyager.core.model.rememberScreenModel
@@ -13,10 +14,15 @@ import eu.kanade.presentation.category.CategoryScreen
 import eu.kanade.presentation.category.components.CategoryCreateDialog
 import eu.kanade.presentation.category.components.CategoryDeleteDialog
 import eu.kanade.presentation.category.components.CategoryRenameDialog
+import eu.kanade.presentation.category.folderStyle
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.flow.collectLatest
+import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.presentation.core.util.collectAsState
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 class CategoryScreen : Screen() {
 
@@ -27,6 +33,7 @@ class CategoryScreen : Screen() {
         val screenModel = rememberScreenModel { CategoryScreenModel() }
 
         val state by screenModel.state.collectAsState()
+        val folderStyles by remember { Injekt.get<LibraryPreferences>().folderStyles }.collectAsState()
 
         if (state is CategoryScreenState.Loading) {
             LoadingScreen()
@@ -56,9 +63,11 @@ class CategoryScreen : Screen() {
             is CategoryDialog.Rename -> {
                 CategoryRenameDialog(
                     onDismissRequest = screenModel::dismissDialog,
-                    onRename = { screenModel.renameCategory(dialog.category, it) },
+                    onRename = { name, color, icon -> screenModel.renameCategory(dialog.category, name, color, icon) },
                     categories = successState.categories.fastMap { it.name },
                     category = dialog.category.name,
+                    initialColor = dialog.category.folderStyle(folderStyles).color,
+                    initialIcon = dialog.category.folderStyle(folderStyles).icon,
                 )
             }
             is CategoryDialog.Delete -> {
