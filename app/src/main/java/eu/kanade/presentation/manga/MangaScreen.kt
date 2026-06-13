@@ -352,7 +352,14 @@ private fun MangaScreenSmallImpl(
                     SmallExtendedFloatingActionButton(
                         text = { Text(text = stringResource(MR.strings.action_pick_up_reading)) },
                         icon = { Icon(imageVector = Icons.Outlined.Bookmark, contentDescription = null) },
-                        onClick = { scope.launch { chapterListState.animateScrollToItem(4 + pickUpIndex) } },
+                        onClick = {
+                            scope.launch {
+                                chapterListState.animateScrollToItem(
+                                    index = 4 + pickUpIndex,
+                                    scrollOffset = -chapterListState.layoutInfo.viewportSize.height / 2,
+                                )
+                            }
+                        },
                         expanded = chapterListState.shouldExpandFAB(),
                     )
                 }
@@ -613,7 +620,14 @@ fun MangaScreenLargeImpl(
                     SmallExtendedFloatingActionButton(
                         text = { Text(text = stringResource(MR.strings.action_pick_up_reading)) },
                         icon = { Icon(imageVector = Icons.Outlined.Bookmark, contentDescription = null) },
-                        onClick = { scope.launch { chapterListState.animateScrollToItem(1 + pickUpIndex) } },
+                        onClick = {
+                            scope.launch {
+                                chapterListState.animateScrollToItem(
+                                    index = 1 + pickUpIndex,
+                                    scrollOffset = -chapterListState.layoutInfo.viewportSize.height / 2,
+                                )
+                            }
+                        },
                         expanded = chapterListState.shouldExpandFAB(),
                     )
                 }

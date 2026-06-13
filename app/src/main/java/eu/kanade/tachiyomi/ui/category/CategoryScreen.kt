@@ -63,11 +63,14 @@ class CategoryScreen : Screen() {
             is CategoryDialog.Rename -> {
                 CategoryRenameDialog(
                     onDismissRequest = screenModel::dismissDialog,
-                    onRename = { name, color, icon -> screenModel.renameCategory(dialog.category, name, color, icon) },
+                    onRename = { name, color, icon, theme ->
+                        screenModel.renameCategory(dialog.category, name, color, icon, theme)
+                    },
                     categories = successState.categories.fastMap { it.name },
                     category = dialog.category.name,
                     initialColor = dialog.category.folderStyle(folderStyles).color,
                     initialIcon = dialog.category.folderStyle(folderStyles).icon,
+                    initialTheme = dialog.category.folderStyle(folderStyles).theme,
                 )
             }
             is CategoryDialog.Delete -> {

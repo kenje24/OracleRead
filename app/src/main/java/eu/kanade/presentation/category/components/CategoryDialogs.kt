@@ -51,12 +51,13 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun CategoryCreateDialog(
     onDismissRequest: () -> Unit,
-    onCreate: (String, Long, String) -> Unit,
+    onCreate: (String, Long, String, String) -> Unit,
     categories: List<String>,
 ) {
     var name by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf(FolderStyleDefaults.colorOptions.first()) }
     var selectedIcon by remember { mutableStateOf(FolderStyleDefaults.DEFAULT_ICON) }
+    var selectedTheme by remember { mutableStateOf(FolderStyleDefaults.DEFAULT_THEME) }
 
     val focusRequester = remember { FocusRequester() }
     val nameAlreadyExists = remember(name) { categories.contains(name) }
@@ -67,7 +68,7 @@ fun CategoryCreateDialog(
             TextButton(
                 enabled = name.isNotEmpty() && !nameAlreadyExists,
                 onClick = {
-                    onCreate(name, selectedColor, selectedIcon)
+                    onCreate(name, selectedColor, selectedIcon, selectedTheme)
                     onDismissRequest()
                 },
             ) {
@@ -92,6 +93,8 @@ fun CategoryCreateDialog(
                 onColorSelected = { selectedColor = it },
                 selectedIcon = selectedIcon,
                 onIconSelected = { selectedIcon = it },
+                selectedTheme = selectedTheme,
+                onThemeSelected = { selectedTheme = it },
             )
         },
     )
@@ -106,20 +109,24 @@ fun CategoryCreateDialog(
 @Composable
 fun CategoryRenameDialog(
     onDismissRequest: () -> Unit,
-    onRename: (String, Long, String) -> Unit,
+    onRename: (String, Long, String, String) -> Unit,
     categories: List<String>,
     category: String,
     initialColor: Long,
     initialIcon: String,
+    initialTheme: String,
 ) {
     var name by remember { mutableStateOf(category) }
     var valueHasChanged by remember { mutableStateOf(false) }
     var selectedColor by remember { mutableStateOf(initialColor) }
     var selectedIcon by remember { mutableStateOf(initialIcon) }
+    var selectedTheme by remember { mutableStateOf(initialTheme) }
 
     val focusRequester = remember { FocusRequester() }
     val nameAlreadyExists = remember(name) { categories.contains(name) }
-    val styleHasChanged = selectedColor != initialColor || selectedIcon != initialIcon
+    val styleHasChanged = selectedColor != initialColor ||
+        selectedIcon != initialIcon ||
+        selectedTheme != initialTheme
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -127,7 +134,7 @@ fun CategoryRenameDialog(
             TextButton(
                 enabled = (valueHasChanged || styleHasChanged) && !nameAlreadyExists,
                 onClick = {
-                    onRename(name, selectedColor, selectedIcon)
+                    onRename(name, selectedColor, selectedIcon, selectedTheme)
                     onDismissRequest()
                 },
             ) {
@@ -155,6 +162,8 @@ fun CategoryRenameDialog(
                 onColorSelected = { selectedColor = it },
                 selectedIcon = selectedIcon,
                 onIconSelected = { selectedIcon = it },
+                selectedTheme = selectedTheme,
+                onThemeSelected = { selectedTheme = it },
             )
         },
     )
@@ -176,6 +185,8 @@ private fun FolderForm(
     onColorSelected: (Long) -> Unit,
     selectedIcon: String,
     onIconSelected: (String) -> Unit,
+    selectedTheme: String,
+    onThemeSelected: (String) -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
@@ -245,6 +256,25 @@ private fun FolderForm(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp),
                         )
+                    },
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(MR.strings.folder_theme),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+        ) {
+            FolderStyleDefaults.themeOptions.forEach { (themeKey, theme) ->
+                FilterChip(
+                    selected = selectedTheme == themeKey,
+                    onClick = { onThemeSelected(themeKey) },
+                    label = {
+                        Text(text = theme.titleRes?.let { stringResource(it) } ?: themeKey)
                     },
                 )
             }

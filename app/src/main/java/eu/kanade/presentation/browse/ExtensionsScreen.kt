@@ -82,6 +82,7 @@ fun ExtensionScreen(
     onUpdateExtension: (Extension.Installed) -> Unit,
     onTrustExtension: (Extension.Untrusted) -> Unit,
     onOpenExtension: (Extension.Installed) -> Unit,
+    onAddExtensionToLibrary: (Extension.Installed) -> Unit,
     onClickUpdateAll: () -> Unit,
     onRefresh: () -> Unit,
 ) {
@@ -124,6 +125,7 @@ fun ExtensionScreen(
                     onUpdateExtension = onUpdateExtension,
                     onTrustExtension = onTrustExtension,
                     onOpenExtension = onOpenExtension,
+                    onAddExtensionToLibrary = onAddExtensionToLibrary,
                     onClickUpdateAll = onClickUpdateAll,
                 )
             }
@@ -143,6 +145,7 @@ private fun ExtensionContent(
     onUpdateExtension: (Extension.Installed) -> Unit,
     onTrustExtension: (Extension.Untrusted) -> Unit,
     onOpenExtension: (Extension.Installed) -> Unit,
+    onAddExtensionToLibrary: (Extension.Installed) -> Unit,
     onClickUpdateAll: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -254,6 +257,11 @@ private fun ExtensionContent(
                             }
                         }
                     },
+                    onClickAddToLibrary = {
+                        if (it is Extension.Installed) {
+                            onAddExtensionToLibrary(it)
+                        }
+                    },
                 )
             }
         }
@@ -283,6 +291,7 @@ private fun ExtensionItem(
     onClickItemCancel: (Extension) -> Unit,
     onClickItemAction: (Extension) -> Unit,
     onClickItemSecondaryAction: (Extension) -> Unit,
+    onClickAddToLibrary: (Extension) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val (extension, installStep) = item
@@ -327,6 +336,7 @@ private fun ExtensionItem(
                 onClickItemCancel = onClickItemCancel,
                 onClickItemAction = onClickItemAction,
                 onClickItemSecondaryAction = onClickItemSecondaryAction,
+                onClickAddToLibrary = onClickAddToLibrary,
             )
         },
     ) {
@@ -422,6 +432,7 @@ private fun ExtensionItemActions(
     onClickItemCancel: (Extension) -> Unit = {},
     onClickItemAction: (Extension) -> Unit = {},
     onClickItemSecondaryAction: (Extension) -> Unit = {},
+    onClickAddToLibrary: (Extension) -> Unit = {},
 ) {
     val isIdle = installStep.isCompleted()
 
@@ -449,6 +460,12 @@ private fun ExtensionItemActions(
             installStep == InstallStep.Idle -> {
                 when (extension) {
                     is Extension.Installed -> {
+                        if (extension.sources.isNotEmpty()) {
+                            TextButton(onClick = { onClickAddToLibrary(extension) }) {
+                                Text(text = stringResource(MR.strings.action_add_to_library_shortcut))
+                            }
+                        }
+
                         IconButton(onClick = { onClickItemSecondaryAction(extension) }) {
                             Icon(
                                 imageVector = Icons.Outlined.Settings,

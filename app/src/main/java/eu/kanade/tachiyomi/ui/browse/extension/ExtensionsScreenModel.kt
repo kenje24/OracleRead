@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
@@ -36,7 +37,7 @@ import uy.kohesive.injekt.api.get
 import kotlin.time.Duration.Companion.seconds
 
 class ExtensionsScreenModel(
-    preferences: SourcePreferences = Injekt.get(),
+    private val sourcePreferences: SourcePreferences = Injekt.get(),
     basePreferences: BasePreferences = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
     private val getExtensions: GetExtensionsByType = Injekt.get(),
@@ -98,7 +99,7 @@ class ExtensionsScreenModel(
 
         screenModelScope.launchIO { findAvailableExtensions() }
 
-        preferences.extensionUpdatesCount.changes()
+        sourcePreferences.extensionUpdatesCount.changes()
             .onEach { mutableState.update { state -> state.copy(updates = it) } }
             .launchIn(screenModelScope)
 
@@ -187,6 +188,13 @@ class ExtensionsScreenModel(
 
     fun uninstallExtension(extension: Extension) {
         extensionManager.uninstallExtension(extension)
+    }
+
+    fun addExtensionToLibrary(extension: Extension.Installed) {
+        val sourceIds = extension.sources.map { it.id.toString() }
+        sourcePreferences.pinnedSources.getAndSet { pinnedSources ->
+            pinnedSources + sourceIds
+        }
     }
 
     fun findAvailableExtensions() {

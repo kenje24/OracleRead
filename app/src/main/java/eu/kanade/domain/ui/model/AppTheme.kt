@@ -23,6 +23,8 @@ enum class AppTheme(val titleRes: StringResource?) {
     SEA_LANTERNS(MR.strings.theme_sea_lanterns),
     SAKURA_DRIFT(MR.strings.theme_sakura_drift),
     AURORA_MOTES(MR.strings.theme_aurora_motes),
+    INK_RAIN(MR.strings.theme_ink_rain),
+    STAR_DUST(MR.strings.theme_star_dust),
 
     // Deprecated
     DARK_BLUE(null),

@@ -247,6 +247,8 @@
     <string name="theme_sea_lanterns">Sea Lanterns</string>
     <string name="theme_sakura_drift">Sakura Drift</string>
     <string name="theme_aurora_motes">Aurora Motes</string>
+    <string name="theme_ink_rain">Ink Rain</string>
+    <string name="theme_star_dust">Star Dust</string>
     <string name="pref_dark_theme_pure_black">Pure black dark mode</string>
     <string name="pref_relative_format">Relative timestamps</string>
     <!-- "Today" instead of "2023-12-31" -->
@@ -974,6 +976,10 @@
     <string name="recommended_extensions">Recommended: Asura Scans, MangaFire, Rolia Scan, MangaDex</string>
     <string name="folder_color">Folder color</string>
     <string name="folder_icon">Folder icon</string>
+    <string name="folder_theme">Folder theme</string>
+    <string name="library_source_shortcuts">Source shortcuts</string>
+    <string name="action_add_to_library_shortcut">Add to Library</string>
+    <string name="action_remove_from_library_shortcut">Remove shortcut</string>
     <string name="information_cloudflare_bypass_failure">Failed to bypass Cloudflare</string>
     <string name="information_cloudflare_help">Tap here for help with Cloudflare</string>
     <string name="information_required_plain">*required</string>

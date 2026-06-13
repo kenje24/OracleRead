@@ -48,12 +48,12 @@ class CategoryScreenModel(
         }
     }
 
-    fun createCategory(name: String, color: Long, icon: String) {
+    fun createCategory(name: String, color: Long, icon: String, theme: String) {
         screenModelScope.launch {
             when (val result = createCategoryWithName.await(name)) {
                 is CreateCategoryWithName.Result.Success -> {
                     if (result.categoryId > 0) {
-                        setFolderStyle(result.categoryId, color, icon)
+                        setFolderStyle(result.categoryId, color, icon, theme)
                     }
                 }
                 is CreateCategoryWithName.Result.InternalError -> _events.send(CategoryEvent.InternalError)
@@ -79,24 +79,24 @@ class CategoryScreenModel(
         }
     }
 
-    fun renameCategory(category: Category, name: String, color: Long, icon: String) {
+    fun renameCategory(category: Category, name: String, color: Long, icon: String, theme: String) {
         screenModelScope.launch {
             when (renameCategory.await(category, name)) {
                 is RenameCategory.Result.InternalError -> {
                     _events.send(CategoryEvent.InternalError)
                 }
                 is RenameCategory.Result.Success -> {
-                    setFolderStyle(category.id, color, icon)
+                    setFolderStyle(category.id, color, icon, theme)
                 }
             }
         }
     }
 
-    private fun setFolderStyle(categoryId: Long, color: Long, icon: String) {
+    private fun setFolderStyle(categoryId: Long, color: Long, icon: String, theme: String) {
         libraryPreferences.folderStyles.getAndSet { styles ->
             styles
                 .filterNot { FolderStyle.parse(it)?.categoryId == categoryId }
-                .plus(FolderStyle(categoryId, color, icon).serialize())
+                .plus(FolderStyle(categoryId, color, icon, theme).serialize())
                 .toSet()
         }
     }

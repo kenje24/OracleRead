@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import eu.kanade.domain.ui.model.AppTheme
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.category.model.Category
 import tachiyomi.i18n.MR
@@ -33,6 +34,7 @@ fun Category.visualName(context: Context): String =
 
 object FolderStyleDefaults {
     const val DEFAULT_ICON = "folder"
+    const val DEFAULT_THEME = "fire_spirits"
 
     val colorOptions = listOf(
         0xFFFF6B35,
@@ -55,24 +57,38 @@ object FolderStyleDefaults {
         "moon",
         "bookmark",
     )
+
+    val themeOptions = listOf(
+        "fire_spirits" to AppTheme.FIRE_SPIRITS,
+        "moon_wisps" to AppTheme.MOON_WISPS,
+        "sea_lanterns" to AppTheme.SEA_LANTERNS,
+        "sakura_drift" to AppTheme.SAKURA_DRIFT,
+        "aurora_motes" to AppTheme.AURORA_MOTES,
+        "ink_rain" to AppTheme.INK_RAIN,
+        "star_dust" to AppTheme.STAR_DUST,
+    )
 }
 
 data class FolderStyle(
     val categoryId: Long,
     val color: Long,
     val icon: String,
+    val theme: String,
 ) {
-    fun serialize(): String = "$categoryId|$color|$icon"
+    fun serialize(): String = "$categoryId|$color|$icon|$theme"
 
     companion object {
         fun parse(value: String): FolderStyle? {
             val parts = value.split("|")
-            if (parts.size != 3) return null
+            if (parts.size !in 3..4) return null
             return FolderStyle(
                 categoryId = parts[0].toLongOrNull() ?: return null,
                 color = parts[1].toLongOrNull() ?: return null,
                 icon = parts[2].takeIf { it in FolderStyleDefaults.iconOptions }
                     ?: FolderStyleDefaults.DEFAULT_ICON,
+                theme = parts.getOrNull(3)
+                    ?.takeIf { theme -> FolderStyleDefaults.themeOptions.any { it.first == theme } }
+                    ?: FolderStyleDefaults.DEFAULT_THEME,
             )
         }
     }
@@ -94,12 +110,19 @@ fun Category.folderStyle(styles: Set<String>): FolderStyle {
         categoryId = id,
         color = color,
         icon = FolderStyleDefaults.DEFAULT_ICON,
+        theme = FolderStyleDefaults.DEFAULT_THEME,
     )
 }
 
 fun Category.folderAccentColor(styles: Set<String>): Color = Color(folderStyle(styles).color)
 
 fun Category.folderIconKey(styles: Set<String>): String = folderStyle(styles).icon
+
+fun Category.folderThemeKey(styles: Set<String>): String = folderStyle(styles).theme
+
+fun Category.folderAmbientTheme(styles: Set<String>): AppTheme =
+    FolderStyleDefaults.themeOptions.firstOrNull { it.first == folderThemeKey(styles) }?.second
+        ?: AppTheme.FIRE_SPIRITS
 
 fun folderIconForKey(key: String): ImageVector = when (key) {
     "book" -> Icons.Outlined.AutoStories

@@ -101,6 +101,8 @@ private val colorSchemes: Map<AppTheme, BaseColorScheme> = mapOf(
     AppTheme.SEA_LANTERNS to TidalWaveColorScheme,
     AppTheme.SAKURA_DRIFT to YotsubaColorScheme,
     AppTheme.AURORA_MOTES to NordColorScheme,
+    AppTheme.INK_RAIN to MonochromeColorScheme,
+    AppTheme.STAR_DUST to MidnightDuskColorScheme,
     AppTheme.TAKO to TakoColorScheme,
     AppTheme.TEALTURQUOISE to TealTurqoiseColorScheme,
     AppTheme.TIDAL_WAVE to TidalWaveColorScheme,

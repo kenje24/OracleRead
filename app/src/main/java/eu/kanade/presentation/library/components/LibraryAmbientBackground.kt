@@ -38,6 +38,8 @@ internal fun LibraryAmbientBackground(
         AppTheme.SEA_LANTERNS -> listOf(Color(0xFF6FFFE9), Color(0xFF5BC0EB), Color(0xFFFFE66D))
         AppTheme.SAKURA_DRIFT -> listOf(Color(0xFFFFB7C5), Color(0xFFFF8FAB), Color(0xFFFFF0F4))
         AppTheme.AURORA_MOTES -> listOf(Color(0xFF86F7C8), Color(0xFF8EA7FF), Color(0xFFFFC2F2))
+        AppTheme.INK_RAIN -> listOf(Color(0xFF44546A), Color(0xFF111827), Color(0xFFA7B0C0))
+        AppTheme.STAR_DUST -> listOf(Color(0xFFFFF1A8), Color(0xFFB8A7FF), Color(0xFFFFFFFF))
         else -> listOf(Color(0xFFFFB347), Color(0xFFFFE66D), Color(0xFFFFFFFF))
     }
 
