@@ -20,6 +20,8 @@ if (Config.includeTelemetry) {
     }
 }
 
+val oracleReadVersionName = "1.0.0"
+
 android {
     namespace = "eu.kanade.tachiyomi"
 
@@ -27,7 +29,7 @@ android {
         applicationId = "io.github.kenje24.oracleread"
 
         versionCode = 100
-        versionName = "1.0.0"
+        versionName = oracleReadVersionName
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getLatestCommitCount()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"${getLatestCommitSha()}\"")
@@ -47,6 +49,7 @@ android {
         val release by getting {
             isMinifyEnabled = Config.enableCodeShrink
             isShrinkResources = Config.enableCodeShrink
+            signingConfig = debug.signingConfig
 
             proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
 
@@ -306,5 +309,17 @@ androidComponents {
         // Only excluding in standard flavor because this breaks
         // Layout Inspector's Compose tree
         it.packaging.resources.excludes.add("META-INF/*.version")
+    }
+
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set(
+                "OracleRead-${variant.name}-$oracleReadVersionName-${output.filters.joinToString("-") {
+                    it.identifier
+                }}.apk"
+                    .replace("--", "-")
+                    .replace("-.", "."),
+            )
+        }
     }
 }

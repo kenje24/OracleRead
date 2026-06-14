@@ -1,24 +1,13 @@
 package eu.kanade.presentation.library.components
 
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Public
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,7 +17,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.dp
 import eu.kanade.core.preference.PreferenceMutableState
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.category.folderAmbientTheme
@@ -41,7 +29,6 @@ import tachiyomi.domain.library.model.LibraryManga
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.model.Source
 import tachiyomi.presentation.core.components.material.PullRefresh
-import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -98,13 +85,7 @@ fun LibraryContent(
 
             val shouldShowTabs = showPageTabs &&
                 categories.isNotEmpty() &&
-                (categories.size > 1 || !categories.first().isSystemCategory)
-            if (sourceShortcuts.isNotEmpty()) {
-                LibrarySourceShortcuts(
-                    sources = sourceShortcuts,
-                    onClickSourceShortcut = onClickSourceShortcut,
-                )
-            }
+                (sourceShortcuts.isNotEmpty() || categories.size > 1 || !categories.first().isSystemCategory)
             if (shouldShowTabs) {
                 LaunchedEffect(categories) {
                     if (categories.size <= pagerState.currentPage) {
@@ -113,6 +94,7 @@ fun LibraryContent(
                 }
                 LibraryTabs(
                     categories = categories,
+                    sourceShortcuts = sourceShortcuts,
                     pagerState = pagerState,
                     getItemCountForCategory = getItemCountForCategory,
                     onTabItemClick = {
@@ -120,6 +102,7 @@ fun LibraryContent(
                             pagerState.animateScrollToPage(it)
                         }
                     },
+                    onClickSourceShortcut = onClickSourceShortcut,
                 )
             }
 
@@ -163,36 +146,6 @@ fun LibraryContent(
             LaunchedEffect(pagerState.currentPage) {
                 onChangeCurrentPage(pagerState.currentPage)
             }
-        }
-    }
-}
-
-@Composable
-private fun LibrarySourceShortcuts(
-    sources: List<Source>,
-    onClickSourceShortcut: (Source) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.extraSmall),
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
-    ) {
-        sources.forEach { source ->
-            FilterChip(
-                selected = false,
-                onClick = { onClickSourceShortcut(source) },
-                label = {
-                    Text(text = source.name)
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Public,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                },
-            )
         }
     }
 }

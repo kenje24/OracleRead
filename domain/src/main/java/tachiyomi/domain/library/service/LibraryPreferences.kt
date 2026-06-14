@@ -32,7 +32,11 @@ class LibraryPreferences(
 
     val folderStyles: Preference<Set<String>> = preferenceStore.getStringSet("library_folder_styles", emptySet())
 
-    val portraitColumns: Preference<Int> = preferenceStore.getInt("pref_library_columns_portrait_key", 0)
+    val readingStreakDays: Preference<Int> = preferenceStore.getInt("library_reading_streak_days", 201)
+
+    val readingStreakDate: Preference<String> = preferenceStore.getString("library_reading_streak_date", "")
+
+    val portraitColumns: Preference<Int> = preferenceStore.getInt("pref_library_columns_portrait_key", 2)
 
     val landscapeColumns: Preference<Int> = preferenceStore.getInt("pref_library_columns_landscape_key", 0)
 

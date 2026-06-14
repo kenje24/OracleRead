@@ -5,8 +5,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -15,7 +18,6 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,6 +60,7 @@ import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.pluralStringResource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import androidx.compose.material3.NavigationBarItem as MaterialNavigationBarItem
 
 object HomeScreen : Screen() {
 
@@ -73,10 +76,8 @@ object HomeScreen : Screen() {
 
     private val TABS = listOf(
         LibraryTab,
-        UpdatesTab,
         HistoryTab,
         BrowseTab,
-        MoreTab,
     )
 
     @Composable
@@ -111,6 +112,24 @@ object HomeScreen : Screen() {
                                 NavigationBar {
                                     TABS.fastForEach {
                                         NavigationBarItem(it)
+                                    }
+                                    AnimatedVisibility(
+                                        visible = tabNavigator.current::class == BrowseTab::class,
+                                        enter = slideInHorizontally(initialOffsetX = { it }),
+                                        exit = slideOutHorizontally(targetOffsetX = { it }),
+                                    ) {
+                                        Row {
+                                            NavigationBarItem(UpdatesTab)
+                                        }
+                                    }
+                                    AnimatedVisibility(
+                                        visible = tabNavigator.current::class == BrowseTab::class,
+                                        enter = slideInHorizontally(initialOffsetX = { it }),
+                                        exit = slideOutHorizontally(targetOffsetX = { it }),
+                                    ) {
+                                        Row {
+                                            NavigationBarItem(MoreTab)
+                                        }
                                     }
                                 }
                             }
@@ -183,7 +202,7 @@ object HomeScreen : Screen() {
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val selected = tabNavigator.current::class == tab::class
-        NavigationBarItem(
+        MaterialNavigationBarItem(
             selected = selected,
             onClick = {
                 if (!selected) {

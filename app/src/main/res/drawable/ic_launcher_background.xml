@@ -3,13 +3,24 @@
     android:height="108dp"
     android:viewportWidth="432"
     android:viewportHeight="432">
-    <path
-        android:fillColor="#0F172A"
-        android:pathData="M0,0h432v432h-432z" />
-    <path
-        android:fillColor="#0F766E"
-        android:pathData="M0,0h432v432h-432z" />
-    <path
-        android:fillColor="#14B8A6"
-        android:pathData="M0,0h96v432h-96z" />
+    <path android:pathData="M0,0h432v432h-432z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:startX="32"
+                android:startY="416"
+                android:endX="400"
+                android:endY="16"
+                android:type="linear">
+                <item
+                    android:color="#2D0B78"
+                    android:offset="0" />
+                <item
+                    android:color="#7C2BC1"
+                    android:offset="0.48" />
+                <item
+                    android:color="#F01293"
+                    android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>
