@@ -5,6 +5,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
@@ -114,14 +116,27 @@ object HomeScreen : Screen() {
                                 enter = expandVertically(),
                                 exit = shrinkVertically(),
                             ) {
-                                NavigationBar {
-                                    val tabs = if (tabNavigator.current::class == BrowseTab::class) {
-                                        BROWSE_TABS
-                                    } else {
-                                        TABS
-                                    }
-                                    tabs.fastForEach {
-                                        NavigationBarItem(it)
+                                val expandedNav = when (tabNavigator.current::class) {
+                                    BrowseTab::class,
+                                    UpdatesTab::class,
+                                    MoreTab::class,
+                                    -> true
+                                    else -> false
+                                }
+                                AnimatedContent(
+                                    targetState = expandedNav,
+                                    transitionSpec = {
+                                        val direction = if (targetState) 1 else -1
+                                        slideInHorizontally { direction * it / 4 } togetherWith
+                                            slideOutHorizontally { -direction * it / 4 }
+                                    },
+                                    label = "browseNavExpansion",
+                                ) { showBrowseTabs ->
+                                    NavigationBar {
+                                        val tabs = if (showBrowseTabs) BROWSE_TABS else TABS
+                                        tabs.fastForEach {
+                                            NavigationBarItem(it)
+                                        }
                                     }
                                 }
                             }
