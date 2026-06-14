@@ -1,5 +1,6 @@
 package eu.kanade.presentation.library.components
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ internal fun LibraryTabs(
     pagerState: PagerState,
     getItemCountForCategory: (Category) -> Int?,
     onTabItemClick: (Int) -> Unit,
+    onTabItemLongClick: (Category) -> Unit,
     onClickSourceShortcut: (Source) -> Unit,
 ) {
     val folderStyles by remember { Injekt.get<LibraryPreferences>().folderStyles }.collectAsState()
@@ -76,6 +78,10 @@ internal fun LibraryTabs(
             categories.forEachIndexed { index, category ->
                 val folderColor = category.folderAccentColor(folderStyles)
                 Tab(
+                    modifier = Modifier.combinedClickable(
+                        onClick = { onTabItemClick(index) },
+                        onLongClick = { onTabItemLongClick(category) },
+                    ),
                     selected = currentPageIndex == index,
                     onClick = { onTabItemClick(index) },
                     text = {

@@ -154,7 +154,7 @@ private fun ReadingStreakPill() {
     val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
     val streakDays by libraryPreferences.readingStreakDays.collectAsState()
     val streakDatePref = libraryPreferences.readingStreakDate
-    val today = remember { LocalDate.now().toString() }
+    val today = remember { LocalDate.now() }
     val transition = rememberInfiniteTransition(label = "readingStreak")
     val fireAlpha by transition.animateFloat(
         initialValue = 0.55f,
@@ -166,10 +166,10 @@ private fun ReadingStreakPill() {
         label = "readingStreakFire",
     )
     androidx.compose.runtime.LaunchedEffect(today) {
-        if (streakDatePref.get().isNotEmpty() && streakDatePref.get() != today) {
+        val lastReadDate = runCatching { LocalDate.parse(streakDatePref.get()) }.getOrNull()
+        if (lastReadDate != null && lastReadDate.isBefore(today.minusDays(1))) {
             libraryPreferences.readingStreakDays.set(0)
         }
-        streakDatePref.set(today)
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {

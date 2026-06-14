@@ -46,6 +46,7 @@ fun LibraryContent(
     onChangeCurrentPage: (Int) -> Unit,
     onClickManga: (Long) -> Unit,
     onClickSourceShortcut: (Source) -> Unit,
+    onLongClickFolder: (Category) -> Unit,
     onContinueReadingClicked: ((LibraryManga) -> Unit)?,
     onToggleSelection: (Category, LibraryManga) -> Unit,
     onToggleRangeSelection: (Category, LibraryManga) -> Unit,
@@ -102,6 +103,7 @@ fun LibraryContent(
                             pagerState.animateScrollToPage(it)
                         }
                     },
+                    onTabItemLongClick = onLongClickFolder,
                     onClickSourceShortcut = onClickSourceShortcut,
                 )
             }

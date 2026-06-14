@@ -77,6 +77,7 @@ import tachiyomi.source.local.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.time.Instant
+import java.time.LocalDate
 import java.util.Date
 
 /**
@@ -597,8 +598,27 @@ class ReaderViewModel @JvmOverloads constructor(
             val sessionReadDuration = chapterReadStartTime?.let { endTime.time - it } ?: 0
 
             upsertHistory.await(HistoryUpdate(chapterId, endTime, sessionReadDuration))
+            updateReadingStreak(sessionReadDuration)
             chapterReadStartTime = null
         }
+    }
+
+    private fun updateReadingStreak(sessionReadDuration: Long) {
+        if (sessionReadDuration <= 0L) return
+
+        val today = LocalDate.now()
+        val lastReadDate = runCatching {
+            LocalDate.parse(libraryPreferences.readingStreakDate.get())
+        }.getOrNull()
+
+        when (lastReadDate) {
+            today -> return
+            today.minusDays(1) -> libraryPreferences.readingStreakDays.set(
+                libraryPreferences.readingStreakDays.get() + 1,
+            )
+            else -> libraryPreferences.readingStreakDays.set(1)
+        }
+        libraryPreferences.readingStreakDate.set(today.toString())
     }
 
     /**

@@ -190,6 +190,7 @@ data object LibraryTab : Tab {
                         onChangeCurrentPage = screenModel::updateActiveCategoryIndex,
                         onClickManga = { navigator.push(MangaScreen(it)) },
                         onClickSourceShortcut = { navigator.push(BrowseSourceScreen(it.id, null)) },
+                        onLongClickFolder = { navigator.push(CategoryScreen()) },
                         onContinueReadingClicked = { it: LibraryManga ->
                             scope.launchIO {
                                 val chapter = screenModel.getNextUnreadChapter(it.manga)

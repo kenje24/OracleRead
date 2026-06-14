@@ -5,11 +5,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -80,6 +77,14 @@ object HomeScreen : Screen() {
         BrowseTab,
     )
 
+    private val BROWSE_TABS = listOf(
+        LibraryTab,
+        HistoryTab,
+        BrowseTab,
+        UpdatesTab,
+        MoreTab,
+    )
+
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
@@ -110,26 +115,13 @@ object HomeScreen : Screen() {
                                 exit = shrinkVertically(),
                             ) {
                                 NavigationBar {
-                                    TABS.fastForEach {
+                                    val tabs = if (tabNavigator.current::class == BrowseTab::class) {
+                                        BROWSE_TABS
+                                    } else {
+                                        TABS
+                                    }
+                                    tabs.fastForEach {
                                         NavigationBarItem(it)
-                                    }
-                                    AnimatedVisibility(
-                                        visible = tabNavigator.current::class == BrowseTab::class,
-                                        enter = slideInHorizontally(initialOffsetX = { it }),
-                                        exit = slideOutHorizontally(targetOffsetX = { it }),
-                                    ) {
-                                        Row {
-                                            NavigationBarItem(UpdatesTab)
-                                        }
-                                    }
-                                    AnimatedVisibility(
-                                        visible = tabNavigator.current::class == BrowseTab::class,
-                                        enter = slideInHorizontally(initialOffsetX = { it }),
-                                        exit = slideOutHorizontally(targetOffsetX = { it }),
-                                    ) {
-                                        Row {
-                                            NavigationBarItem(MoreTab)
-                                        }
                                     }
                                 }
                             }

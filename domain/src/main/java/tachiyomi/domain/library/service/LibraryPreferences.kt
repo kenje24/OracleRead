@@ -32,7 +32,7 @@ class LibraryPreferences(
 
     val folderStyles: Preference<Set<String>> = preferenceStore.getStringSet("library_folder_styles", emptySet())
 
-    val readingStreakDays: Preference<Int> = preferenceStore.getInt("library_reading_streak_days", 201)
+    val readingStreakDays: Preference<Int> = preferenceStore.getInt("library_reading_streak_days", 0)
 
     val readingStreakDate: Preference<String> = preferenceStore.getString("library_reading_streak_date", "")
 
