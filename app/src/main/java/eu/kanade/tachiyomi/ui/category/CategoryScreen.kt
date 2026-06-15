@@ -24,7 +24,9 @@ import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class CategoryScreen : Screen() {
+class CategoryScreen(
+    private val openCreateDialog: Boolean = false,
+) : Screen() {
 
     @Composable
     override fun Content() {
@@ -41,6 +43,12 @@ class CategoryScreen : Screen() {
         }
 
         val successState = state as CategoryScreenState.Success
+
+        LaunchedEffect(openCreateDialog) {
+            if (openCreateDialog) {
+                screenModel.showDialog(CategoryDialog.Create)
+            }
+        }
 
         CategoryScreen(
             state = successState,

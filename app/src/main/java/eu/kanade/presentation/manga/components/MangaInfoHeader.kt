@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.DropdownMenuItem
@@ -179,6 +180,7 @@ fun MangaActionRow(
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
+    onCommunityClicked: () -> Unit,
     onEditIntervalClicked: (() -> Unit)?,
     onEditCategory: (() -> Unit)?,
     modifier: Modifier = Modifier,
@@ -226,6 +228,12 @@ fun MangaActionRow(
             icon = mangaStatusIcon(status),
             color = MaterialTheme.colorScheme.primary,
             onClick = {},
+        )
+        MangaActionButton(
+            title = stringResource(MR.strings.action_community),
+            icon = Icons.Outlined.Forum,
+            color = MaterialTheme.colorScheme.primary,
+            onClick = onCommunityClicked,
         )
     }
 }

@@ -11,6 +11,14 @@ build
 
 # Configuration files
 local.properties
+*.local
+.env
+.env.*
+supabase.db
+supabase/.branches
+supabase/.temp
+supabase/.env
+supabase/config.toml
 
 # macOS specific files
 .DS_Store

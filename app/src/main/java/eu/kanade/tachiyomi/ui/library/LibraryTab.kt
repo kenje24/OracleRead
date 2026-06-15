@@ -1,25 +1,45 @@
 package eu.kanade.tachiyomi.ui.library
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAll
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -33,6 +53,7 @@ import eu.kanade.presentation.library.LibrarySettingsDialog
 import eu.kanade.presentation.library.components.LibraryContent
 import eu.kanade.presentation.library.components.LibraryToolbar
 import eu.kanade.presentation.manga.components.LibraryBottomActionMenu
+import eu.kanade.presentation.more.settings.screen.SettingsAppearanceScreen
 import eu.kanade.presentation.more.onboarding.GETTING_STARTED_URL
 import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
@@ -40,6 +61,7 @@ import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
+import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.manga.MangaScreen
@@ -48,6 +70,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import mihon.feature.community.CommunityHubScreen
+import mihon.feature.community.CommunityNotificationsScreen
+import mihon.feature.community.CommunityProfileScreen
 import mihon.feature.migration.config.MigrationConfigScreen
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.lang.launchIO
@@ -74,10 +99,10 @@ data object LibraryTab : Tab {
                 title = stringResource(MR.strings.label_library),
                 icon = rememberAnimatedVectorPainter(image, isSelected),
             )
-        }
+    }
 
     override suspend fun onReselect(navigator: Navigator) {
-        requestOpenSettingsSheet()
+        requestToggleQuickActions()
     }
 
     @Composable
@@ -92,6 +117,7 @@ data object LibraryTab : Tab {
         val state by screenModel.state.collectAsState()
 
         val snackbarHostState = remember { SnackbarHostState() }
+        var quickActionsVisible by remember { mutableStateOf(false) }
 
         val onClickRefresh: (Category?) -> Boolean = { category ->
             val started = LibraryUpdateJob.startNow(context, category)
@@ -121,6 +147,7 @@ data object LibraryTab : Tab {
                     onClickSelectAll = screenModel::selectAll,
                     onClickInvertSelection = screenModel::invertSelection,
                     onClickFilter = screenModel::showSettingsDialog,
+                    onClickNotifications = { navigator.push(CommunityNotificationsScreen()) },
                     onClickRefresh = { onClickRefresh(state.activeCategory) },
                     onClickGlobalUpdate = { onClickRefresh(null) },
                     onClickOpenRandomManga = {
@@ -157,6 +184,78 @@ data object LibraryTab : Tab {
                         navigator.push(MigrationConfigScreen(selection))
                     },
                 )
+            },
+            floatingActionButton = {
+                if (!state.selectionMode) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        AnimatedVisibility(
+                            visible = quickActionsVisible,
+                            enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
+                            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.End,
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                SmallFloatingActionButton(
+                                    onClick = {
+                                        quickActionsVisible = false
+                                        navigator.push(CategoryScreen(openCreateDialog = true))
+                                    },
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.CreateNewFolder,
+                                        contentDescription = "Add folder",
+                                    )
+                                }
+                                SmallFloatingActionButton(
+                                    onClick = {
+                                        quickActionsVisible = false
+                                        navigator.push(SettingsAppearanceScreen)
+                                    },
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Palette,
+                                        contentDescription = "Change theme",
+                                    )
+                                }
+                                SmallFloatingActionButton(
+                                    onClick = {
+                                        quickActionsVisible = false
+                                        navigator.push(DownloadQueueScreen)
+                                    },
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Download,
+                                        contentDescription = "Download queue",
+                                    )
+                                }
+                                SmallFloatingActionButton(
+                                    onClick = {
+                                        quickActionsVisible = false
+                                        navigator.push(CommunityProfileScreen())
+                                    },
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Person,
+                                        contentDescription = "Profile",
+                                    )
+                                }
+                            }
+                        }
+                        ExtendedFloatingActionButton(
+                            text = { Text("Community") },
+                            icon = { Icon(Icons.Outlined.Forum, contentDescription = null) },
+                            onClick = {
+                                quickActionsVisible = false
+                                navigator.push(CommunityHubScreen())
+                            },
+                        )
+                    }
+                }
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         ) { contentPadding ->
@@ -278,7 +377,11 @@ data object LibraryTab : Tab {
 
         LaunchedEffect(Unit) {
             launch { queryEvent.receiveAsFlow().collect(screenModel::search) }
-            launch { requestSettingsSheetEvent.receiveAsFlow().collectLatest { screenModel.showSettingsDialog() } }
+            launch {
+                requestQuickActionsEvent.receiveAsFlow().collectLatest {
+                    quickActionsVisible = !quickActionsVisible
+                }
+            }
         }
     }
 
@@ -286,7 +389,6 @@ data object LibraryTab : Tab {
     private val queryEvent = Channel<String>()
     suspend fun search(query: String) = queryEvent.send(query)
 
-    // For opening settings sheet in LibraryController
-    private val requestSettingsSheetEvent = Channel<Unit>()
-    private suspend fun requestOpenSettingsSheet() = requestSettingsSheetEvent.send(Unit)
+    private val requestQuickActionsEvent = Channel<Unit>()
+    private suspend fun requestToggleQuickActions() = requestQuickActionsEvent.send(Unit)
 }

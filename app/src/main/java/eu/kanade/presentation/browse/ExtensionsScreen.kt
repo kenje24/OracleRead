@@ -224,6 +224,7 @@ private fun ExtensionContent(
                 ExtensionItem(
                     modifier = Modifier.animateItemFastScroll(),
                     item = item,
+                    pinnedSources = state.pinnedSources,
                     onClickItem = {
                         when (it) {
                             is Extension.Available -> onInstallExtension(it)
@@ -286,6 +287,7 @@ private fun ExtensionContent(
 @Composable
 private fun ExtensionItem(
     item: ExtensionUiModel.Item,
+    pinnedSources: Set<String>,
     onClickItem: (Extension) -> Unit,
     onLongClickItem: (Extension) -> Unit,
     onClickItemCancel: (Extension) -> Unit,
@@ -333,6 +335,7 @@ private fun ExtensionItem(
             ExtensionItemActions(
                 extension = extension,
                 installStep = installStep,
+                pinnedSources = pinnedSources,
                 onClickItemCancel = onClickItemCancel,
                 onClickItemAction = onClickItemAction,
                 onClickItemSecondaryAction = onClickItemSecondaryAction,
@@ -428,6 +431,7 @@ private fun ExtensionItemContent(
 private fun ExtensionItemActions(
     extension: Extension,
     installStep: InstallStep,
+    pinnedSources: Set<String>,
     modifier: Modifier = Modifier,
     onClickItemCancel: (Extension) -> Unit = {},
     onClickItemAction: (Extension) -> Unit = {},
@@ -461,8 +465,18 @@ private fun ExtensionItemActions(
                 when (extension) {
                     is Extension.Installed -> {
                         if (extension.sources.isNotEmpty()) {
+                            val sourceIds = extension.sources.map { it.id.toString() }
+                            val isInLibrary = sourceIds.all { it in pinnedSources }
                             TextButton(onClick = { onClickAddToLibrary(extension) }) {
-                                Text(text = stringResource(MR.strings.action_add_to_library_shortcut))
+                                Text(
+                                    text = stringResource(
+                                        if (isInLibrary) {
+                                            MR.strings.remove_from_library
+                                        } else {
+                                            MR.strings.action_add_to_library_shortcut
+                                        },
+                                    ),
+                                )
                             }
                         }
 

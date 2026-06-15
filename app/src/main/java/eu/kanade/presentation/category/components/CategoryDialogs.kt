@@ -189,6 +189,9 @@ private fun FolderForm(
     onThemeSelected: (String) -> Unit,
 ) {
     Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
     ) {
         OutlinedTextField(

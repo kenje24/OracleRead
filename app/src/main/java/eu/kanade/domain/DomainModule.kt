@@ -27,6 +27,8 @@ import eu.kanade.domain.track.interactor.SyncChapterProgressWithTrack
 import eu.kanade.domain.track.interactor.TrackChapter
 import mihon.data.extension.repository.ExtensionStoreRepositoryImpl
 import mihon.data.extension.service.ExtensionStoreService
+import mihon.data.community.SupabaseCommunityRepository
+import mihon.domain.community.repository.CommunityRepository
 import mihon.domain.chapter.interactor.FilterChaptersForDownload
 import mihon.domain.extension.interactor.AddExtensionStore
 import mihon.domain.extension.interactor.GetExtensionStoreCountAsFlow
@@ -204,5 +206,7 @@ class DomainModule : InjektModule {
 
         addFactory { ToggleIncognito(get()) }
         addFactory { GetIncognitoState(get(), get(), get()) }
+
+        addSingletonFactory<CommunityRepository> { SupabaseCommunityRepository(get(), get(), get()) }
     }
 }

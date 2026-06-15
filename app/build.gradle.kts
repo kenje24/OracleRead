@@ -3,6 +3,7 @@ import mihon.gradle.getBuildTime
 import mihon.gradle.getLatestCommitCount
 import mihon.gradle.getLatestCommitSha
 import mihon.gradle.tasks.ReplaceShortcutsPlaceholderTask
+import java.util.Properties
 
 plugins {
     alias(mihonx.plugins.android.application)
@@ -20,7 +21,25 @@ if (Config.includeTelemetry) {
     }
 }
 
-val oracleReadVersionName = "1.0.0"
+val oracleReadVersionName = "1.2.0"
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use(::load)
+    }
+}
+
+fun localOrEnv(name: String): String {
+    return providers.environmentVariable(name).orNull
+        ?: localProperties.getProperty(name)
+        ?: ""
+}
+
+fun escapedBuildConfigString(value: String): String {
+    return value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+}
 
 android {
     namespace = "eu.kanade.tachiyomi"
@@ -28,7 +47,7 @@ android {
     defaultConfig {
         applicationId = "io.github.kenje24.oracleread"
 
-        versionCode = 100
+        versionCode = 120
         versionName = oracleReadVersionName
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getLatestCommitCount()}\"")
@@ -36,6 +55,12 @@ android {
         buildConfigField("String", "BUILD_TIME", "\"${getBuildTime(useLatestCommitTime = false)}\"")
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
+        buildConfigField("String", "SUPABASE_URL", "\"${escapedBuildConfigString(localOrEnv("SUPABASE_URL"))}\"")
+        buildConfigField(
+            "String",
+            "SUPABASE_ANON_KEY",
+            "\"${escapedBuildConfigString(localOrEnv("SUPABASE_ANON_KEY").ifBlank { localOrEnv("SUPABASE_PUBLISHABLE_KEY") })}\"",
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

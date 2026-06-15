@@ -560,6 +560,7 @@ class ReaderViewModel @JvmOverloads constructor(
 
     private suspend fun updateChapterProgressOnComplete(readerChapter: ReaderChapter) {
         readerChapter.chapter.read = true
+        updateReadingStreak()
         updateTrackChapterRead(readerChapter)
         deleteChapterIfNeeded(readerChapter)
 
@@ -598,14 +599,12 @@ class ReaderViewModel @JvmOverloads constructor(
             val sessionReadDuration = chapterReadStartTime?.let { endTime.time - it } ?: 0
 
             upsertHistory.await(HistoryUpdate(chapterId, endTime, sessionReadDuration))
-            updateReadingStreak(sessionReadDuration)
+            updateReadingStreak()
             chapterReadStartTime = null
         }
     }
 
-    private fun updateReadingStreak(sessionReadDuration: Long) {
-        if (sessionReadDuration <= 0L) return
-
+    private fun updateReadingStreak() {
         val today = LocalDate.now()
         val lastReadDate = runCatching {
             LocalDate.parse(libraryPreferences.readingStreakDate.get())

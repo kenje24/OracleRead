@@ -41,7 +41,9 @@ class ExtensionsScreenModel(
     basePreferences: BasePreferences = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
     private val getExtensions: GetExtensionsByType = Injekt.get(),
-) : StateScreenModel<ExtensionsScreenModel.State>(State()) {
+) : StateScreenModel<ExtensionsScreenModel.State>(
+    State(pinnedSources = sourcePreferences.pinnedSources.get()),
+) {
 
     private val currentDownloads = MutableStateFlow<Map<String, InstallStep>>(hashMapOf())
 
@@ -101,6 +103,10 @@ class ExtensionsScreenModel(
 
         sourcePreferences.extensionUpdatesCount.changes()
             .onEach { mutableState.update { state -> state.copy(updates = it) } }
+            .launchIn(screenModelScope)
+
+        sourcePreferences.pinnedSources.changes()
+            .onEach { mutableState.update { state -> state.copy(pinnedSources = it) } }
             .launchIn(screenModelScope)
 
         basePreferences.extensionInstaller.changes()
@@ -193,7 +199,11 @@ class ExtensionsScreenModel(
     fun addExtensionToLibrary(extension: Extension.Installed) {
         val sourceIds = extension.sources.map { it.id.toString() }
         sourcePreferences.pinnedSources.getAndSet { pinnedSources ->
-            pinnedSources + sourceIds
+            if (sourceIds.all { it in pinnedSources }) {
+                pinnedSources - sourceIds.toSet()
+            } else {
+                pinnedSources + sourceIds
+            }
         }
     }
 
@@ -224,6 +234,7 @@ class ExtensionsScreenModel(
         val updates: Int = 0,
         val installer: BasePreferences.ExtensionInstaller? = null,
         val searchQuery: String? = null,
+        val pinnedSources: Set<String> = emptySet(),
     ) {
         val isEmpty = items.isEmpty()
     }
