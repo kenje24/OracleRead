@@ -21,7 +21,7 @@ if (Config.includeTelemetry) {
     }
 }
 
-val oracleReadVersionName = "1.2.0"
+val oracleReadVersionName = "1.3.0"
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) {
@@ -47,7 +47,7 @@ android {
     defaultConfig {
         applicationId = "io.github.kenje24.oracleread"
 
-        versionCode = 120
+        versionCode = 130
         versionName = oracleReadVersionName
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getLatestCommitCount()}\"")

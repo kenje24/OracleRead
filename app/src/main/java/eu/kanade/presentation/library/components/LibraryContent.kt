@@ -7,7 +7,15 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,9 +25,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
 import eu.kanade.core.preference.PreferenceMutableState
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.category.folderAmbientTheme
+import eu.kanade.presentation.browse.components.SourceIcon
 import eu.kanade.tachiyomi.ui.library.LibraryItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,20 +75,50 @@ fun LibraryContent(
         ?.folderAmbientTheme(folderStyles)
         ?: appTheme
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                top = contentPadding.calculateTopPadding(),
-                start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
-                end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
-            ),
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val drawerScope = rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = sourceShortcuts.isNotEmpty() && selection.isEmpty(),
+        drawerContent = {
+            ModalDrawerSheet {
+                Text(
+                    text = "Extensions in your library",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(16.dp),
+                )
+                sourceShortcuts.forEach { source ->
+                    NavigationDrawerItem(
+                        label = { Text(source.name) },
+                        selected = false,
+                        icon = { SourceIcon(source = source, modifier = Modifier.size(24.dp)) },
+                        onClick = {
+                            drawerScope.launch {
+                                drawerState.close()
+                                onClickSourceShortcut(source)
+                            }
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                }
+            }
+        },
     ) {
-        LibraryAmbientBackground(
-            appTheme = ambientTheme,
-            modifier = Modifier.fillMaxSize(),
-        )
-        Column {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = contentPadding.calculateTopPadding(),
+                    start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+                ),
+        ) {
+            LibraryAmbientBackground(
+                appTheme = ambientTheme,
+                modifier = Modifier.fillMaxSize(),
+            )
+            Column {
             val pagerState = rememberPagerState(currentPage) { categories.size }
 
             val scope = rememberCoroutineScope()
@@ -86,7 +126,7 @@ fun LibraryContent(
 
             val shouldShowTabs = showPageTabs &&
                 categories.isNotEmpty() &&
-                (sourceShortcuts.isNotEmpty() || categories.size > 1 || !categories.first().isSystemCategory)
+                (categories.size > 1 || !categories.first().isSystemCategory)
             if (shouldShowTabs) {
                 LaunchedEffect(categories) {
                     if (categories.size <= pagerState.currentPage) {
@@ -95,7 +135,6 @@ fun LibraryContent(
                 }
                 LibraryTabs(
                     categories = categories,
-                    sourceShortcuts = sourceShortcuts,
                     pagerState = pagerState,
                     getItemCountForCategory = getItemCountForCategory,
                     onTabItemClick = {
@@ -104,7 +143,6 @@ fun LibraryContent(
                         }
                     },
                     onTabItemLongClick = onLongClickFolder,
-                    onClickSourceShortcut = onClickSourceShortcut,
                 )
             }
 
@@ -147,7 +185,8 @@ fun LibraryContent(
 
             LaunchedEffect(pagerState.currentPage) {
                 onChangeCurrentPage(pagerState.currentPage)
+                }
             }
         }
+        }
     }
-}

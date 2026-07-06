@@ -42,6 +42,7 @@ data class CommunityPost(
 data class CommunitySummary(
     val title: String,
     val slug: String,
+    @SerialName("cover_image") val coverImage: String? = null,
 )
 
 @Serializable

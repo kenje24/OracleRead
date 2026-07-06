@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.lazy.items
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material.icons.outlined.WorkspacePremium
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -49,6 +51,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,14 +64,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import coil3.compose.AsyncImage
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.Screen
 import kotlinx.coroutines.flow.update
@@ -95,6 +103,7 @@ class CommunityScreen(
 ) : Screen() {
 
     @Composable
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { CommunityScreenModel(mangaId) }
@@ -133,10 +142,12 @@ class CommunityScreen(
 class CommunityHubScreen : Screen() {
 
     @Composable
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel { CommunityHubScreenModel() }
         val state by screenModel.state.collectAsState()
+        var showSortSheet by remember { mutableStateOf(false) }
 
         CommunityScaffold("Oracle discussions", navigator::pop, screenModel::refresh) {
             if (!state.signedIn) {
@@ -152,9 +163,10 @@ class CommunityHubScreen : Screen() {
                 return@CommunityScaffold
             }
             item("search") {
-                Column(
+                Row(
                     modifier = Modifier.padding(MaterialTheme.padding.medium),
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     OutlinedTextField(
                         value = state.query,
@@ -162,26 +174,13 @@ class CommunityHubScreen : Screen() {
                         label = { Text("Search discussions") },
                         leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.weight(1f),
                     )
-                    Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall)) {
-                        CommunitySort.entries.chunked(3).forEach { rowSorts ->
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
-                            ) {
-                                rowSorts.forEach { sort ->
-                                    FilterChip(
-                                        selected = state.sort == sort,
-                                        onClick = { screenModel.setSort(sort) },
-                                        label = { Text(if (sort == CommunitySort.QA) "Q&A" else sort.name) },
-                                    )
-                                }
-                            }
-                        }
+                    IconButton(onClick = { showSortSheet = true }) {
+                        Icon(Icons.Outlined.Sort, contentDescription = "Sort discussions")
                     }
-                    HorizontalDivider()
-                    state.message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 }
+                state.message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
             if (state.loading) {
                 item("loading") { Text("Loading...", modifier = Modifier.padding(MaterialTheme.padding.medium)) }
@@ -205,6 +204,32 @@ class CommunityHubScreen : Screen() {
                     onHide = { screenModel.hidePost(post.id) },
                     onReport = { screenModel.reportPost(post) },
                 )
+            }
+        }
+        if (showSortSheet) {
+            ModalBottomSheet(onDismissRequest = { showSortSheet = false }) {
+                Text(
+                    text = "Sort discussions",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = MaterialTheme.padding.medium),
+                )
+                CommunitySort.entries.forEach { sort ->
+                    TextButton(
+                        onClick = {
+                            screenModel.setSort(sort)
+                            showSortSheet = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = if (sort == CommunitySort.QA) "Q&A" else sort.name,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (state.sort == sort) {
+                            Icon(Icons.Filled.CheckCircle, contentDescription = "Selected")
+                        }
+                    }
+                }
             }
         }
     }
@@ -499,45 +524,47 @@ private fun CommunityFeedContent(
             return@CommunityScaffold
         }
         item("header") {
-            Column(
-                modifier = Modifier.padding(MaterialTheme.padding.medium),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(MaterialTheme.padding.medium),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
-                Text(text = state.community.title, style = MaterialTheme.typography.headlineSmall)
-                state.community.description?.takeIf { it.isNotBlank() }?.let {
-                    TextButton(onClick = { showDescription = !showDescription }) {
-                        Icon(
-                            imageVector = if (showDescription) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                            contentDescription = null,
-                        )
-                        Text(if (showDescription) "Hide description" else "Show description")
-                    }
-                    AnimatedVisibility(showDescription) {
-                        Text(it)
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
-                    verticalAlignment = Alignment.CenterVertically,
+                Column(
+                    modifier = Modifier.padding(MaterialTheme.padding.medium),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
                 ) {
-                    AssistChip(onClick = {}, label = { Text("${state.community.memberCount} members") })
-                    Button(onClick = onToggleFollow) {
+                    Text(text = state.community.title, style = MaterialTheme.typography.headlineSmall)
+                    Text("oracle/${state.community.slug}", color = MaterialTheme.colorScheme.primary)
+                    state.community.description?.takeIf { it.isNotBlank() }?.let {
+                        TextButton(onClick = { showDescription = !showDescription }) {
+                            Icon(
+                                imageVector = if (showDescription) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                                contentDescription = null,
+                            )
+                            Text(if (showDescription) "Hide description" else "About this community")
+                        }
+                        AnimatedVisibility(showDescription) { Text(it) }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CommunityMetric("${state.community.memberCount}", "Members", Modifier.weight(1f))
+                        CommunityMetric("${state.posts.size}", "Posts", Modifier.weight(1f))
+                    }
+                    Button(onClick = onToggleFollow, modifier = Modifier.fillMaxWidth()) {
                         Icon(
                             imageVector = if (state.community.isFollowing) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
                             contentDescription = null,
                         )
-                        Text(if (state.community.isFollowing) "Following" else "Follow")
+                        Text(if (state.community.isFollowing) "Following community" else "Follow community")
                     }
-                }
-                if (!state.message.isNullOrBlank()) {
-                    AuthPanel(
-                        signedIn = state.signedIn,
-                        working = state.working,
-                        message = state.message,
-                        onSignIn = onSignIn,
-                        onSignUp = onSignUp,
-                    )
+                    if (!state.message.isNullOrBlank()) {
+                        Text(state.message, color = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
         }
@@ -553,6 +580,7 @@ private fun CommunityFeedContent(
         items(state.posts, key = { it.id }) { post ->
             PostItem(
                 post = post,
+                coverImage = state.community.coverImage,
                 currentUserId = state.currentUserId,
                 onOpen = { onOpenPost(post) },
                 onOpenProfile = onOpenProfile,
@@ -561,6 +589,20 @@ private fun CommunityFeedContent(
                 onHide = {},
                 onReport = {},
             )
+        }
+    }
+}
+
+@Composable
+private fun CommunityMetric(value: String, label: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    ) {
+        Column(modifier = Modifier.padding(MaterialTheme.padding.small)) {
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -604,6 +646,7 @@ internal fun AuthPanel(
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var register by remember { mutableStateOf(false) }
+    var acceptedTerms by remember { mutableStateOf(false) }
 
     val feedback = message?.toAuthFeedback()
 
@@ -648,12 +691,28 @@ internal fun AuthPanel(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { acceptedTerms = !acceptedTerms },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(
+                    checked = acceptedTerms,
+                    onCheckedChange = { acceptedTerms = it },
+                )
+                Text(
+                    text = "I agree to the Terms and Conditions and Community Guidelines.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
         Button(
             onClick = {
                 if (register) onSignUp(email, password, username) else onSignIn(email, password)
             },
-            enabled = !working && email.isNotBlank() && password.length >= 6 && (!register || username.length >= 3),
+            enabled = !working && email.isNotBlank() && password.length >= 6 &&
+                (!register || username.length >= 3 && acceptedTerms),
         ) {
             Text(
                 when {
@@ -673,6 +732,7 @@ internal fun AuthPanel(
 @Composable
 private fun PostItem(
     post: CommunityPost,
+    coverImage: String? = post.community?.coverImage,
     currentUserId: String?,
     onOpen: () -> Unit,
     onOpenProfile: (String) -> Unit,
@@ -704,7 +764,26 @@ private fun PostItem(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
             ) {
-                Icon(Icons.Outlined.Forum, contentDescription = null)
+                if (!coverImage.isNullOrBlank()) {
+                    AsyncImage(
+                        model = coverImage,
+                        contentDescription = post.community?.title?.let { "$it cover" } ?: "Manga cover",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(width = 64.dp, height = 88.dp)
+                            .clip(MaterialTheme.shapes.small),
+                    )
+                } else {
+                    Surface(
+                        modifier = Modifier.size(width = 64.dp, height = 88.dp),
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Outlined.Forum, contentDescription = null)
+                        }
+                    }
+                }
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
@@ -1487,10 +1566,22 @@ class CommunityProfileScreen(
                 is CommunityProfileScreenModel.State.Ready -> item("profile") {
                     Column(
                         modifier = Modifier.padding(MaterialTheme.padding.medium),
-                        verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+                        verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
                     ) {
-                        Text(value.page.profile.visibleName, style = MaterialTheme.typography.headlineSmall)
-                        Text("@${value.page.profile.username}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(MaterialTheme.padding.medium),
+                                verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
+                            ) {
+                                Icon(Icons.Outlined.AccountCircle, contentDescription = null, modifier = Modifier.size(52.dp))
+                                Text(value.page.profile.visibleName, style = MaterialTheme.typography.headlineSmall)
+                                Text("@${value.page.profile.username}", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            }
+                        }
                         if (!value.page.isSelf && !value.page.isFriend) {
                             when (value.page.friendRequestStatus) {
                                 FriendRequestStatus.Outgoing -> AssistChip(onClick = {}, label = { Text("Friend request sent") })
@@ -1510,27 +1601,49 @@ class CommunityProfileScreen(
                         } else if (!value.page.isSelf) {
                             AssistChip(onClick = {}, label = { Text("Friends") })
                         }
-                        Text("Following", fontWeight = FontWeight.SemiBold)
-                        if (value.page.followedCommunities.isEmpty()) {
-                            Text("No followed communities yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        } else {
-                            value.page.followedCommunities.forEach { Text("oracle/${it.slug}") }
+                        Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small)) {
+                            CommunityMetric("${value.page.followedCommunities.size}", "Following", Modifier.weight(1f))
+                            CommunityMetric("${value.page.friends.size}", "Friends", Modifier.weight(1f))
                         }
-                        Text("Friends", fontWeight = FontWeight.SemiBold)
-                        if (value.page.friends.isEmpty()) {
-                            Text("No friends yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        } else {
-                            value.page.friends.forEach { Text(it.visibleName) }
-                        }
-                        Text("Recent comments", fontWeight = FontWeight.SemiBold)
-                        if (value.page.recentComments.isEmpty()) {
-                            Text("Only friends can see recent replies.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        } else {
-                            value.page.recentComments.forEach { Text(it.content, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                        }
+                        ProfileBentoSection(
+                            title = "Following",
+                            emptyText = "No followed communities yet.",
+                            lines = value.page.followedCommunities.map { "oracle/${it.slug}" },
+                        )
+                        ProfileBentoSection(
+                            title = "Friends",
+                            emptyText = "No friends yet.",
+                            lines = value.page.friends.map { it.visibleName },
+                        )
+                        ProfileBentoSection(
+                            title = "Recent replies",
+                            emptyText = "Only friends can see recent replies.",
+                            lines = value.page.recentComments.map { it.content },
+                        )
                         value.message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileBentoSection(title: String, emptyText: String, lines: List<String>) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(MaterialTheme.padding.medium),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (lines.isEmpty()) {
+                Text(emptyText, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                lines.take(5).forEach { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
     }

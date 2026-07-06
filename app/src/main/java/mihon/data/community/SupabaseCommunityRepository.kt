@@ -163,7 +163,7 @@ class SupabaseCommunityRepository(
             CommunitySort.QA -> "created_at.desc"
         }
         val urlBuilder = "$baseUrl/rest/v1/posts".toHttpUrl().newBuilder()
-            .addQueryParameter("select", "*,communities(title,slug),profiles!posts_author_id_fkey(id,username,display_name)")
+            .addQueryParameter("select", "*,communities(title,slug,cover_image),profiles!posts_author_id_fkey(id,username,display_name)")
             .addQueryParameter("order", order)
             .addQueryParameter("limit", "100")
 

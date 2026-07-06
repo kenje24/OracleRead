@@ -196,6 +196,22 @@ private fun ColumnScope.SortPage(
         },
     )
     SortCard(
+        title = if (sortingMode == LibrarySort.Type.LastUpdate && sortAscending) "Last update" else "Latest update",
+        selected = sortingMode == LibrarySort.Type.LastUpdate,
+        onClick = {
+            screenModel.setSort(
+                category,
+                LibrarySort.Type.LastUpdate,
+                toggledDirection(
+                    sortingMode,
+                    sortAscending,
+                    LibrarySort.Type.LastUpdate,
+                    LibrarySort.Direction.Descending,
+                ),
+            )
+        },
+    )
+    SortCard(
         title = if (sortingMode == LibrarySort.Type.TotalChapters && sortAscending) {
             "Least Chapters"
         } else {
