@@ -26,6 +26,10 @@ class ExtensionStoreService(
     }
 
     private suspend fun fetch(indexUrl: String, forceV2: Boolean): Result<ExtensionStore> {
+        if (!forceV2 && indexUrl.endsWith("/index.min.json")) {
+            return fetchLegacyStoreMetadata(indexUrl)
+        }
+
         var updatedIndexUrl: String = indexUrl
         return try {
             val store = network.client.newCall(GET(indexUrl)).awaitSuccess().body.source().use { source ->
@@ -64,7 +68,9 @@ class ExtensionStoreService(
                         }
                     }
                 }
-                    .toExtensionStore(updatedIndexUrl)
+                    .toExtensionStore(
+                        if (indexUrl.endsWith("/index.min.json")) indexUrl else updatedIndexUrl,
+                    )
             }
             Result.success(store)
         } catch (e: CancellationException) {
@@ -72,6 +78,23 @@ class ExtensionStoreService(
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e) {
                 "Failed to add extension store '$updatedIndexUrl'"
+            }
+            Result.failure(e)
+        }
+    }
+
+    private suspend fun fetchLegacyStoreMetadata(indexUrl: String): Result<ExtensionStore> {
+        val metadataUrl = indexUrl.replace("/index.min.json", "/repo.json")
+        return try {
+            val metadata = network.client.newCall(GET(metadataUrl)).awaitSuccess().body.source().use {
+                json.decodeFromBufferedSource<NetworkLegacyExtensionRepo>(it)
+            }
+            Result.success(metadata.toExtensionStore(indexUrl))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) {
+                "Failed to add extension store '$indexUrl'"
             }
             Result.failure(e)
         }
@@ -91,7 +114,9 @@ class ExtensionStoreService(
                     }
                 }
             } else {
-                val storeBaseUrl = store.indexUrl.removeSuffix("/repo.json")
+                val storeBaseUrl = store.indexUrl
+                    .removeSuffix("/repo.json")
+                    .removeSuffix("/index.min.json")
                 val response = network.client.newCall(GET("$storeBaseUrl/index.min.json")).awaitSuccess()
                 response.body.source().use { source ->
                     json.decodeFromBufferedSource<List<NetworkLegacyExtension>>(source)

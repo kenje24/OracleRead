@@ -37,7 +37,7 @@ class ExtensionStoreRepositoryImpl(
 
     override suspend fun refreshAll() {
         try {
-            ensureDefaultStore()
+            ensureDefaultStores()
             database.extension_storeQueries.getAll().awaitAsList().forEach { store ->
                 service.fetch(store.index_url)
                     .mapCatching { upsert(it) }
@@ -66,7 +66,7 @@ class ExtensionStoreRepositoryImpl(
 
     override suspend fun fetchExtensions(): List<Extension.Available> {
         return try {
-            ensureDefaultStore()
+            ensureDefaultStores()
             supervisorScope {
                 database.extension_storeQueries.getAll(::extensionStoreMapper).awaitAsList().map { store ->
                     async {
@@ -87,7 +87,7 @@ class ExtensionStoreRepositoryImpl(
     }
 
     override suspend fun getAll(): List<ExtensionStore> {
-        ensureDefaultStore()
+        ensureDefaultStores()
         return database.extension_storeQueries.getAll(::extensionStoreMapper).awaitAsList()
     }
 
@@ -105,17 +105,27 @@ class ExtensionStoreRepositoryImpl(
         database.extension_storeQueries.delete(indexUrl)
     }
 
-    private suspend fun ensureDefaultStore() {
-        val hasDefaultStore = database.extension_storeQueries
+    private suspend fun ensureDefaultStores() {
+        val existingStores = database.extension_storeQueries
             .getAll()
             .awaitAsList()
-            .any { it.index_url == DEFAULT_EXTENSION_STORE_URL }
-        if (hasDefaultStore) return
 
-        insertFromPreference(
-            indexUrl = DEFAULT_EXTENSION_STORE_URL,
-            name = DEFAULT_EXTENSION_STORE_NAME,
-        )
+        DEFAULT_EXTENSION_STORES
+            .forEach { store ->
+                val existingStore = existingStores.find { it.index_url == store.indexUrl }
+                if (existingStore?.is_legacy == true) return@forEach
+
+                service.fetch(store.indexUrl)
+                    .onSuccess { upsert(it) }
+                    .onFailure {
+                        if (existingStore == null) {
+                            insertFromPreference(
+                                indexUrl = store.indexUrl,
+                                name = store.name,
+                            )
+                        }
+                    }
+            }
     }
 
     private fun extensionStoreMapper(
@@ -139,5 +149,18 @@ class ExtensionStoreRepositoryImpl(
     )
 }
 
-private const val DEFAULT_EXTENSION_STORE_NAME = "Keiyoushi"
-private const val DEFAULT_EXTENSION_STORE_URL = "https://raw.githubusercontent.com/keiyoushi/extensions/repo/repo.json"
+private data class DefaultExtensionStore(
+    val name: String,
+    val indexUrl: String,
+)
+
+private val DEFAULT_EXTENSION_STORES = listOf(
+    DefaultExtensionStore(
+        name = "Keiyoushi",
+        indexUrl = "https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json",
+    ),
+    DefaultExtensionStore(
+        name = "Yūzōnō",
+        indexUrl = "https://raw.githubusercontent.com/yuzono/manga-repo/repo/index.min.json",
+    ),
+)

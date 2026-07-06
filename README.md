@@ -16,9 +16,11 @@ Feature additions will be implemented in future versions.
 
 ## Extension Repository
 
-OracleRead includes the Keiyoushi extension repository by default:
+OracleRead includes the Keiyoushi and Yūzōnō extension repositories by default:
 
 <https://github.com/keiyoushi/extensions>
+
+<https://github.com/yuzono/manga-repo>
 
 ## Credits
 
