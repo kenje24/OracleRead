@@ -36,6 +36,13 @@ abstract class PageLoader {
     open fun retryPage(page: ReaderPage) {}
 
     /**
+     * Automatically retries [page] while its retry budget has not been exhausted.
+     *
+     * @return whether another retry was scheduled.
+     */
+    open fun retryPageAutomatically(page: ReaderPage): Boolean = false
+
+    /**
      * Recycles this loader. Implementations must override this method to clean up any active
      * resources.
      */

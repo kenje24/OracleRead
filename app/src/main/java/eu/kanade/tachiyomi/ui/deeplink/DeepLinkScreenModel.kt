@@ -5,6 +5,7 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.chapter.interactor.SyncChaptersWithSource
 import eu.kanade.domain.manga.model.toSManga
+import eu.kanade.tachiyomi.source.MangaUpdateCoordinator
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.online.ResolvableSource
@@ -26,6 +27,7 @@ class DeepLinkScreenModel(
     private val networkToLocalManga: NetworkToLocalManga = Injekt.get(),
     private val getChapterByUrlAndMangaId: GetChapterByUrlAndMangaId = Injekt.get(),
     private val syncChaptersWithSource: SyncChaptersWithSource = Injekt.get(),
+    private val mangaUpdateCoordinator: MangaUpdateCoordinator = Injekt.get(),
 ) : StateScreenModel<DeepLinkScreenModel.State>(State.Loading) {
 
     init {
@@ -62,7 +64,13 @@ class DeepLinkScreenModel(
         val localChapter = getChapterByUrlAndMangaId.await(sChapter.url, manga.id)
 
         return if (localChapter == null) {
-            val sourceChapters = source.getChapterList(manga.toSManga())
+            val sourceChapters = mangaUpdateCoordinator.update(
+                source = source,
+                manga = manga.toSManga(),
+                chapters = emptyList(),
+                fetchDetails = false,
+                fetchChapters = true,
+            ).chapters.orEmpty()
             val newChapters = syncChaptersWithSource.await(sourceChapters, manga, source, false)
             newChapters.find { it.url == sChapter.url }
         } else {

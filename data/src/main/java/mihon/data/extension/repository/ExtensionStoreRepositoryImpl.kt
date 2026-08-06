@@ -32,6 +32,7 @@ class ExtensionStoreRepositoryImpl(
             contactWebsite = indexUrl,
             contactDiscord = null,
             isLegacy = false,
+            extensionListUrl = null,
         )
     }
 
@@ -61,6 +62,7 @@ class ExtensionStoreRepositoryImpl(
             contactWebsite = store.contact.website,
             contactDiscord = store.contact.discord,
             isLegacy = store.isLegacy,
+            extensionListUrl = store.extensionListUrl,
         )
     }
 
@@ -112,11 +114,19 @@ class ExtensionStoreRepositoryImpl(
 
         DEFAULT_EXTENSION_STORES
             .forEach { store ->
-                val existingStore = existingStores.find { it.index_url == store.indexUrl }
-                if (existingStore?.is_legacy == true) return@forEach
+                val existingStore = existingStores.find {
+                    it.name == store.name ||
+                        it.index_url == store.indexUrl ||
+                        it.index_url in store.deprecatedIndexUrls
+                }
 
                 service.fetch(store.indexUrl)
-                    .onSuccess { upsert(it) }
+                    .onSuccess { refreshedStore ->
+                        upsert(refreshedStore)
+                        (store.deprecatedIndexUrls + store.indexUrl)
+                            .filter { it != refreshedStore.indexUrl }
+                            .forEach { database.extension_storeQueries.delete(it) }
+                    }
                     .onFailure {
                         if (existingStore == null) {
                             insertFromPreference(
@@ -136,31 +146,37 @@ class ExtensionStoreRepositoryImpl(
         contactWebsite: String,
         contactDiscord: String?,
         isLegacy: Boolean,
+        extensionListUrl: String?,
     ): ExtensionStore = ExtensionStore(
         indexUrl = indexUrl,
         name = name,
         badgeLabel = badgeLabel,
         signingKey = signingKey,
-        contact = ExtensionStore.Contact(
-            website = contactWebsite,
-            discord = contactDiscord,
-        ),
+        contact = ExtensionStore.Contact(contactWebsite, contactDiscord),
         isLegacy = isLegacy,
+        extensionListUrl = extensionListUrl,
     )
 }
 
 private data class DefaultExtensionStore(
     val name: String,
     val indexUrl: String,
+    val deprecatedIndexUrls: Set<String>,
 )
 
 private val DEFAULT_EXTENSION_STORES = listOf(
     DefaultExtensionStore(
         name = "Keiyoushi",
-        indexUrl = "https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json",
+        indexUrl = "https://raw.githubusercontent.com/keiyoushi/extensions/repo/repo.json",
+        deprecatedIndexUrls = setOf(
+            "https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json",
+        ),
     ),
     DefaultExtensionStore(
         name = "Yūzōnō",
-        indexUrl = "https://raw.githubusercontent.com/yuzono/manga-repo/repo/index.min.json",
+        indexUrl = "https://raw.githubusercontent.com/yuzono/manga-repo/repo/repo.json",
+        deprecatedIndexUrls = setOf(
+            "https://raw.githubusercontent.com/yuzono/manga-repo/repo/index.min.json",
+        ),
     ),
 )

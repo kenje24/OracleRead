@@ -42,6 +42,8 @@ fun LibraryPager(
     onClickManga: (Category, LibraryManga) -> Unit,
     onLongClickManga: (Category, LibraryManga) -> Unit,
     onClickContinueReading: ((LibraryManga) -> Unit)?,
+    onFeaturedContinueReading: (LibraryManga) -> Unit,
+    showFeaturedManga: Boolean,
 ) {
     HorizontalPager(
         modifier = Modifier.fillMaxSize(),
@@ -54,6 +56,12 @@ fun LibraryPager(
         }
         val category = getCategoryForPage(page)
         val items = getItemsForCategory(category)
+        val featuredItem = if (showFeaturedManga && searchQuery.isNullOrEmpty()) {
+            items.maxByOrNull { it.libraryManga.latestUpload }
+        } else {
+            null
+        }
+        val regularItems = featuredItem?.let { featured -> items.filterNot { it.id == featured.id } } ?: items
 
         if (items.isEmpty()) {
             LibraryPagerEmptyScreen(
@@ -81,19 +89,22 @@ fun LibraryPager(
         when (displayMode) {
             LibraryDisplayMode.List -> {
                 LibraryList(
-                    items = items,
+                    items = regularItems,
+                    featuredItem = featuredItem,
                     contentPadding = contentPadding,
                     selection = selection,
                     onClick = onClickManga,
                     onLongClick = onLongClickManga,
                     onClickContinueReading = onClickContinueReading,
+                    onFeaturedContinueReading = onFeaturedContinueReading,
                     searchQuery = searchQuery,
                     onGlobalSearchClicked = onGlobalSearchClicked,
                 )
             }
             LibraryDisplayMode.CompactGrid, LibraryDisplayMode.CoverOnlyGrid -> {
                 LibraryCompactGrid(
-                    items = items,
+                    items = regularItems,
+                    featuredItem = featuredItem,
                     showTitle = displayMode is LibraryDisplayMode.CompactGrid,
                     columns = columns,
                     contentPadding = contentPadding,
@@ -101,19 +112,22 @@ fun LibraryPager(
                     onClick = onClickManga,
                     onLongClick = onLongClickManga,
                     onClickContinueReading = onClickContinueReading,
+                    onFeaturedContinueReading = onFeaturedContinueReading,
                     searchQuery = searchQuery,
                     onGlobalSearchClicked = onGlobalSearchClicked,
                 )
             }
             LibraryDisplayMode.ComfortableGrid -> {
                 LibraryComfortableGrid(
-                    items = items,
+                    items = regularItems,
+                    featuredItem = featuredItem,
                     columns = columns,
                     contentPadding = contentPadding,
                     selection = selection,
                     onClick = onClickManga,
                     onLongClick = onLongClickManga,
                     onClickContinueReading = onClickContinueReading,
+                    onFeaturedContinueReading = onFeaturedContinueReading,
                     searchQuery = searchQuery,
                     onGlobalSearchClicked = onGlobalSearchClicked,
                 )

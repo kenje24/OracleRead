@@ -71,6 +71,7 @@ import eu.kanade.tachiyomi.ui.reader.ReaderViewModel.SetAsCoverResult.Error
 import eu.kanade.tachiyomi.ui.reader.ReaderViewModel.SetAsCoverResult.Success
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
+import eu.kanade.tachiyomi.ui.reader.model.ReaderPageRetryState
 import eu.kanade.tachiyomi.ui.reader.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderOrientation
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
@@ -203,6 +204,15 @@ class ReaderActivity : BaseActivity() {
             .map { it.isLoadingAdjacentChapter }
             .distinctUntilChanged()
             .onEach(::setProgressDialog)
+            .launchIn(lifecycleScope)
+
+        viewModel.initialChapterRetryCount
+            .onEach { retryCount ->
+                loadingIndicator?.setRetryProgress(
+                    retryCount,
+                    ReaderPageRetryState.DEFAULT_MAX_RETRIES,
+                )
+            }
             .launchIn(lifecycleScope)
 
         viewModel.state

@@ -97,6 +97,11 @@ class PagerPageHolder(
             launchIO {
                 loader.loadPage(page)
             }
+            launch {
+                page.retryState.retryCount.collectLatest { retryCount ->
+                    progressIndicator?.setRetryProgress(retryCount, page.retryState.maxRetries)
+                }
+            }
             page.statusFlow.collectLatest { state ->
                 when (state) {
                     Page.State.Queue -> setQueued()
@@ -119,6 +124,7 @@ class PagerPageHolder(
      */
     private fun setQueued() {
         initProgressIndicator()
+        progressIndicator?.setRetryProgress(page.retryState.retryCount.value, page.retryState.maxRetries)
         progressIndicator?.show()
         removeErrorLayout()
     }
@@ -128,6 +134,7 @@ class PagerPageHolder(
      */
     private fun setLoading() {
         initProgressIndicator()
+        progressIndicator?.setRetryProgress(page.retryState.retryCount.value, page.retryState.maxRetries)
         progressIndicator?.show()
         removeErrorLayout()
     }
@@ -137,6 +144,7 @@ class PagerPageHolder(
      */
     private fun setDownloading() {
         initProgressIndicator()
+        progressIndicator?.setRetryProgress(page.retryState.retryCount.value, page.retryState.maxRetries)
         progressIndicator?.show()
         removeErrorLayout()
     }
@@ -180,7 +188,7 @@ class PagerPageHolder(
         } catch (e: Throwable) {
             logcat(LogPriority.ERROR, e)
             withUIContext {
-                setError(e)
+                handleImageLoadError(e)
             }
         }
     }
@@ -252,6 +260,8 @@ class PagerPageHolder(
 
     override fun onImageLoaded() {
         super.onImageLoaded()
+        page.retryState.reset()
+        progressIndicator?.setRetryProgress(0, page.retryState.maxRetries)
         progressIndicator?.hide()
     }
 
@@ -260,7 +270,13 @@ class PagerPageHolder(
      */
     override fun onImageLoadError(error: Throwable?) {
         super.onImageLoadError(error)
-        setError(error)
+        handleImageLoadError(error)
+    }
+
+    private fun handleImageLoadError(error: Throwable?) {
+        if (page.chapter.pageLoader?.retryPageAutomatically(page) != true) {
+            setError(error)
+        }
     }
 
     /**
@@ -294,8 +310,19 @@ class PagerPageHolder(
             }
         }
 
-        errorLayout?.errorMessage?.text = with(context) { error?.formattedMessage }
+        val errorMessage = with(context) { error?.formattedMessage }
             ?: context.stringResource(MR.strings.decode_image_error)
+        val retryCount = page.retryState.retryCount.value
+        errorLayout?.errorMessage?.text = if (retryCount > 0) {
+            context.stringResource(
+                MR.strings.reader_retry_failed,
+                retryCount,
+                page.retryState.maxRetries,
+                errorMessage,
+            )
+        } else {
+            errorMessage
+        }
 
         errorLayout?.root?.isVisible = true
         return errorLayout!!

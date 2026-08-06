@@ -257,6 +257,11 @@ object SettingsLibraryScreen : SearchableSettings {
                     preference = libraryPreferences.hideMissingChapters,
                     title = stringResource(MR.strings.pref_hide_missing_chapter_indicators),
                 ),
+                Preference.PreferenceItem.SwitchPreference(
+                    preference = libraryPreferences.hideDecimalChapters,
+                    title = "Hide decimal chapters globally",
+                    subtitle = "Manga can still override this from their chapter menu.",
+                ),
             ),
         )
     }

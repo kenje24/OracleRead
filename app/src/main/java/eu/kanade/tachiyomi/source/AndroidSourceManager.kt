@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.source
 
 import android.content.Context
+import android.os.Looper
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.source.online.HttpSource
@@ -72,10 +73,7 @@ class AndroidSourceManager(
         scope.launchIO {
             sourceRepository.subscribeAll()
                 .collectLatest { sources ->
-                    val mutableMap = stubSourcesMap.toMutableMap()
-                    sources.forEach {
-                        mutableMap[it.id] = it
-                    }
+                    sources.forEach { stubSourcesMap[it.id] = it }
                 }
         }
     }
@@ -85,8 +83,28 @@ class AndroidSourceManager(
     }
 
     override fun getOrStub(sourceKey: Long): Source {
-        return sourcesMapFlow.value[sourceKey] ?: stubSourcesMap.getOrPut(sourceKey) {
-            runBlocking { createStubSource(sourceKey) }
+        sourcesMapFlow.value[sourceKey]?.let { return it }
+        stubSourcesMap[sourceKey]?.let { return it }
+
+        // Reached whenever the source belongs to an extension that is no longer loaded. Resolving
+        // the stub hits the database, so never block the main thread on it: hand back a bare stub
+        // and let the cache fill in the background instead.
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            extensionManager.getSourceData(sourceKey)?.let { sourceData ->
+                stubSourcesMap[sourceKey] = sourceData
+                registerStubSource(sourceData)
+                return sourceData
+            }
+            scope.launchIO {
+                runCatching { createStubSource(sourceKey) }
+                    .onSuccess { stubSourcesMap.putIfAbsent(sourceKey, it) }
+            }
+            return StubSource(id = sourceKey, lang = "", name = "")
+        }
+
+        return stubSourcesMap.getOrPut(sourceKey) {
+            runCatching { runBlocking { createStubSource(sourceKey) } }
+                .getOrElse { StubSource(id = sourceKey, lang = "", name = "") }
         }
     }
 

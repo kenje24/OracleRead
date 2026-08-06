@@ -37,6 +37,8 @@ fun MangaToolbar(
     onClickRefresh: () -> Unit,
     onClickMigrate: (() -> Unit)?,
     onClickEditNotes: () -> Unit,
+    hideDecimalChapters: Boolean,
+    onClickHideDecimalChapters: () -> Unit,
 
     // For action mode
     actionModeCounter: Int,
@@ -114,6 +116,12 @@ fun MangaToolbar(
                         AppBar.OverflowAction(
                             title = stringResource(MR.strings.action_webview_refresh),
                             onClick = onClickRefresh,
+                        ),
+                    )
+                    add(
+                        AppBar.OverflowAction(
+                            title = "${if (hideDecimalChapters) "☑" else "☐"} Hide decimal chapters",
+                            onClick = onClickHideDecimalChapters,
                         ),
                     )
                     if (onClickEditCategory != null) {

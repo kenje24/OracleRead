@@ -107,6 +107,9 @@ class ReaderViewModel @JvmOverloads constructor(
     private val mutableState = MutableStateFlow(State())
     val state = mutableState.asStateFlow()
 
+    private val _initialChapterRetryCount = MutableStateFlow(0)
+    val initialChapterRetryCount = _initialChapterRetryCount.asStateFlow()
+
     private val eventChannel = Channel<Event>()
     val eventFlow = eventChannel.receiveAsFlow()
 
@@ -289,7 +292,16 @@ class ReaderViewModel @JvmOverloads constructor(
                     val source = sourceManager.getOrStub(manga.source)
                     loader = ChapterLoader(context, viewModelScope, downloadManager, downloadProvider, manga, source)
 
-                    loadChapter(loader!!, chapterList.first { chapterId == it.chapter.id })
+                    val initialChapter = chapterList.first { chapterId == it.chapter.id }
+                    val retryProgressJob = initialChapter.retryState.retryCount
+                        .onEach { retryCount -> _initialChapterRetryCount.value = retryCount }
+                        .launchIn(viewModelScope)
+                    try {
+                        loadChapter(loader!!, initialChapter)
+                    } finally {
+                        retryProgressJob.cancel()
+                        _initialChapterRetryCount.value = 0
+                    }
                     Result.success(true)
                 } else {
                     // Unlikely but okay

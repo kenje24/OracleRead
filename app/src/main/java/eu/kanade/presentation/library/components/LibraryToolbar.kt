@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -30,7 +29,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
@@ -38,7 +36,6 @@ import eu.kanade.presentation.components.SearchToolbar
 import eu.kanade.tachiyomi.R
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.Pill
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.theme.active
 import tachiyomi.presentation.core.util.collectAsState
@@ -59,6 +56,7 @@ fun LibraryToolbar(
     onClickRefresh: () -> Unit,
     onClickGlobalUpdate: () -> Unit,
     onClickOpenRandomManga: () -> Unit,
+    onClickChangeTheme: () -> Unit,
     searchQuery: String?,
     onSearchQueryChange: (String?) -> Unit,
     scrollBehavior: TopAppBarScrollBehavior?,
@@ -79,6 +77,7 @@ fun LibraryToolbar(
         onClickRefresh = onClickRefresh,
         onClickGlobalUpdate = onClickGlobalUpdate,
         onClickOpenRandomManga = onClickOpenRandomManga,
+        onClickChangeTheme = onClickChangeTheme,
         scrollBehavior = scrollBehavior,
     )
 }
@@ -94,9 +93,9 @@ private fun LibraryRegularToolbar(
     onClickRefresh: () -> Unit,
     onClickGlobalUpdate: () -> Unit,
     onClickOpenRandomManga: () -> Unit,
+    onClickChangeTheme: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior?,
 ) {
-    val pillAlpha = if (isSystemInDarkTheme()) 0.12f else 0.08f
     val incognitoPref = remember { Injekt.get<BasePreferences>().incognitoMode }
     val incognitoMode by incognitoPref.collectAsState()
     SearchToolbar(
@@ -113,13 +112,6 @@ private fun LibraryRegularToolbar(
                     },
                 )
                 ReadingStreakPill()
-                if (title.numberOfManga != null) {
-                    Pill(
-                        text = "${title.numberOfManga}",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = pillAlpha),
-                        fontSize = 14.sp,
-                    )
-                }
             }
         },
         searchQuery = searchQuery,
@@ -150,6 +142,10 @@ private fun LibraryRegularToolbar(
                     AppBar.OverflowAction(
                         title = stringResource(MR.strings.action_open_random_manga),
                         onClick = onClickOpenRandomManga,
+                    ),
+                    AppBar.OverflowAction(
+                        title = "Change Theme",
+                        onClick = onClickChangeTheme,
                     ),
                 ),
             )
@@ -231,5 +227,4 @@ private fun LibrarySelectionToolbar(
 @Immutable
 data class LibraryToolbarTitle(
     val text: String,
-    val numberOfManga: Int? = null,
 )

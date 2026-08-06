@@ -24,8 +24,8 @@ class GetEnabledSources(
             repository.getSources(),
         ) { pinnedSourceIds, enabledLanguages, disabledSources, lastUsedSource, sources ->
             sources
-                .filter { it.lang in enabledLanguages || it.isLocal() }
-                .filterNot { it.id.toString() in disabledSources }
+                .filter { it.id.toString() in pinnedSourceIds || it.lang in enabledLanguages || it.isLocal() }
+                .filterNot { it.id.toString() in disabledSources && it.id.toString() !in pinnedSourceIds }
                 .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
                 .flatMap {
                     val flag = if ("${it.id}" in pinnedSourceIds) Pins.pinned else Pins.unpinned

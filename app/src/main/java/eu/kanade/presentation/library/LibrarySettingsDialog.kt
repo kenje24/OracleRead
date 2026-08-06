@@ -212,6 +212,26 @@ private fun ColumnScope.SortPage(
         },
     )
     SortCard(
+        title = if (sortingMode == LibrarySort.Type.LatestChapter && sortAscending) {
+            "Oldest chapter"
+        } else {
+            "Latest chapter"
+        },
+        selected = sortingMode == LibrarySort.Type.LatestChapter,
+        onClick = {
+            screenModel.setSort(
+                category,
+                LibrarySort.Type.LatestChapter,
+                toggledDirection(
+                    sortingMode,
+                    sortAscending,
+                    LibrarySort.Type.LatestChapter,
+                    LibrarySort.Direction.Descending,
+                ),
+            )
+        },
+    )
+    SortCard(
         title = if (sortingMode == LibrarySort.Type.TotalChapters && sortAscending) {
             "Least Chapters"
         } else {
@@ -381,6 +401,10 @@ private fun ColumnScope.DisplayPage(
     CheckboxItem(
         label = stringResource(MR.strings.action_display_show_continue_reading_button),
         pref = screenModel.libraryPreferences.showContinueReadingButton,
+    )
+    CheckboxItem(
+        label = "Featured manga",
+        pref = screenModel.libraryPreferences.showFeaturedManga,
     )
 
     HeadingItem(MR.strings.tabs_header)

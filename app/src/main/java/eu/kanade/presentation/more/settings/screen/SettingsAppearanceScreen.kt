@@ -11,6 +11,7 @@ import androidx.core.app.ActivityCompat
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.NavigationBarMode
 import eu.kanade.domain.ui.model.TabletUiMode
 import eu.kanade.domain.ui.model.ThemeMode
 import eu.kanade.domain.ui.model.setAppCompatDelegateThemeMode
@@ -122,6 +123,15 @@ object SettingsAppearanceScreen : SearchableSettings {
                         context.toast(MR.strings.requires_app_restart)
                         true
                     },
+                ),
+                Preference.PreferenceItem.ListPreference(
+                    preference = uiPreferences.navigationBarMode,
+                    entries = mapOf(
+                        NavigationBarMode.COMPACT to "Compact: 3 tabs, Browse expands",
+                        NavigationBarMode.FULL to "Always show 5 tabs",
+                    ),
+                    title = "Navigation bar layout",
+                    subtitle = "%s",
                 ),
                 Preference.PreferenceItem.ListPreference(
                     preference = uiPreferences.dateFormat,

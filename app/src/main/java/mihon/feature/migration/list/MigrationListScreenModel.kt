@@ -8,6 +8,7 @@ import eu.kanade.domain.manga.interactor.UpdateManga
 import eu.kanade.domain.manga.model.toSManga
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.tachiyomi.source.CatalogueSource
+import eu.kanade.tachiyomi.source.MangaUpdateCoordinator
 import eu.kanade.tachiyomi.source.getNameForMangaInfo
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -49,6 +50,7 @@ class MigrationListScreenModel(
     private val syncChaptersWithSource: SyncChaptersWithSource = Injekt.get(),
     private val getChaptersByMangaId: GetChaptersByMangaId = Injekt.get(),
     private val migrateManga: MigrateMangaUseCase = Injekt.get(),
+    private val mangaUpdateCoordinator: MangaUpdateCoordinator = Injekt.get(),
 ) : StateScreenModel<MigrationListScreenModel.State>(State()) {
 
     private val smartSearchEngine = SmartSourceSearchEngine(extraSearchQuery)
@@ -148,7 +150,14 @@ class MigrationListScreenModel(
 
             if (result != null && result.first.thumbnailUrl == null) {
                 try {
-                    val newManga = sourceManager.getOrStub(result.first.source).getMangaDetails(result.first.toSManga())
+                    val source = sourceManager.getOrStub(result.first.source)
+                    val newManga = mangaUpdateCoordinator.update(
+                        source = source,
+                        manga = result.first.toSManga(),
+                        chapters = emptyList(),
+                        fetchDetails = true,
+                        fetchChapters = false,
+                    ).manga ?: result.first.toSManga()
                     updateManga.awaitUpdateFromSource(result.first, newManga, true)
                 } catch (e: CancellationException) {
                     throw e
@@ -188,7 +197,13 @@ class MigrationListScreenModel(
 
             val localManga = networkToLocalManga(searchResult)
             try {
-                val chapters = source.getChapterList(localManga.toSManga())
+                val chapters = mangaUpdateCoordinator.update(
+                    source = source,
+                    manga = localManga.toSManga(),
+                    chapters = emptyList(),
+                    fetchDetails = false,
+                    fetchChapters = true,
+                ).chapters.orEmpty()
                 syncChaptersWithSource.await(chapters, localManga, source)
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e)
@@ -223,8 +238,14 @@ class MigrationListScreenModel(
             val result = migratingManga.migrationScope.async {
                 val manga = getManga.await(target) ?: return@async null
                 try {
-                    val source = sourceManager.get(manga.source)!!
-                    val chapters = source.getChapterList(manga.toSManga())
+                    val source = sourceManager.get(manga.source) ?: return@async null
+                    val chapters = mangaUpdateCoordinator.update(
+                        source = source,
+                        manga = manga.toSManga(),
+                        chapters = emptyList(),
+                        fetchDetails = false,
+                        fetchChapters = true,
+                    ).chapters.orEmpty()
                     syncChaptersWithSource.await(chapters, manga, source)
                 } catch (_: Exception) {
                     return@async null
@@ -240,7 +261,14 @@ class MigrationListScreenModel(
             }
 
             try {
-                val newManga = sourceManager.getOrStub(result.source).getMangaDetails(result.toSManga())
+                val source = sourceManager.getOrStub(result.source)
+                val newManga = mangaUpdateCoordinator.update(
+                    source = source,
+                    manga = result.toSManga(),
+                    chapters = emptyList(),
+                    fetchDetails = true,
+                    fetchChapters = false,
+                ).manga ?: result.toSManga()
                 updateManga.awaitUpdateFromSource(result, newManga, true)
             } catch (e: CancellationException) {
                 throw e

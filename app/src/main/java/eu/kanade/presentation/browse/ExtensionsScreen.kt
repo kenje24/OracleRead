@@ -82,7 +82,6 @@ fun ExtensionScreen(
     onUpdateExtension: (Extension.Installed) -> Unit,
     onTrustExtension: (Extension.Untrusted) -> Unit,
     onOpenExtension: (Extension.Installed) -> Unit,
-    onAddExtensionToLibrary: (Extension.Installed) -> Unit,
     onClickUpdateAll: () -> Unit,
     onRefresh: () -> Unit,
 ) {
@@ -125,7 +124,6 @@ fun ExtensionScreen(
                     onUpdateExtension = onUpdateExtension,
                     onTrustExtension = onTrustExtension,
                     onOpenExtension = onOpenExtension,
-                    onAddExtensionToLibrary = onAddExtensionToLibrary,
                     onClickUpdateAll = onClickUpdateAll,
                 )
             }
@@ -145,7 +143,6 @@ private fun ExtensionContent(
     onUpdateExtension: (Extension.Installed) -> Unit,
     onTrustExtension: (Extension.Untrusted) -> Unit,
     onOpenExtension: (Extension.Installed) -> Unit,
-    onAddExtensionToLibrary: (Extension.Installed) -> Unit,
     onClickUpdateAll: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -224,7 +221,6 @@ private fun ExtensionContent(
                 ExtensionItem(
                     modifier = Modifier.animateItemFastScroll(),
                     item = item,
-                    pinnedSources = state.pinnedSources,
                     onClickItem = {
                         when (it) {
                             is Extension.Available -> onInstallExtension(it)
@@ -258,11 +254,6 @@ private fun ExtensionContent(
                             }
                         }
                     },
-                    onClickAddToLibrary = {
-                        if (it is Extension.Installed) {
-                            onAddExtensionToLibrary(it)
-                        }
-                    },
                 )
             }
         }
@@ -287,13 +278,11 @@ private fun ExtensionContent(
 @Composable
 private fun ExtensionItem(
     item: ExtensionUiModel.Item,
-    pinnedSources: Set<String>,
     onClickItem: (Extension) -> Unit,
     onLongClickItem: (Extension) -> Unit,
     onClickItemCancel: (Extension) -> Unit,
     onClickItemAction: (Extension) -> Unit,
     onClickItemSecondaryAction: (Extension) -> Unit,
-    onClickAddToLibrary: (Extension) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val (extension, installStep) = item
@@ -335,11 +324,9 @@ private fun ExtensionItem(
             ExtensionItemActions(
                 extension = extension,
                 installStep = installStep,
-                pinnedSources = pinnedSources,
                 onClickItemCancel = onClickItemCancel,
                 onClickItemAction = onClickItemAction,
                 onClickItemSecondaryAction = onClickItemSecondaryAction,
-                onClickAddToLibrary = onClickAddToLibrary,
             )
         },
     ) {
@@ -431,12 +418,10 @@ private fun ExtensionItemContent(
 private fun ExtensionItemActions(
     extension: Extension,
     installStep: InstallStep,
-    pinnedSources: Set<String>,
     modifier: Modifier = Modifier,
     onClickItemCancel: (Extension) -> Unit = {},
     onClickItemAction: (Extension) -> Unit = {},
     onClickItemSecondaryAction: (Extension) -> Unit = {},
-    onClickAddToLibrary: (Extension) -> Unit = {},
 ) {
     val isIdle = installStep.isCompleted()
 
@@ -464,22 +449,6 @@ private fun ExtensionItemActions(
             installStep == InstallStep.Idle -> {
                 when (extension) {
                     is Extension.Installed -> {
-                        if (extension.sources.isNotEmpty()) {
-                            val sourceIds = extension.sources.map { it.id.toString() }
-                            val isInLibrary = sourceIds.all { it in pinnedSources }
-                            TextButton(onClick = { onClickAddToLibrary(extension) }) {
-                                Text(
-                                    text = stringResource(
-                                        if (isInLibrary) {
-                                            MR.strings.remove_from_library
-                                        } else {
-                                            MR.strings.action_add_to_library_shortcut
-                                        },
-                                    ),
-                                )
-                            }
-                        }
-
                         IconButton(onClick = { onClickItemSecondaryAction(extension) }) {
                             Icon(
                                 imageVector = Icons.Outlined.Settings,

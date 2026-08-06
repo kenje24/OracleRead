@@ -18,6 +18,8 @@ data class ReaderChapter(val chapter: Chapter) {
     val pages: List<ReaderPage>?
         get() = (state as? State.Loaded)?.pages
 
+    internal val retryState = ReaderPageRetryState()
+
     var pageLoader: PageLoader? = null
 
     var requestedPage: Int = 0

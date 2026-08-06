@@ -10,7 +10,6 @@ import eu.kanade.domain.extension.interactor.TrustExtension
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.LoadResult
-import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.util.lang.Hash
@@ -50,8 +49,9 @@ internal object ExtensionLoader {
     private const val METADATA_SOURCE_CLASS = "tachiyomi.extension.class"
     private const val METADATA_SOURCE_FACTORY = "tachiyomi.extension.factory"
     private const val METADATA_NSFW = "tachiyomi.extension.nsfw"
-    const val LIB_VERSION_MIN = 1.4
-    const val LIB_VERSION_MAX = 1.5
+    private const val METADATA_NAME = "tachiyomix.name"
+    private const val METADATA_EXTENSION_LIB = "tachiyomix.extensionLib"
+    private const val METADATA_CONTENT_WARNING = "tachiyomix.contentWarning"
 
     @Suppress("DEPRECATION")
     private val PACKAGE_FLAGS = PackageManager.GET_CONFIGURATIONS or
@@ -82,7 +82,8 @@ internal object ExtensionLoader {
                 return false
             }
 
-            if (!extensionSignatures.containsAll(getSignatures(currentExtension)!!)) {
+            val currentSignatures = getSignatures(currentExtension)
+            if (currentSignatures.isNullOrEmpty() || !extensionSignatures.containsAll(currentSignatures)) {
                 logcat(LogPriority.ERROR) { "Installed extension signature is not matched." }
                 return false
             }
@@ -132,15 +133,23 @@ internal object ExtensionLoader {
             .listFiles()
             ?.asSequence()
             ?.filter { it.isFile && it.extension == PRIVATE_EXTENSION_EXTENSION }
-            ?.mapNotNull {
-                // Just in case, since Android 14+ requires them to be read-only
-                if (it.canWrite()) {
-                    it.setReadOnly()
-                }
+            ?.mapNotNull { file ->
+                // An orphaned or half-written apk in the private directory must not take the
+                // whole app down, this runs while the ExtensionManager is being constructed.
+                try {
+                    // Just in case, since Android 14+ requires them to be read-only
+                    if (file.canWrite()) {
+                        file.setReadOnly()
+                    }
 
-                val path = it.absolutePath
-                pkgManager.getPackageArchiveInfo(path, PACKAGE_FLAGS)
-                    ?.apply { applicationInfo!!.fixBasePaths(path) }
+                    val path = file.absolutePath
+                    pkgManager.getPackageArchiveInfo(path, PACKAGE_FLAGS)
+                        ?.takeIf { it.applicationInfo != null }
+                        ?.apply { applicationInfo!!.fixBasePaths(path) }
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR, e) { "Failed to read private extension ${file.name}" }
+                    null
+                }
             }
             ?.filter { isPackageAnExtension(it) }
             ?.map { ExtensionInfo(packageInfo = it, isShared = false) }
@@ -162,9 +171,24 @@ internal object ExtensionLoader {
         // Load each extension concurrently and wait for completion
         return runBlocking {
             val deferred = extPkgs.map {
-                async { loadExtension(context, it) }
+                async { loadExtensionSafely(context, it) }
             }
             deferred.awaitAll()
+        }
+    }
+
+    /**
+     * Wraps [loadExtension] so a single broken extension is reported as [LoadResult.Error]
+     * instead of taking down whoever triggered the load.
+     */
+    private suspend fun loadExtensionSafely(context: Context, extensionInfo: ExtensionInfo): LoadResult {
+        return try {
+            loadExtension(context, extensionInfo)
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) {
+                "Extension load error: ${extensionInfo.packageInfo.packageName}"
+            }
+            LoadResult.Error
         }
     }
 
@@ -178,7 +202,7 @@ internal object ExtensionLoader {
             logcat(LogPriority.ERROR) { "Extension package is not found ($pkgName)" }
             return LoadResult.Error
         }
-        return loadExtension(context, extensionPackage)
+        return loadExtensionSafely(context, extensionPackage)
     }
 
     fun getExtensionPackageInfoFromPkgName(context: Context, pkgName: String): PackageInfo? {
@@ -188,22 +212,27 @@ internal object ExtensionLoader {
     private fun getExtensionInfoFromPkgName(context: Context, pkgName: String): ExtensionInfo? {
         val privateExtensionFile = File(getPrivateExtensionDir(context), "$pkgName.$PRIVATE_EXTENSION_EXTENSION")
         val privatePkg = if (privateExtensionFile.isFile) {
-            context.packageManager.getPackageArchiveInfo(privateExtensionFile.absolutePath, PACKAGE_FLAGS)
-                ?.takeIf { isPackageAnExtension(it) }
-                ?.let {
-                    it.applicationInfo!!.fixBasePaths(privateExtensionFile.absolutePath)
-                    ExtensionInfo(
-                        packageInfo = it,
-                        isShared = false,
-                    )
-                }
+            try {
+                context.packageManager.getPackageArchiveInfo(privateExtensionFile.absolutePath, PACKAGE_FLAGS)
+                    ?.takeIf { isPackageAnExtension(it) && it.applicationInfo != null }
+                    ?.let {
+                        it.applicationInfo!!.fixBasePaths(privateExtensionFile.absolutePath)
+                        ExtensionInfo(
+                            packageInfo = it,
+                            isShared = false,
+                        )
+                    }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Failed to read private extension $pkgName" }
+                null
+            }
         } else {
             null
         }
 
         val sharedPkg = try {
             context.packageManager.getPackageInfo(pkgName, PACKAGE_FLAGS)
-                .takeIf { isPackageAnExtension(it) }
+                .takeIf { isPackageAnExtension(it) && it.applicationInfo != null }
                 ?.let {
                     ExtensionInfo(
                         packageInfo = it,
@@ -211,6 +240,9 @@ internal object ExtensionLoader {
                     )
                 }
         } catch (error: PackageManager.NameNotFoundException) {
+            null
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Failed to read extension package $pkgName" }
             null
         }
 
@@ -226,10 +258,20 @@ internal object ExtensionLoader {
     private suspend fun loadExtension(context: Context, extensionInfo: ExtensionInfo): LoadResult {
         val pkgManager = context.packageManager
         val pkgInfo = extensionInfo.packageInfo
-        val appInfo = pkgInfo.applicationInfo!!
         val pkgName = pkgInfo.packageName
+        val appInfo = pkgInfo.applicationInfo
+        if (appInfo == null) {
+            logcat(LogPriority.WARN) { "Missing application info for extension $pkgName" }
+            return LoadResult.Error
+        }
+        val metaData = appInfo.metaData
+        if (metaData == null) {
+            logcat(LogPriority.WARN) { "Missing metadata for extension $pkgName" }
+            return LoadResult.Error
+        }
 
-        val extName = pkgManager.getApplicationLabel(appInfo).toString().substringAfter("Tachiyomi: ")
+        val extName = metaData.getString(METADATA_NAME)
+            ?: pkgManager.getApplicationLabel(appInfo).toString().substringAfter("Tachiyomi: ")
         val versionName = pkgInfo.versionName
         val versionCode = PackageInfoCompat.getLongVersionCode(pkgInfo)
 
@@ -239,11 +281,14 @@ internal object ExtensionLoader {
         }
 
         // Validate lib version
-        val libVersion = versionName.substringBeforeLast('.').toDoubleOrNull()
-        if (libVersion == null || libVersion < LIB_VERSION_MIN || libVersion > LIB_VERSION_MAX) {
+        val libVersion = ExtensionCompatibility.resolveLibVersion(
+            metadataVersion = metaData.getFloat(METADATA_EXTENSION_LIB),
+            versionName = versionName,
+        )
+        if (libVersion == null || !ExtensionCompatibility.isSupportedLibVersion(libVersion)) {
             logcat(LogPriority.WARN) {
-                "Lib version is $libVersion, while only versions " +
-                    "$LIB_VERSION_MIN to $LIB_VERSION_MAX are allowed"
+                "Lib version is $libVersion, while only version(s) " +
+                    "${ExtensionCompatibility.supportedLibVersionsLabel()} are supported"
             }
             return LoadResult.Error
         }
@@ -265,7 +310,8 @@ internal object ExtensionLoader {
             return LoadResult.Untrusted(extension)
         }
 
-        val isNsfw = appInfo.metaData.getInt(METADATA_NSFW) == 1
+        val isNsfw = metaData.getInt(METADATA_CONTENT_WARNING) > 0 ||
+            metaData.getInt(METADATA_NSFW) == 1
         if (!loadNsfwSource && isNsfw) {
             logcat(LogPriority.WARN) { "NSFW extension $pkgName not allowed" }
             return LoadResult.Error
@@ -278,7 +324,13 @@ internal object ExtensionLoader {
             return LoadResult.Error
         }
 
-        val sources = appInfo.metaData.getString(METADATA_SOURCE_CLASS)!!
+        val sourceClasses = metaData.getString(METADATA_SOURCE_CLASS)
+        if (sourceClasses.isNullOrBlank()) {
+            logcat(LogPriority.WARN) { "Extension $pkgName declares no source class" }
+            return LoadResult.Error
+        }
+
+        val sources = sourceClasses
             .split(";")
             .map {
                 val sourceClass = it.trim()
@@ -301,9 +353,7 @@ internal object ExtensionLoader {
                 }
             }
 
-        val langs = sources.filterIsInstance<CatalogueSource>()
-            .map { it.lang }
-            .toSet()
+        val langs = sources.map { it.lang }.toSet()
         val lang = when (langs.size) {
             0 -> ""
             1 -> langs.first()
@@ -319,7 +369,7 @@ internal object ExtensionLoader {
             lang = lang,
             isNsfw = isNsfw,
             sources = sources,
-            pkgFactory = appInfo.metaData.getString(METADATA_SOURCE_FACTORY),
+            pkgFactory = metaData.getString(METADATA_SOURCE_FACTORY),
             icon = appInfo.loadIcon(pkgManager),
             isShared = extensionInfo.isShared,
         )

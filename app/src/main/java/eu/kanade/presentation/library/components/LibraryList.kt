@@ -16,11 +16,13 @@ import tachiyomi.presentation.core.util.plus
 @Composable
 internal fun LibraryList(
     items: List<LibraryItem>,
+    featuredItem: LibraryItem?,
     contentPadding: PaddingValues,
     selection: Set<Long>,
     onClick: (LibraryManga) -> Unit,
     onLongClick: (LibraryManga) -> Unit,
     onClickContinueReading: ((LibraryManga) -> Unit)?,
+    onFeaturedContinueReading: (LibraryManga) -> Unit,
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
 ) {
@@ -34,6 +36,15 @@ internal fun LibraryList(
                     modifier = Modifier.fillMaxWidth(),
                     searchQuery = searchQuery,
                     onClick = onGlobalSearchClicked,
+                )
+            }
+        }
+        featuredItem?.let { featured ->
+            item(contentType = "featured_manga") {
+                FeaturedMangaCard(
+                    item = featured,
+                    onClick = { onClick(featured.libraryManga) },
+                    onContinue = { onFeaturedContinueReading(featured.libraryManga) },
                 )
             }
         }

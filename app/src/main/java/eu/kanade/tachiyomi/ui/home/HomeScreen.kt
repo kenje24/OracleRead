@@ -24,7 +24,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -35,6 +39,8 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import eu.kanade.domain.source.service.SourcePreferences
+import eu.kanade.domain.ui.UiPreferences
+import eu.kanade.domain.ui.model.NavigationBarMode
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.ui.browse.BrowseTab
@@ -57,6 +63,7 @@ import tachiyomi.presentation.core.components.material.NavigationBar
 import tachiyomi.presentation.core.components.material.NavigationRail
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.pluralStringResource
+import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import androidx.compose.material3.NavigationBarItem as MaterialNavigationBarItem
@@ -94,13 +101,17 @@ object HomeScreen : Screen() {
             tab = LibraryTab,
             key = TabNavigatorKey,
         ) { tabNavigator ->
+            var expandedNav by rememberSaveable { mutableStateOf(false) }
+            val uiPreferences = remember { Injekt.get<UiPreferences>() }
+            val navigationBarMode by uiPreferences.navigationBarMode.collectAsState()
             // Provide usable navigator to content screen
             CompositionLocalProvider(LocalNavigator provides navigator) {
                 Scaffold(
                     startBar = {
                         if (isTabletUi()) {
                             NavigationRail {
-                                TABS.fastForEach {
+                                val tabs = if (navigationBarMode == NavigationBarMode.FULL) BROWSE_TABS else TABS
+                                tabs.fastForEach {
                                     NavigationRailItem(it)
                                 }
                             }
@@ -116,13 +127,6 @@ object HomeScreen : Screen() {
                                 enter = expandVertically(),
                                 exit = shrinkVertically(),
                             ) {
-                                val expandedNav = when (tabNavigator.current::class) {
-                                    BrowseTab::class,
-                                    UpdatesTab::class,
-                                    MoreTab::class,
-                                    -> true
-                                    else -> false
-                                }
                                 AnimatedContent(
                                     targetState = expandedNav,
                                     transitionSpec = {
@@ -133,9 +137,27 @@ object HomeScreen : Screen() {
                                     label = "browseNavExpansion",
                                 ) { showBrowseTabs ->
                                     NavigationBar {
-                                        val tabs = if (showBrowseTabs) BROWSE_TABS else TABS
+                                        val tabs = if (
+                                            navigationBarMode == NavigationBarMode.FULL ||
+                                            showBrowseTabs
+                                        ) {
+                                            BROWSE_TABS
+                                        } else {
+                                            TABS
+                                        }
                                         tabs.fastForEach {
-                                            NavigationBarItem(it)
+                                            NavigationBarItem(
+                                                tab = it,
+                                                onSelected = { selectedTab ->
+                                                    if (navigationBarMode == NavigationBarMode.COMPACT) {
+                                                        when (selectedTab) {
+                                                            LibraryTab -> expandedNav = false
+                                                            BrowseTab -> expandedNav = true
+                                                            else -> Unit
+                                                        }
+                                                    }
+                                                },
+                                            )
                                         }
                                     }
                                 }
@@ -165,9 +187,24 @@ object HomeScreen : Screen() {
                 }
             }
 
-            val goToLibraryTab = { tabNavigator.current = LibraryTab }
+            val goToLibraryTab = {
+                tabNavigator.current = LibraryTab
+            }
 
             BackHandler(enabled = tabNavigator.current != LibraryTab, onBack = goToLibraryTab)
+
+            // Keep the bottom nav's expanded/collapsed state in sync even when the current tab
+            // is changed programmatically (app shortcuts, deep links, search) instead of via a
+            // NavigationBarItem tap.
+            LaunchedEffect(tabNavigator.current, navigationBarMode) {
+                if (navigationBarMode == NavigationBarMode.COMPACT) {
+                    when (tabNavigator.current) {
+                        LibraryTab -> expandedNav = false
+                        HistoryTab, MoreTab -> expandedNav = true
+                        else -> Unit
+                    }
+                }
+            }
 
             LaunchedEffect(Unit) {
                 launch {
@@ -204,7 +241,10 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    private fun RowScope.NavigationBarItem(tab: eu.kanade.presentation.util.Tab) {
+    private fun RowScope.NavigationBarItem(
+        tab: eu.kanade.presentation.util.Tab,
+        onSelected: (eu.kanade.presentation.util.Tab) -> Unit,
+    ) {
         val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
@@ -212,6 +252,7 @@ object HomeScreen : Screen() {
         MaterialNavigationBarItem(
             selected = selected,
             onClick = {
+                onSelected(tab)
                 if (!selected) {
                     tabNavigator.current = tab
                 } else {

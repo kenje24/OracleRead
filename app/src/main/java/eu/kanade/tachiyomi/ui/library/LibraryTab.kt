@@ -9,19 +9,30 @@ import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.CreateNewFolder
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Forum
-import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -35,6 +46,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -48,6 +61,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
+import eu.kanade.presentation.browse.components.SourceIcon
 import eu.kanade.presentation.library.DeleteLibraryMangaDialog
 import eu.kanade.presentation.library.LibrarySettingsDialog
 import eu.kanade.presentation.library.components.LibraryContent
@@ -118,6 +132,7 @@ data object LibraryTab : Tab {
 
         val snackbarHostState = remember { SnackbarHostState() }
         var quickActionsVisible by remember { mutableStateOf(false) }
+        val drawerState = rememberDrawerState(DrawerValue.Closed)
 
         val onClickRefresh: (Category?) -> Boolean = { category ->
             val started = LibraryUpdateJob.startNow(context, category)
@@ -131,7 +146,53 @@ data object LibraryTab : Tab {
             }
             started
         }
+        val openNextChapter: (LibraryManga) -> Unit = { libraryManga ->
+            scope.launchIO {
+                val chapter = screenModel.getNextUnreadChapter(libraryManga.manga)
+                if (chapter != null) {
+                    context.startActivity(
+                        ReaderActivity.newIntent(context, chapter.mangaId, chapter.id),
+                    )
+                } else {
+                    snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_chapter))
+                }
+            }
+        }
 
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            gesturesEnabled = drawerState.isOpen,
+            drawerContent = {
+                ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.6f)) {
+                    Text(
+                        text = "Extensions in your library",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    state.libraryData.pinnedSources.forEach { source ->
+                        NavigationDrawerItem(
+                            label = { Text(source.name, style = MaterialTheme.typography.titleMedium) },
+                            selected = false,
+                            icon = { SourceIcon(source = source, modifier = Modifier.size(30.dp)) },
+                            onClick = {
+                                scope.launch {
+                                    drawerState.close()
+                                    navigator.push(BrowseSourceScreen(source.id, null))
+                                }
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                        )
+                    }
+                    if (state.libraryData.pinnedSources.isEmpty()) {
+                        Text(
+                            text = "No extensions have been added to your library yet.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp),
+                        )
+                    }
+                }
+            },
+        ) {
         Scaffold(
             topBar = { scrollBehavior ->
                 val title = state.getToolbarTitle(
@@ -162,6 +223,7 @@ data object LibraryTab : Tab {
                             }
                         }
                     },
+                    onClickChangeTheme = { navigator.push(SettingsAppearanceScreen) },
                     searchQuery = state.searchQuery,
                     onSearchQueryChange = screenModel::search,
                     // For scroll overlay when no tab
@@ -200,7 +262,7 @@ data object LibraryTab : Tab {
                                 horizontalAlignment = Alignment.End,
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                SmallFloatingActionButton(
+                                FloatingActionButton(
                                     onClick = {
                                         quickActionsVisible = false
                                         navigator.push(CategoryScreen(openCreateDialog = true))
@@ -209,20 +271,10 @@ data object LibraryTab : Tab {
                                     Icon(
                                         Icons.Outlined.CreateNewFolder,
                                         contentDescription = "Add folder",
+                                        modifier = Modifier.size(28.dp),
                                     )
                                 }
-                                SmallFloatingActionButton(
-                                    onClick = {
-                                        quickActionsVisible = false
-                                        navigator.push(SettingsAppearanceScreen)
-                                    },
-                                ) {
-                                    Icon(
-                                        Icons.Outlined.Palette,
-                                        contentDescription = "Change theme",
-                                    )
-                                }
-                                SmallFloatingActionButton(
+                                FloatingActionButton(
                                     onClick = {
                                         quickActionsVisible = false
                                         navigator.push(DownloadQueueScreen)
@@ -231,9 +283,10 @@ data object LibraryTab : Tab {
                                     Icon(
                                         Icons.Outlined.Download,
                                         contentDescription = "Download queue",
+                                        modifier = Modifier.size(28.dp),
                                     )
                                 }
-                                SmallFloatingActionButton(
+                                FloatingActionButton(
                                     onClick = {
                                         quickActionsVisible = false
                                         navigator.push(CommunityProfileScreen())
@@ -242,18 +295,44 @@ data object LibraryTab : Tab {
                                     Icon(
                                         Icons.Outlined.Person,
                                         contentDescription = "Profile",
+                                        modifier = Modifier.size(28.dp),
+                                    )
+                                }
+                                FloatingActionButton(
+                                    onClick = {
+                                        quickActionsVisible = false
+                                        navigator.push(CommunityHubScreen())
+                                    },
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Forum,
+                                        contentDescription = "Community",
+                                        modifier = Modifier.size(28.dp),
                                     )
                                 }
                             }
                         }
-                        ExtendedFloatingActionButton(
-                            text = { Text("Community") },
-                            icon = { Icon(Icons.Outlined.Forum, contentDescription = null) },
-                            onClick = {
-                                quickActionsVisible = false
-                                navigator.push(CommunityHubScreen())
-                            },
+                        val gradient = Brush.linearGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.tertiary,
+                            ),
                         )
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(gradient)
+                                .clickable { quickActionsVisible = !quickActionsVisible },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Outlined.MoreVert,
+                                contentDescription = "Library actions",
+                                modifier = Modifier.size(36.dp),
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
                     }
                 }
             },
@@ -288,21 +367,9 @@ data object LibraryTab : Tab {
                         showPageTabs = state.showCategoryTabs || !state.searchQuery.isNullOrEmpty(),
                         onChangeCurrentPage = screenModel::updateActiveCategoryIndex,
                         onClickManga = { navigator.push(MangaScreen(it)) },
-                        onClickSourceShortcut = { navigator.push(BrowseSourceScreen(it.id, null)) },
                         onLongClickFolder = { navigator.push(CategoryScreen()) },
-                        onContinueReadingClicked = { it: LibraryManga ->
-                            scope.launchIO {
-                                val chapter = screenModel.getNextUnreadChapter(it.manga)
-                                if (chapter != null) {
-                                    context.startActivity(
-                                        ReaderActivity.newIntent(context, chapter.mangaId, chapter.id),
-                                    )
-                                } else {
-                                    snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_chapter))
-                                }
-                            }
-                            Unit
-                        }.takeIf { state.showMangaContinueButton },
+                        onContinueReadingClicked = openNextChapter.takeIf { state.showMangaContinueButton },
+                        onFeaturedContinueReadingClicked = openNextChapter,
                         onToggleSelection = screenModel::toggleSelection,
                         onToggleRangeSelection = { category, manga ->
                             screenModel.toggleRangeSelection(category, manga)
@@ -317,9 +384,11 @@ data object LibraryTab : Tab {
                         getDisplayMode = { screenModel.getDisplayMode() },
                         getColumnsForOrientation = { screenModel.getColumnsForOrientation(it) },
                         getItemsForCategory = { state.getItemsForCategory(it) },
+                        drawerState = drawerState,
                     )
                 }
             }
+        }
         }
 
         val onDismissRequest = screenModel::closeDialog

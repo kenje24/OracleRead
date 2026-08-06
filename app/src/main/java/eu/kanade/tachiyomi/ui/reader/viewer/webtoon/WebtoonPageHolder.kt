@@ -84,7 +84,7 @@ class WebtoonPageHolder(
         refreshLayoutParams()
 
         frame.onImageLoaded = { onImageDecoded() }
-        frame.onImageLoadError = { error -> setError(error) }
+        frame.onImageLoadError = { error -> handleImageLoadError(error) }
         frame.onScaleChanged = { viewer.activity.hideMenu() }
     }
 
@@ -137,6 +137,11 @@ class WebtoonPageHolder(
             launchIO {
                 loader.loadPage(page)
             }
+            launch {
+                page.retryState.retryCount.collectLatest { retryCount ->
+                    progressIndicator.setRetryProgress(retryCount, page.retryState.maxRetries)
+                }
+            }
             page.statusFlow.collectLatest { state ->
                 when (state) {
                     Page.State.Queue -> setQueued()
@@ -159,6 +164,7 @@ class WebtoonPageHolder(
      */
     private fun setQueued() {
         progressContainer.isVisible = true
+        page?.let { progressIndicator.setRetryProgress(it.retryState.retryCount.value, it.retryState.maxRetries) }
         progressIndicator.show()
         removeErrorLayout()
     }
@@ -168,6 +174,7 @@ class WebtoonPageHolder(
      */
     private fun setLoading() {
         progressContainer.isVisible = true
+        page?.let { progressIndicator.setRetryProgress(it.retryState.retryCount.value, it.retryState.maxRetries) }
         progressIndicator.show()
         removeErrorLayout()
     }
@@ -177,6 +184,7 @@ class WebtoonPageHolder(
      */
     private fun setDownloading() {
         progressContainer.isVisible = true
+        page?.let { progressIndicator.setRetryProgress(it.retryState.retryCount.value, it.retryState.maxRetries) }
         progressIndicator.show()
         removeErrorLayout()
     }
@@ -210,7 +218,7 @@ class WebtoonPageHolder(
         } catch (e: Throwable) {
             logcat(LogPriority.ERROR, e)
             withUIContext {
-                setError(e)
+                handleImageLoadError(e)
             }
         }
     }
@@ -249,10 +257,21 @@ class WebtoonPageHolder(
         initErrorLayout(error)
     }
 
+    private fun handleImageLoadError(error: Throwable?) {
+        val currentPage = page ?: return
+        if (currentPage.chapter.pageLoader?.retryPageAutomatically(currentPage) != true) {
+            setError(error)
+        }
+    }
+
     /**
      * Called when the image is decoded and going to be displayed.
      */
     private fun onImageDecoded() {
+        page?.let {
+            it.retryState.reset()
+            progressIndicator.setRetryProgress(0, it.retryState.maxRetries)
+        }
         progressContainer.isVisible = false
         removeErrorLayout()
     }
@@ -298,8 +317,20 @@ class WebtoonPageHolder(
             }
         }
 
-        errorLayout?.errorMessage?.text = with(context) { error?.formattedMessage }
+        val errorMessage = with(context) { error?.formattedMessage }
             ?: context.stringResource(MR.strings.decode_image_error)
+        val currentPage = page
+        val retryCount = currentPage?.retryState?.retryCount?.value ?: 0
+        errorLayout?.errorMessage?.text = if (currentPage != null && retryCount > 0) {
+            context.stringResource(
+                MR.strings.reader_retry_failed,
+                retryCount,
+                currentPage.retryState.maxRetries,
+                errorMessage,
+            )
+        } else {
+            errorMessage
+        }
 
         return errorLayout!!
     }

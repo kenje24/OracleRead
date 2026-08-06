@@ -59,7 +59,7 @@ import eu.kanade.presentation.manga.components.MangaBottomActionMenu
 import eu.kanade.presentation.manga.components.MangaChapterListItem
 import eu.kanade.presentation.manga.components.MangaInfoBox
 import eu.kanade.presentation.manga.components.MangaToolbar
-import eu.kanade.presentation.manga.components.MissingChapterCountListItem
+import eu.kanade.presentation.manga.components.MissingChapterListItem
 import eu.kanade.presentation.util.formatChapterNumber
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.source.getNameForMangaInfo
@@ -118,6 +118,8 @@ fun MangaScreen(
     onEditFetchIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
+    onToggleHideDecimalChapters: () -> Unit,
+    onMissingChapterClicked: (Int) -> Unit,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
@@ -168,6 +170,8 @@ fun MangaScreen(
             onEditIntervalClicked = onEditFetchIntervalClicked,
             onMigrateClicked = onMigrateClicked,
             onEditNotesClicked = onEditNotesClicked,
+            onToggleHideDecimalChapters = onToggleHideDecimalChapters,
+            onMissingChapterClicked = onMissingChapterClicked,
             onMultiBookmarkClicked = onMultiBookmarkClicked,
             onMultiMarkAsReadClicked = onMultiMarkAsReadClicked,
             onMarkPreviousAsReadClicked = onMarkPreviousAsReadClicked,
@@ -205,6 +209,8 @@ fun MangaScreen(
             onEditIntervalClicked = onEditFetchIntervalClicked,
             onMigrateClicked = onMigrateClicked,
             onEditNotesClicked = onEditNotesClicked,
+            onToggleHideDecimalChapters = onToggleHideDecimalChapters,
+            onMissingChapterClicked = onMissingChapterClicked,
             onMultiBookmarkClicked = onMultiBookmarkClicked,
             onMultiMarkAsReadClicked = onMultiMarkAsReadClicked,
             onMarkPreviousAsReadClicked = onMarkPreviousAsReadClicked,
@@ -252,6 +258,8 @@ private fun MangaScreenSmallImpl(
     onEditIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
+    onToggleHideDecimalChapters: () -> Unit,
+    onMissingChapterClicked: (Int) -> Unit,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
@@ -311,6 +319,8 @@ private fun MangaScreenSmallImpl(
                 onClickRefresh = onRefresh,
                 onClickMigrate = onMigrateClicked,
                 onClickEditNotes = onEditNotesClicked,
+                hideDecimalChapters = state.hideDecimalChapters,
+                onClickHideDecimalChapters = onToggleHideDecimalChapters,
                 actionModeCounter = selectedChapterCount,
                 onCancelActionMode = { onAllChapterSelected(false) },
                 onSelectAll = { onAllChapterSelected(true) },
@@ -479,6 +489,7 @@ private fun MangaScreenSmallImpl(
                         chapterSwipeStartAction = chapterSwipeStartAction,
                         chapterSwipeEndAction = chapterSwipeEndAction,
                         onChapterClicked = onChapterClicked,
+                        onMissingChapterClicked = onMissingChapterClicked,
                         onDownloadChapter = onDownloadChapter,
                         onChapterSelected = onChapterSelected,
                         onChapterSwipe = onChapterSwipe,
@@ -524,6 +535,8 @@ fun MangaScreenLargeImpl(
     onEditIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
+    onToggleHideDecimalChapters: () -> Unit,
+    onMissingChapterClicked: (Int) -> Unit,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
@@ -576,6 +589,8 @@ fun MangaScreenLargeImpl(
                 onClickRefresh = onRefresh,
                 onClickMigrate = onMigrateClicked,
                 onClickEditNotes = onEditNotesClicked,
+                hideDecimalChapters = state.hideDecimalChapters,
+                onClickHideDecimalChapters = onToggleHideDecimalChapters,
                 onCancelActionMode = { onAllChapterSelected(false) },
                 actionModeCounter = selectedChapterCount,
                 onSelectAll = { onAllChapterSelected(true) },
@@ -746,6 +761,7 @@ fun MangaScreenLargeImpl(
                                 chapterSwipeStartAction = chapterSwipeStartAction,
                                 chapterSwipeEndAction = chapterSwipeEndAction,
                                 onChapterClicked = onChapterClicked,
+                                onMissingChapterClicked = onMissingChapterClicked,
                                 onDownloadChapter = onDownloadChapter,
                                 onChapterSelected = onChapterSelected,
                                 onChapterSwipe = onChapterSwipe,
@@ -807,6 +823,7 @@ private fun LazyListScope.sharedChapterItems(
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     onChapterClicked: (Chapter) -> Unit,
+    onMissingChapterClicked: (Int) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     onChapterSelected: (ChapterList.Item, Boolean, Boolean) -> Unit,
     onChapterSwipe: (ChapterList.Item, LibraryPreferences.ChapterSwipeAction) -> Unit,
@@ -815,7 +832,7 @@ private fun LazyListScope.sharedChapterItems(
         items = chapters,
         key = { item ->
             when (item) {
-                is ChapterList.MissingCount -> "missing-count-${item.id}"
+                is ChapterList.MissingChapter -> "missing-chapter-${item.id}"
                 is ChapterList.Item -> "chapter-${item.id}"
             }
         },
@@ -824,8 +841,11 @@ private fun LazyListScope.sharedChapterItems(
         val haptic = LocalHapticFeedback.current
 
         when (item) {
-            is ChapterList.MissingCount -> {
-                MissingChapterCountListItem(count = item.count)
+            is ChapterList.MissingChapter -> {
+                MissingChapterListItem(
+                    chapterNumber = item.chapterNumber,
+                    onClick = { onMissingChapterClicked(item.chapterNumber) },
+                )
             }
             is ChapterList.Item -> {
                 MangaChapterListItem(

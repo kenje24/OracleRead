@@ -70,8 +70,8 @@ class ExtensionManager(
     val untrustedExtensionsFlow = untrustedExtensionMapFlow.mapExtensions(scope)
 
     init {
-        initExtensions()
         ExtensionInstallReceiver(InstallationListener()).register(context)
+        initExtensions()
     }
 
     private var subLanguagesEnabledOnFirstRun = preferences.enabledLanguages.isSet()
@@ -95,10 +95,21 @@ class ExtensionManager(
     fun getAppIconForSource(sourceId: Long): Drawable? {
         val pkgName = getExtensionPackage(sourceId) ?: return null
 
-        return iconMap[pkgName] ?: iconMap.getOrPut(pkgName) {
-            ExtensionLoader.getExtensionPackageInfoFromPkgName(context, pkgName)!!.applicationInfo!!
-                .loadIcon(context.packageManager)
-        }
+        iconMap[pkgName]?.let { return it }
+
+        // The extension can be orphaned: still listed in memory while its package or private
+        // apk file is already gone. Resolving it must never throw, this runs during composition.
+        val icon = try {
+            ExtensionLoader.getExtensionPackageInfoFromPkgName(context, pkgName)
+                ?.applicationInfo
+                ?.loadIcon(context.packageManager)
+        } catch (e: Exception) {
+            logcat(LogPriority.WARN, e) { "Failed to load icon for extension $pkgName" }
+            null
+        } ?: return null
+
+        iconMap[pkgName] = icon
+        return icon
     }
 
     private var availableExtensionsSourcesData: Map<Long, StubSource> = emptyMap()
@@ -133,6 +144,8 @@ class ExtensionManager(
      * Finds the available extensions in the [api] and updates [availableExtensionMapFlow].
      */
     suspend fun findAvailableExtensions() {
+        refreshInstalledExtensions()
+
         val extensions: List<Extension.Available> = try {
             api.findExtensions()
         } catch (e: Exception) {
@@ -146,6 +159,33 @@ class ExtensionManager(
         availableExtensionMapFlow.value = extensions.associateBy { it.pkgName }
         updatedInstalledExtensionsStatuses(extensions)
         setupAvailableExtensionsSourcesDataMap(extensions)
+    }
+
+    /**
+     * Reconciles the in-memory state with PackageManager and private extension files. This recovers
+     * from package broadcasts that were missed while the process was stopped or being initialized.
+     */
+    private fun refreshInstalledExtensions() {
+        val previousInstalled = installedExtensionMapFlow.value
+        val extensions = ExtensionLoader.loadExtensions(context)
+
+        installedExtensionMapFlow.value = extensions
+            .filterIsInstance<LoadResult.Success>()
+            .associate { result ->
+                val extension = result.extension
+                val previous = previousInstalled[extension.pkgName]
+                extension.pkgName to extension.copy(
+                    hasUpdate = previous?.hasUpdate ?: false,
+                    isObsolete = previous?.isObsolete ?: false,
+                    store = previous?.store,
+                )
+            }
+
+        untrustedExtensionMapFlow.value = extensions
+            .filterIsInstance<LoadResult.Untrusted>()
+            .associate { it.extension.pkgName to it.extension }
+
+        updatePendingUpdatesCount()
     }
 
     /**
@@ -238,7 +278,11 @@ class ExtensionManager(
      */
     fun updateExtension(extension: Extension.Installed): Flow<InstallStep> {
         val availableExt = availableExtensionMapFlow.value[extension.pkgName] ?: return emptyFlow()
-        return installExtension(availableExt)
+        return installer.downloadAndInstall(
+            availableExt.apkUrl,
+            availableExt,
+            isUpdateForPrivatelyInstalled = !extension.isShared,
+        )
     }
 
     fun cancelInstallUpdateExtension(extension: Extension) {

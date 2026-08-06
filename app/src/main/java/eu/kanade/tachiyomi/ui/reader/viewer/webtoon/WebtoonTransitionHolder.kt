@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.ui.reader.viewer.ReaderTransitionView
 import eu.kanade.tachiyomi.util.system.dpToPx
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import tachiyomi.core.common.i18n.stringResource
@@ -83,11 +84,13 @@ class WebtoonTransitionHolder(
     private fun observeStatus(chapter: ReaderChapter, transition: ChapterTransition) {
         stateJob?.cancel()
         stateJob = scope.launch {
-            chapter.stateFlow
-                .collectLatest { state ->
+            combine(chapter.stateFlow, chapter.retryState.retryCount) { state, retryCount ->
+                state to retryCount
+            }
+                .collectLatest { (state, retryCount) ->
                     pagesContainer.removeAllViews()
                     when (state) {
-                        is ReaderChapter.State.Loading -> setLoading()
+                        is ReaderChapter.State.Loading -> setLoading(retryCount, chapter.retryState.maxRetries)
                         is ReaderChapter.State.Error -> setError(state.error, transition)
                         is ReaderChapter.State.Wait, is ReaderChapter.State.Loaded -> {
                             // No additional view is added
@@ -101,13 +104,17 @@ class WebtoonTransitionHolder(
     /**
      * Sets the loading state on the pages container.
      */
-    private fun setLoading() {
+    private fun setLoading(retryCount: Int, maxRetries: Int) {
         val progress = CircularProgressIndicator(context)
         progress.isIndeterminate = true
 
         val textView = AppCompatTextView(context).apply {
             wrapContent()
-            text = context.stringResource(MR.strings.transition_pages_loading)
+            text = if (retryCount > 0) {
+                context.stringResource(MR.strings.reader_retrying, retryCount, maxRetries)
+            } else {
+                context.stringResource(MR.strings.transition_pages_loading)
+            }
         }
 
         pagesContainer.addView(progress)

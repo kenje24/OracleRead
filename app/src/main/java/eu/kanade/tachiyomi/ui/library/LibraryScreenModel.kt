@@ -849,13 +849,7 @@ class LibraryScreenModel(
                 if (it.isSystemCategory) defaultCategoryTitle else it.name
             }
             val title = if (showCategoryTabs) defaultTitle else categoryName
-            val count = when {
-                !showMangaCount -> null
-                !showCategoryTabs -> getItemCountForCategory(category)
-                // Whole library count
-                else -> libraryData.favorites.size
-            }
-            return LibraryToolbarTitle(title, count)
+            return LibraryToolbarTitle(title)
         }
     }
 }

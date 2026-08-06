@@ -12,6 +12,7 @@ import tachiyomi.domain.manga.model.MangaCover
 @Composable
 internal fun LibraryCompactGrid(
     items: List<LibraryItem>,
+    featuredItem: LibraryItem?,
     showTitle: Boolean,
     columns: Int,
     contentPadding: PaddingValues,
@@ -19,6 +20,7 @@ internal fun LibraryCompactGrid(
     onClick: (LibraryManga) -> Unit,
     onLongClick: (LibraryManga) -> Unit,
     onClickContinueReading: ((LibraryManga) -> Unit)?,
+    onFeaturedContinueReading: (LibraryManga) -> Unit,
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
 ) {
@@ -28,6 +30,16 @@ internal fun LibraryCompactGrid(
         contentPadding = contentPadding,
     ) {
         globalSearchItem(searchQuery, onGlobalSearchClicked)
+
+        featuredItem?.let { featured ->
+            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                FeaturedMangaCard(
+                    item = featured,
+                    onClick = { onClick(featured.libraryManga) },
+                    onContinue = { onFeaturedContinueReading(featured.libraryManga) },
+                )
+            }
+        }
 
         items(
             items = items,

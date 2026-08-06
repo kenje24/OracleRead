@@ -24,6 +24,7 @@ import eu.kanade.domain.manga.model.toSManga
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.notification.Notifications
+import eu.kanade.tachiyomi.source.MangaUpdateCoordinator
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import eu.kanade.tachiyomi.util.storage.getUriCompat
@@ -90,6 +91,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val syncChaptersWithSource: SyncChaptersWithSource = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
     private val filterChaptersForDownload: FilterChaptersForDownload = Injekt.get()
+    private val mangaUpdateCoordinator: MangaUpdateCoordinator = Injekt.get()
 
     private val notifier = LibraryUpdateNotifier(context)
 
@@ -331,19 +333,25 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private suspend fun updateManga(manga: Manga, fetchWindow: Pair<Long, Long>): List<Chapter> {
         val source = sourceManager.getOrStub(manga.source)
 
-        // Update manga metadata if needed
-        if (libraryPreferences.autoUpdateMetadata.get()) {
-            val networkManga = source.getMangaDetails(manga.toSManga())
-            updateManga.awaitUpdateFromSource(manga, networkManga, manualFetch = false, coverCache)
+        val fetchDetails = libraryPreferences.autoUpdateMetadata.get()
+        val remoteUpdate = mangaUpdateCoordinator.update(
+            source = source,
+            manga = manga.toSManga(),
+            chapters = emptyList(),
+            fetchDetails = fetchDetails,
+            fetchChapters = true,
+        )
+        if (fetchDetails) {
+            remoteUpdate.manga?.let {
+                updateManga.awaitUpdateFromSource(manga, it, manualFetch = false, coverCache)
+            }
         }
-
-        val chapters = source.getChapterList(manga.toSManga())
 
         // Get manga from database to account for if it was removed during the update and
         // to get latest data so it doesn't get overwritten later on
         val dbManga = getManga.await(manga.id)?.takeIf { it.favorite } ?: return emptyList()
 
-        return syncChaptersWithSource.await(chapters, dbManga, source, false, fetchWindow)
+        return syncChaptersWithSource.await(remoteUpdate.chapters.orEmpty(), dbManga, source, false, fetchWindow)
     }
 
     private suspend fun withUpdateNotification(

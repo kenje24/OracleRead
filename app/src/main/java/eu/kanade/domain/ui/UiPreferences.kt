@@ -1,6 +1,7 @@
 package eu.kanade.domain.ui
 
 import eu.kanade.domain.ui.model.AppTheme
+import eu.kanade.domain.ui.model.NavigationBarMode
 import eu.kanade.domain.ui.model.TabletUiMode
 import eu.kanade.domain.ui.model.ThemeMode
 import eu.kanade.tachiyomi.util.system.DeviceUtil
@@ -34,6 +35,11 @@ class UiPreferences(
     val dateFormat: Preference<String> = preferenceStore.getString("app_date_format", "")
 
     val tabletUiMode: Preference<TabletUiMode> = preferenceStore.getEnum("tablet_ui_mode", TabletUiMode.AUTOMATIC)
+
+    val navigationBarMode: Preference<NavigationBarMode> = preferenceStore.getEnum(
+        "navigation_bar_mode",
+        NavigationBarMode.COMPACT,
+    )
 
     val imagesInDescription: Preference<Boolean> = preferenceStore.getBoolean("pref_render_images_description", true)
 

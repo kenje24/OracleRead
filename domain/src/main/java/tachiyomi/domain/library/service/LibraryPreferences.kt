@@ -69,6 +69,11 @@ class LibraryPreferences(
         false,
     )
 
+    val showFeaturedManga: Preference<Boolean> = preferenceStore.getBoolean(
+        "display_featured_manga",
+        true,
+    )
+
     val markDuplicateReadChapterAsRead: Preference<Set<String>> = preferenceStore.getStringSet(
         "mark_duplicate_read_chapter_read",
         emptySet(),
@@ -201,6 +206,21 @@ class LibraryPreferences(
     val hideMissingChapters: Preference<Boolean> = preferenceStore.getBoolean(
         "pref_hide_missing_chapter_indicators",
         false,
+    )
+
+    val hideDecimalChapters: Preference<Boolean> = preferenceStore.getBoolean(
+        "pref_hide_decimal_chapters",
+        false,
+    )
+
+    val hideDecimalChaptersMangaIds: Preference<Set<String>> = preferenceStore.getStringSet(
+        "pref_hide_decimal_chapters_manga_ids",
+        emptySet(),
+    )
+
+    val showDecimalChaptersMangaIds: Preference<Set<String>> = preferenceStore.getStringSet(
+        "pref_show_decimal_chapters_manga_ids",
+        emptySet(),
     )
     // endregion
 

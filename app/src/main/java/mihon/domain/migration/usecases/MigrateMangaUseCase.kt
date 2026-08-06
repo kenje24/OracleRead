@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
+import eu.kanade.tachiyomi.source.MangaUpdateCoordinator
 import kotlinx.coroutines.CancellationException
 import mihon.domain.migration.models.MigrationFlag
 import tachiyomi.domain.category.interactor.GetCategories
@@ -37,6 +38,7 @@ class MigrateMangaUseCase(
     private val getTracks: GetTracks,
     private val insertTrack: InsertTrack,
     private val coverCache: CoverCache,
+    private val mangaUpdateCoordinator: MangaUpdateCoordinator,
 ) {
     private val enhancedServices by lazy { trackerManager.trackers.filterIsInstance<EnhancedTracker>() }
 
@@ -46,7 +48,13 @@ class MigrateMangaUseCase(
         val flags = sourcePreferences.migrationFlags.get()
 
         try {
-            val chapters = targetSource.getChapterList(target.toSManga())
+            val chapters = mangaUpdateCoordinator.update(
+                source = targetSource,
+                manga = target.toSManga(),
+                chapters = emptyList(),
+                fetchDetails = false,
+                fetchChapters = true,
+            ).chapters.orEmpty()
 
             try {
                 syncChaptersWithSource.await(chapters, target, targetSource)

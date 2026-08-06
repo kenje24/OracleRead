@@ -13,7 +13,6 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.preference.asState
 import eu.kanade.core.util.addOrRemove
-import eu.kanade.core.util.insertSeparators
 import eu.kanade.domain.chapter.interactor.GetAvailableScanlators
 import eu.kanade.domain.chapter.interactor.SetReadStatus
 import eu.kanade.domain.chapter.interactor.SyncChaptersWithSource
@@ -37,6 +36,7 @@ import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.network.HttpException
+import eu.kanade.tachiyomi.source.MangaUpdateCoordinator
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.util.chapter.getNextUnread
@@ -71,7 +71,6 @@ import tachiyomi.domain.chapter.interactor.UpdateChapter
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.chapter.model.ChapterUpdate
 import tachiyomi.domain.chapter.model.NoChaptersException
-import tachiyomi.domain.chapter.service.calculateChapterGap
 import tachiyomi.domain.chapter.service.getChapterSort
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetDuplicateLibraryManga
@@ -88,6 +87,12 @@ import tachiyomi.source.local.isLocal
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.math.floor
+
+/** Largest gap between two chapter numbers that is still treated as missing chapters. */
+private const val MAX_MISSING_CHAPTER_GAP = 500
+
+/** Upper bound on missing chapter rows generated for a single manga. */
+private const val MAX_MISSING_CHAPTER_PLACEHOLDERS = 1000
 
 class MangaScreenModel(
     private val context: Context,
@@ -118,6 +123,7 @@ class MangaScreenModel(
     private val setMangaCategories: SetMangaCategories = Injekt.get(),
     private val mangaRepository: MangaRepository = Injekt.get(),
     private val filterChaptersForDownload: FilterChaptersForDownload = Injekt.get(),
+    private val mangaUpdateCoordinator: MangaUpdateCoordinator = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
 ) : StateScreenModel<MangaScreenModel.State>(State.Loading) {
 
@@ -176,6 +182,7 @@ class MangaScreenModel(
                         it.copy(
                             manga = manga,
                             chapters = chapters.toChapterListItems(manga),
+                            hideDecimalChapters = isHideDecimalChaptersEnabled(manga.id),
                         )
                     }
                 }
@@ -215,7 +222,10 @@ class MangaScreenModel(
             }
 
             val needRefreshInfo = !manga.initialized
-            val needRefreshChapter = chapters.isEmpty()
+            val needRefreshChapter = shouldRefreshChapters(
+                mangaInitialized = manga.initialized,
+                chapterCount = chapters.size,
+            )
 
             // Show what we have earlier
             mutableState.update {
@@ -229,6 +239,7 @@ class MangaScreenModel(
                     isRefreshingData = needRefreshInfo || needRefreshChapter,
                     dialog = null,
                     hideMissingChapters = libraryPreferences.hideMissingChapters.get(),
+                    hideDecimalChapters = isHideDecimalChaptersEnabled(manga.id),
                 )
             }
 
@@ -236,12 +247,11 @@ class MangaScreenModel(
             observeTrackers()
 
             // Fetch info-chapters when needed
-            if (screenModelScope.isActive) {
-                val fetchFromSourceTasks = listOf(
-                    async { if (needRefreshInfo) fetchMangaFromSource() },
-                    async { if (needRefreshChapter) fetchChaptersFromSource() },
+            if (screenModelScope.isActive && (needRefreshInfo || needRefreshChapter)) {
+                fetchFromSource(
+                    fetchDetails = needRefreshInfo,
+                    fetchChapters = needRefreshChapter,
                 )
-                fetchFromSourceTasks.awaitAll()
             }
 
             // Initial loading finished
@@ -252,37 +262,71 @@ class MangaScreenModel(
     fun fetchAllFromSource(manualFetch: Boolean = true) {
         screenModelScope.launch {
             updateSuccessState { it.copy(isRefreshingData = true) }
-            val fetchFromSourceTasks = listOf(
-                async { fetchMangaFromSource(manualFetch) },
-                async { fetchChaptersFromSource(manualFetch) },
+            fetchFromSource(
+                fetchDetails = true,
+                fetchChapters = true,
+                manualFetch = manualFetch,
             )
-            fetchFromSourceTasks.awaitAll()
             updateSuccessState { it.copy(isRefreshingData = false) }
         }
     }
 
     // Manga info - start
 
-    /**
-     * Fetch manga information from source.
-     */
-    private suspend fun fetchMangaFromSource(manualFetch: Boolean = false) {
+    private suspend fun fetchFromSource(
+        fetchDetails: Boolean,
+        fetchChapters: Boolean,
+        manualFetch: Boolean = false,
+    ) {
         val state = successState ?: return
         try {
             withIOContext {
-                val networkManga = state.source.getMangaDetails(state.manga.toSManga())
-                updateManga.awaitUpdateFromSource(state.manga, networkManga, manualFetch)
+                val localManga = state.manga.toSManga()
+                val remoteUpdate = mangaUpdateCoordinator.update(
+                    source = state.source,
+                    manga = localManga,
+                    chapters = emptyList(),
+                    fetchDetails = fetchDetails,
+                    fetchChapters = fetchChapters,
+                )
+
+                if (fetchDetails) {
+                    val networkManga = remoteUpdate.manga ?: localManga
+                    updateManga.awaitUpdateFromSource(state.manga, networkManga, manualFetch)
+                }
+
+                if (fetchChapters) {
+                    val newChapters = syncChaptersWithSource.await(
+                        remoteUpdate.chapters.orEmpty(),
+                        state.manga,
+                        state.source,
+                        manualFetch,
+                    )
+
+                    if (manualFetch) {
+                        downloadNewChapters(newChapters)
+                    }
+                }
             }
         } catch (e: Throwable) {
             // Ignore early hints "errors" that aren't handled by OkHttp
             if (e is HttpException && e.code == 103) return
 
-            logcat(LogPriority.ERROR, e)
-            screenModelScope.launch {
-                snackbarHostState.showSnackbar(message = with(context) { e.formattedMessage })
+            val message = if (e is NoChaptersException) {
+                context.stringResource(MR.strings.no_chapters_error)
+            } else {
+                logcat(LogPriority.ERROR, e)
+                with(context) { e.formattedMessage }
             }
+
+            screenModelScope.launch {
+                snackbarHostState.showSnackbar(message = message)
+            }
+            val newManga = mangaRepository.getMangaById(mangaId)
+            updateSuccessState { it.copy(manga = newManga, isRefreshingData = false) }
         }
     }
+
 
     fun toggleFavorite() {
         toggleFavorite(
@@ -548,41 +592,6 @@ class MangaScreenModel(
         }
     }
 
-    /**
-     * Requests an updated list of chapters from the source.
-     */
-    private suspend fun fetchChaptersFromSource(manualFetch: Boolean = false) {
-        val state = successState ?: return
-        try {
-            withIOContext {
-                val chapters = state.source.getChapterList(state.manga.toSManga())
-
-                val newChapters = syncChaptersWithSource.await(
-                    chapters,
-                    state.manga,
-                    state.source,
-                    manualFetch,
-                )
-
-                if (manualFetch) {
-                    downloadNewChapters(newChapters)
-                }
-            }
-        } catch (e: Throwable) {
-            val message = if (e is NoChaptersException) {
-                context.stringResource(MR.strings.no_chapters_error)
-            } else {
-                logcat(LogPriority.ERROR, e)
-                with(context) { e.formattedMessage }
-            }
-
-            screenModelScope.launch {
-                snackbarHostState.showSnackbar(message = message)
-            }
-            val newManga = mangaRepository.getMangaById(mangaId)
-            updateSuccessState { it.copy(manga = newManga, isRefreshingData = false) }
-        }
-    }
 
     /**
      * @throws IllegalStateException if the swipe action is [LibraryPreferences.ChapterSwipeAction.Disabled]
@@ -633,6 +642,38 @@ class MangaScreenModel(
     fun getNextUnreadChapter(): Chapter? {
         val successState = successState ?: return null
         return successState.chapters.getNextUnread(successState.manga)
+    }
+
+    private fun isHideDecimalChaptersEnabled(mangaId: Long): Boolean {
+        val key = mangaId.toString()
+        val globalEnabled = libraryPreferences.hideDecimalChapters.get()
+        return if (globalEnabled) {
+            key !in libraryPreferences.showDecimalChaptersMangaIds.get()
+        } else {
+            key in libraryPreferences.hideDecimalChaptersMangaIds.get()
+        }
+    }
+
+    fun toggleHideDecimalChapters() {
+        val successState = successState ?: return
+        val key = successState.manga.id.toString()
+        val globalEnabled = libraryPreferences.hideDecimalChapters.get()
+        val enabled = successState.hideDecimalChapters
+
+        if (globalEnabled) {
+            libraryPreferences.showDecimalChaptersMangaIds.set(
+                libraryPreferences.showDecimalChaptersMangaIds.get().toMutableSet().apply {
+                    if (enabled) add(key) else remove(key)
+                },
+            )
+        } else {
+            libraryPreferences.hideDecimalChaptersMangaIds.set(
+                libraryPreferences.hideDecimalChaptersMangaIds.get().toMutableSet().apply {
+                    if (enabled) remove(key) else add(key)
+                },
+            )
+        }
+        updateSuccessState { it.copy(hideDecimalChapters = !enabled) }
     }
 
     private fun getUnreadChapters(): List<Chapter> {
@@ -1139,6 +1180,7 @@ class MangaScreenModel(
             val dialog: Dialog? = null,
             val hasPromptedToAddBefore: Boolean = false,
             val hideMissingChapters: Boolean = false,
+            val hideDecimalChapters: Boolean = false,
         ) : State {
             val processedChapters by lazy {
                 chapters.applyFilters(manga).toList()
@@ -1153,29 +1195,48 @@ class MangaScreenModel(
                     return@lazy processedChapters
                 }
 
-                processedChapters.insertSeparators { before, after ->
-                    val (lowerChapter, higherChapter) = if (manga.sortDescending()) {
-                        after to before
-                    } else {
-                        before to after
-                    }
-                    if (higherChapter == null) return@insertSeparators null
-
-                    if (lowerChapter == null) {
-                        floor(higherChapter.chapter.chapterNumber)
-                            .toInt()
-                            .minus(1)
-                            .coerceAtLeast(0)
-                    } else {
-                        calculateChapterGap(higherChapter.chapter, lowerChapter.chapter)
-                    }
-                        .takeIf { it > 0 }
-                        ?.let { missingCount ->
-                            ChapterList.MissingCount(
-                                id = "${lowerChapter?.id}-${higherChapter.id}",
-                                count = missingCount,
-                            )
+                buildList<ChapterList> {
+                    var remainingPlaceholders = MAX_MISSING_CHAPTER_PLACEHOLDERS
+                    processedChapters.forEachIndexed { index, item ->
+                        val previous = processedChapters.getOrNull(index - 1)
+                        val (lowerChapter, higherChapter) = if (manga.sortDescending()) {
+                            item to previous
+                        } else {
+                            previous to item
                         }
+
+                        if (higherChapter != null && remainingPlaceholders > 0) {
+                            val first: Int
+                            val last: Int
+                            if (lowerChapter == null) {
+                                first = 1
+                                last = floor(higherChapter.chapter.chapterNumber).toInt() - 1
+                            } else {
+                                first = floor(lowerChapter.chapter.chapterNumber).toInt() + 1
+                                last = floor(higherChapter.chapter.chapterNumber).toInt() - 1
+                            }
+
+                            // Sources that put dates or ids in the chapter number would otherwise
+                            // expand into millions of placeholder rows, so ignore absurd gaps.
+                            val gap = last - first + 1
+                            if (gap in 1..MAX_MISSING_CHAPTER_GAP) {
+                                val missingNumbers = (first..last).let {
+                                    if (manga.sortDescending()) it.reversed() else it.toList()
+                                }
+                                missingNumbers.take(remainingPlaceholders).forEach { chapterNumber ->
+                                    add(
+                                        ChapterList.MissingChapter(
+                                            id = "missing-${manga.id}-$chapterNumber-${item.id}",
+                                            chapterNumber = chapterNumber,
+                                        ),
+                                    )
+                                }
+                                remainingPlaceholders -= gap
+                            }
+                        }
+
+                        add(item)
+                    }
                 }
             }
 
@@ -1195,6 +1256,10 @@ class MangaScreenModel(
                 val downloadedFilter = manga.downloadedFilter
                 val bookmarkedFilter = manga.bookmarkedFilter
                 return asSequence()
+                    .filter { (chapter) ->
+                        !hideDecimalChapters || chapter.chapterNumber < 0.0 ||
+                            chapter.chapterNumber % 1.0 == 0.0
+                    }
                     .filter { (chapter) -> applyFilter(unreadFilter) { !chapter.read } }
                     .filter { (chapter) -> applyFilter(bookmarkedFilter) { chapter.bookmark } }
                     .filter { applyFilter(downloadedFilter) { it.isDownloaded || isLocalManga } }
@@ -1207,9 +1272,9 @@ class MangaScreenModel(
 @Immutable
 sealed class ChapterList {
     @Immutable
-    data class MissingCount(
+    data class MissingChapter(
         val id: String,
-        val count: Int,
+        val chapterNumber: Int,
     ) : ChapterList()
 
     @Immutable

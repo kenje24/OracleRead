@@ -842,6 +842,8 @@
     <string name="chapter_progress">Page: %1$d</string>
     <string name="no_next_chapter">Next chapter not found</string>
     <string name="decode_image_error">The image couldn\'t be loaded</string>
+    <string name="reader_retrying">Retrying %1$d/%2$d</string>
+    <string name="reader_retry_failed">Failed after %1$d/%2$d retries\n%3$s</string>
     <string name="confirm_set_image_as_cover">Use this image as cover art?</string>
     <string name="pref_category_for_this_series">For this series</string>
     <string name="viewer">Reading mode</string>

@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runInterruptible
@@ -75,11 +76,24 @@ internal class HttpPageLoader(
             if (e is CancellationException) {
                 throw e
             }
-            source.getPageList(chapter.chapter)
+            loadRemotePageList()
         }
         return pages.mapIndexed { index, page ->
             // Don't trust sources and use our own indexing
             ReaderPage(index, page.url, page.imageUrl)
+        }
+    }
+
+    private suspend fun loadRemotePageList(): List<Page> {
+        chapter.retryState.reset()
+        while (true) {
+            try {
+                return source.getPageList(chapter.chapter)
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+                if (!chapter.retryState.recordFailure()) throw e
+                delay(RETRY_DELAY_MS)
+            }
         }
     }
 
@@ -120,10 +134,16 @@ internal class HttpPageLoader(
      * Retries a page. This method is only called from user interaction on the viewer.
      */
     override fun retryPage(page: ReaderPage) {
-        if (page.status is Page.State.Error) {
-            page.status = Page.State.Queue
-        }
+        page.retryState.reset()
+        page.status = Page.State.Queue
         queue.offer(PriorityPage(page, PriorityPage.RETRY))
+    }
+
+    override fun retryPageAutomatically(page: ReaderPage): Boolean {
+        if (!page.retryState.recordFailure()) return false
+        page.status = Page.State.Queue
+        queue.offer(PriorityPage(page, PriorityPage.RETRY))
+        return true
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -175,27 +195,40 @@ internal class HttpPageLoader(
      * @param page the page whose source image has to be downloaded.
      */
     private suspend fun internalLoadPage(page: ReaderPage, force: Boolean) {
-        try {
-            if (page.imageUrl.isNullOrEmpty()) {
-                page.status = Page.State.LoadPage
-                page.imageUrl = source.getImageUrl(page)
-            }
-            val imageUrl = page.imageUrl!!
+        var forceReload = force
+        while (true) {
+            try {
+                if (page.imageUrl.isNullOrEmpty()) {
+                    page.status = Page.State.LoadPage
+                    page.imageUrl = source.getImageUrl(page)
+                }
+                val imageUrl = page.imageUrl!!
 
-            if (force || !chapterCache.isImageInCache(imageUrl)) {
-                page.status = Page.State.DownloadImage
-                val imageResponse = source.getImage(page)
-                chapterCache.putImageToCache(imageUrl, imageResponse)
-            }
+                if (forceReload || !chapterCache.isImageInCache(imageUrl)) {
+                    page.status = Page.State.DownloadImage
+                    val imageResponse = source.getImage(page)
+                    chapterCache.putImageToCache(imageUrl, imageResponse)
+                }
 
-            page.stream = { chapterCache.getImageFile(imageUrl).inputStream() }
-            page.status = Page.State.Ready
-        } catch (e: Throwable) {
-            page.status = Page.State.Error(e)
-            if (e is CancellationException) {
-                throw e
+                page.stream = { chapterCache.getImageFile(imageUrl).inputStream() }
+                page.status = Page.State.Ready
+                return
+            } catch (e: Throwable) {
+                if (e is CancellationException) {
+                    throw e
+                }
+                if (!page.retryState.recordFailure()) {
+                    page.status = Page.State.Error(e)
+                    return
+                }
+                delay(RETRY_DELAY_MS)
+                forceReload = true
             }
         }
+    }
+
+    companion object {
+        private const val RETRY_DELAY_MS = 1_000L
     }
 }
 

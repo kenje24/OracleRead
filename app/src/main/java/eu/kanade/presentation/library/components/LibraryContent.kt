@@ -6,16 +6,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.material3.DrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,12 +20,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import eu.kanade.core.preference.PreferenceMutableState
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.category.folderAmbientTheme
-import eu.kanade.presentation.browse.components.SourceIcon
 import eu.kanade.tachiyomi.ui.library.LibraryItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -55,9 +52,9 @@ fun LibraryContent(
     showPageTabs: Boolean,
     onChangeCurrentPage: (Int) -> Unit,
     onClickManga: (Long) -> Unit,
-    onClickSourceShortcut: (Source) -> Unit,
     onLongClickFolder: (Category) -> Unit,
     onContinueReadingClicked: ((LibraryManga) -> Unit)?,
+    onFeaturedContinueReadingClicked: (LibraryManga) -> Unit,
     onToggleSelection: (Category, LibraryManga) -> Unit,
     onToggleRangeSelection: (Category, LibraryManga) -> Unit,
     onRefresh: () -> Boolean,
@@ -67,45 +64,20 @@ fun LibraryContent(
     getDisplayMode: (Int) -> PreferenceMutableState<LibraryDisplayMode>,
     getColumnsForOrientation: (Boolean) -> PreferenceMutableState<Int>,
     getItemsForCategory: (Category) -> List<LibraryItem>,
+    drawerState: DrawerState,
 ) {
     val appTheme by remember { Injekt.get<UiPreferences>().appTheme }.collectAsState()
-    val folderStyles by remember { Injekt.get<LibraryPreferences>().folderStyles }.collectAsState()
+    val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
+    val folderStyles by libraryPreferences.folderStyles.collectAsState()
+    val showFeaturedManga by libraryPreferences.showFeaturedManga.collectAsState()
     val ambientTheme = categories
         .getOrNull(currentPage.coerceIn(0, categories.lastIndex.coerceAtLeast(0)))
         ?.folderAmbientTheme(folderStyles)
         ?: appTheme
 
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val drawerScope = rememberCoroutineScope()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        gesturesEnabled = sourceShortcuts.isNotEmpty() && selection.isEmpty(),
-        drawerContent = {
-            ModalDrawerSheet {
-                Text(
-                    text = "Extensions in your library",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp),
-                )
-                sourceShortcuts.forEach { source ->
-                    NavigationDrawerItem(
-                        label = { Text(source.name) },
-                        selected = false,
-                        icon = { SourceIcon(source = source, modifier = Modifier.size(24.dp)) },
-                        onClick = {
-                            drawerScope.launch {
-                                drawerState.close()
-                                onClickSourceShortcut(source)
-                            }
-                        },
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                    )
-                }
-            }
-        },
-    ) {
-        Box(
+    Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
@@ -180,13 +152,36 @@ fun LibraryContent(
                     },
                     onLongClickManga = onToggleRangeSelection,
                     onClickContinueReading = onContinueReadingClicked,
+                    onFeaturedContinueReading = onFeaturedContinueReadingClicked,
+                    showFeaturedManga = showFeaturedManga,
                 )
             }
 
             LaunchedEffect(pagerState.currentPage) {
+                if (drawerState.isOpen) drawerState.close()
                 onChangeCurrentPage(pagerState.currentPage)
                 }
             }
-        }
+            if (selection.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .fillMaxHeight()
+                        .width(48.dp)
+                        .pointerInput(sourceShortcuts) {
+                            var distance = 0f
+                            detectHorizontalDragGestures(
+                                onDragStart = { distance = 0f },
+                                onHorizontalDrag = { _, amount ->
+                                    distance += amount
+                                    if (distance > 32.dp.toPx()) {
+                                        distance = Float.NEGATIVE_INFINITY
+                                        drawerScope.launch { drawerState.open() }
+                                    }
+                                },
+                            )
+                        },
+                )
+            }
         }
     }

@@ -15,6 +15,7 @@ import eu.kanade.domain.manga.model.copyFrom
 import eu.kanade.domain.manga.model.toSManga
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.notification.Notifications
+import eu.kanade.tachiyomi.source.MangaUpdateCoordinator
 import eu.kanade.tachiyomi.util.prepUpdateCover
 import eu.kanade.tachiyomi.util.system.isRunning
 import eu.kanade.tachiyomi.util.system.setForegroundSafely
@@ -49,6 +50,7 @@ class MetadataUpdateJob(private val context: Context, workerParams: WorkerParame
     private val coverCache: CoverCache = Injekt.get()
     private val getLibraryManga: GetLibraryManga = Injekt.get()
     private val updateManga: UpdateManga = Injekt.get()
+    private val mangaUpdateCoordinator: MangaUpdateCoordinator = Injekt.get()
 
     private val notifier = LibraryUpdateNotifier(context)
 
@@ -120,7 +122,13 @@ class MetadataUpdateJob(private val context: Context, workerParams: WorkerParame
                                 ) {
                                     val source = sourceManager.get(manga.source) ?: return@withUpdateNotification
                                     try {
-                                        val networkManga = source.getMangaDetails(manga.toSManga())
+                                        val networkManga = mangaUpdateCoordinator.update(
+                                            source = source,
+                                            manga = manga.toSManga(),
+                                            chapters = emptyList(),
+                                            fetchDetails = true,
+                                            fetchChapters = false,
+                                        ).manga ?: manga.toSManga()
                                         val updatedManga = manga.prepUpdateCover(coverCache, networkManga, true)
                                             .copyFrom(networkManga)
                                         try {
