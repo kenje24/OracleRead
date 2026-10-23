@@ -24,7 +24,7 @@ The design system is documented in [DESIGN.md](DESIGN.md) and the product princi
 
 OracleRead also adds:
 
-- a Community space
+- a Community space and OracleRead accounts (in progress, coming in a future update)
 - reader auto-retry
 - a reading streak
 - pinned manga

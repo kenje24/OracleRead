@@ -22,14 +22,23 @@ below this section are the upstream changes included in this release.
   - a library with a continue-reading hero, folder-coloured tabs, ambient folder backgrounds and poster covers
   - manga pages staged on their own blurred cover art, with a cover-derived accent colour
   - redesigned updates, history, browse, more, settings, about, onboarding and reader controls
+  - a textured home: an aurora and silk backdrop (a GPU shader on Android 13+) with film grain, shimmering serif
+    titles and grain-textured glass with lantern-lit edges, plus a time-of-day greeting and a "Keep reading"
+    shelf in the library
 - Every previous theme is still available, and light mode is one tap away.
 - Default extension stores (Keiyoushi, Yūzōnō) are added once on first launch, including on fresh installs.
+- OracleRead accounts and Community are paused for now. Their entry points stay visible, marked "In progress".
+
+### Fixed
+- Extensions sometimes never finished installing. If the download completed after you left the app, Android
+  silently blocked the install confirmation and the extension stayed at "Installing" forever, also holding up
+  later installs and updates. The confirmation now waits for you: a "Tap to confirm" notification, and it opens
+  by itself when you return to the app. An install the system stops part-way now shows Retry instead of hanging.
 
 ### Other
 - Synced with Mihon `main` at `d001e6f21` (481 upstream commits). This includes Metro DI, Material Symbols,
   the TachiyomiX 1.6 source API and database migrations 14–19. Libraries from OracleRead 1.3.x upgrade in place.
 - OracleRead features kept across the sync:
-  - Community
   - reader auto-retry
   - reading streak
   - pinned manga

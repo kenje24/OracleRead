@@ -66,6 +66,28 @@ and their licenses in `presentation-core/src/main/assets/licenses/`.
 | `OraclePoster` / `OraclePill` | Cover cards with a vignette, status pills and a lantern selection ring. |
 | `OraclePillTabs` | Scrolling pill tabs; folders show their accent, icon and count. |
 
+## Texture and light (`OracleTexture.kt`)
+
+These are native Compose versions of React Bits effects. React Bits itself is web-only (React/CSS/WebGL), so it
+cannot run in the app.
+
+| Effect | React Bits counterpart | Implementation |
+|---|---|---|
+| `OracleAuroraBackdrop` | Aurora / Silk | AGSL `RuntimeShader` on Android 13+: two aurora curtains in primary and secondary, bent by fbm "silk" noise, with an ember glow from tertiary at the bottom. Before Android 13: soft static radial gradients. Sits behind every home tab. |
+| `Modifier.oracleGrain` | Noise | A seamless 192px monochrome grain tile drawn as a repeating `ImageShader`: over backdrops at about 5.5% and behind glass content at 4%, so text stays clean. |
+| `OracleShinyText` | ShinyText / GradientText | A lantern-light sweep across serif titles (`OracleLargeTopBar`), every 5.2 s. |
+| `oracleHairline()` | gradient borders | Glass edges lit from the top-left in primary, fading into `outlineVariant`. |
+
+Home tab scaffolds read `LocalScaffoldContainerColor` (provided as transparent by `HomeScreen`), so the backdrop shows
+through. Screens pushed on top keep an opaque background. The shader time, the title sweep and every ambient loop
+hold still under reduced motion.
+
+## In-progress features
+
+`OracleInProgressPill` (an hourglass and "In progress" on `tertiaryContainer`) marks features that are visible but
+not available yet: OracleRead Account, Community, and the profile and community quick actions. Tapping one only
+explains that it is coming in a future update.
+
 ## Surfaces
 
 - **Navigation.** `HomeScreen` shows the floating dock, or the rail on tablets. Compact mode (3 tabs, Browse
@@ -73,7 +95,7 @@ and their licenses in `presentation-core/src/main/assets/licenses/`.
 - **Library.** A serif title with the reading streak, folder pills, the ambient folder background, the
   continue-reading hero, source shortcuts and a poster grid. Pin, featured and folder styles all work.
 - **Manga detail.** Cover backdrop, cover-derived accent, large poster, serif title, glass action tiles (library,
-  interval, tracking, WebView, Community) and the chapter list.
+  interval, tracking, WebView, and Community marked "In progress") and the chapter list.
 - **Updates, history, browse, more, settings, about, onboarding and reader chrome** use the same headers, glass cards
   and pills. The reader page itself is never restyled.
 
