@@ -1,7 +1,7 @@
 # OracleRead cinematic redesign — design
 
 Date: 2026-10-23
-Status: in implementation
+Status: implemented on branch sync/mihon-2026-10 (not pushed); awaiting owner review
 Sub-project 2 of 2. Builds on the Mihon sync (`2026-10-23-mihon-sync-design.md`).
 
 ## Intent

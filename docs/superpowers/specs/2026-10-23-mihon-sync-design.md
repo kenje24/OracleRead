@@ -1,7 +1,7 @@
 # Mihon upstream sync — design
 
 Date: 2026-10-23
-Status: awaiting review
+Status: implemented on branch sync/mihon-2026-10 (not pushed)
 Sub-project 1 of 2. Sub-project 2 (cinematic / immersive UI redesign) gets its own spec after this ships.
 
 ## Goal
