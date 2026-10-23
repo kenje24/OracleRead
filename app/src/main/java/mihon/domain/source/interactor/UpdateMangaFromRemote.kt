@@ -49,6 +49,7 @@ class UpdateMangaFromRemote(
             fetchDetails = fetchDetails,
             fetchChapters = fetchChapters,
             manualFetch = manualFetch,
+            fetchWindow = fetchWindow,
         )
     }
 
