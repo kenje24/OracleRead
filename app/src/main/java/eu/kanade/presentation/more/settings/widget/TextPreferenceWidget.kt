@@ -2,7 +2,6 @@ package eu.kanade.presentation.more.settings.widget
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,10 +44,9 @@ fun TextPreferenceWidget(
         },
         icon = if (icon != null) {
             {
-                Icon(
-                    imageVector = icon,
+                OracleIconTile(
+                    icon = icon,
                     tint = iconTint,
-                    contentDescription = null,
                 )
             }
         } else {

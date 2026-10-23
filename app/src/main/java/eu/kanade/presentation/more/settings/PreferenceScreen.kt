@@ -1,10 +1,11 @@
 package eu.kanade.presentation.more.settings
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import eu.kanade.presentation.more.settings.screen.SearchableSettings
 import eu.kanade.presentation.more.settings.widget.PreferenceGroupHeader
+import eu.kanade.presentation.more.settings.widget.oracleCardSegment
 import kotlinx.coroutines.delay
 import tachiyomi.presentation.core.components.ScrollbarLazyColumn
 import kotlin.time.Duration.Companion.seconds
@@ -60,11 +62,26 @@ fun PreferenceScreen(
                             )
                         }
                     }
-                    items(preference.preferenceItems) { item ->
-                        PreferenceItem(
-                            item = item,
-                            highlightKey = highlightKey,
-                        )
+                    // Rows of a group render as one rounded glass card; hidden rows don't count as its ends
+                    val groupItems = preference.preferenceItems
+                    val firstVisible = groupItems.indexOfFirst { it.visible }
+                    val lastVisible = groupItems.indexOfLast { it.visible }
+                    itemsIndexed(groupItems) { index, item ->
+                        Box(
+                            modifier = if (item.visible) {
+                                Modifier.oracleCardSegment(
+                                    isFirst = index == firstVisible,
+                                    isLast = index == lastVisible,
+                                )
+                            } else {
+                                Modifier
+                            },
+                        ) {
+                            PreferenceItem(
+                                item = item,
+                                highlightKey = highlightKey,
+                            )
+                        }
                     }
                     item {
                         if (i < items.lastIndex) {

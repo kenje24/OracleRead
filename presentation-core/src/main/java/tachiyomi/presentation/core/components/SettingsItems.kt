@@ -41,9 +41,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.icerock.moko.resources.StringResource
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.ArrowDownward
@@ -58,13 +61,12 @@ import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.Slider
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
-import tachiyomi.presentation.core.theme.header
 import tachiyomi.presentation.core.util.collectAsState
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 
 object SettingsItemsPaddings {
     val Horizontal = 24.dp
-    val Vertical = 10.dp
+    val Vertical = 12.dp
 }
 
 @Composable
@@ -72,17 +74,22 @@ fun HeadingItem(labelRes: StringResource) {
     HeadingItem(stringResource(labelRes))
 }
 
+/** Section heading in the headline serif, colored with the theme primary. */
 @Composable
 fun HeadingItem(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.header,
+        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 18.sp, lineHeight = 24.sp),
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = SettingsItemsPaddings.Horizontal,
-                vertical = SettingsItemsPaddings.Vertical,
-            ),
+                start = SettingsItemsPaddings.Horizontal,
+                end = SettingsItemsPaddings.Horizontal,
+                top = SettingsItemsPaddings.Vertical + 4.dp,
+                bottom = SettingsItemsPaddings.Vertical,
+            )
+            .semantics { heading() },
     )
 }
 
@@ -447,12 +454,12 @@ private fun BaseSettingsItem(
                 vertical = SettingsItemsPaddings.Vertical,
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         widget(this)
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
         )
     }
 }

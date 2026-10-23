@@ -69,7 +69,7 @@ internal class StorageStep : OnboardingStep {
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 8.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
 
             Text(stringResource(MR.strings.onboarding_storage_help_info, stringResource(MR.strings.app_name)))

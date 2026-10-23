@@ -121,7 +121,7 @@ internal class PermissionStep : OnboardingStep {
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
 
             val crashlyticsPref = privacyPreferences.crashlytics

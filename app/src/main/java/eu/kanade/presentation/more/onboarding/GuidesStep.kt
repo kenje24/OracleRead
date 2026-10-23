@@ -42,7 +42,7 @@ internal class GuidesStep(
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 8.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
 
             Text(stringResource(MR.strings.onboarding_guides_returning_user, stringResource(MR.strings.app_name)))

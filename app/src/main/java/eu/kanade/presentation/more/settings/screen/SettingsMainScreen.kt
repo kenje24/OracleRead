@@ -1,12 +1,12 @@
 package eu.kanade.presentation.more.settings.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBarDefaults
@@ -16,7 +16,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,6 +29,7 @@ import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.more.settings.screen.about.AboutScreen
 import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
+import eu.kanade.presentation.more.settings.widget.oracleCardSegment
 import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.presentation.util.Screen
 import mihon.icons.materialsymbols.MaterialSymbols
@@ -126,32 +126,38 @@ object SettingsMainScreen : Screen() {
                         key = { _, item -> item.hashCode() },
                     ) { index, item ->
                         val selected = indexSelected == index
-                        var modifier: Modifier = Modifier
-                        var contentColor = LocalContentColor.current
-                        if (twoPane) {
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .clip(RoundedCornerShape(24.dp))
-                                .then(
-                                    if (selected) {
-                                        Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                                    } else {
-                                        Modifier
-                                    },
-                                )
-                            if (selected) {
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            }
+                        // Consecutive items sharing a group render as one rounded glass card
+                        val isFirst = index == 0 || items[index - 1].group != item.group
+                        val isLast = index == items.lastIndex || items[index + 1].group != item.group
+                        val contentColor = if (selected) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            LocalContentColor.current
                         }
                         CompositionLocalProvider(LocalContentColor provides contentColor) {
                             TextPreferenceWidget(
-                                modifier = modifier,
+                                modifier = Modifier
+                                    .padding(
+                                        top = when {
+                                            !isFirst -> 0.dp
+                                            index == 0 -> 8.dp
+                                            else -> 14.dp
+                                        },
+                                    )
+                                    .oracleCardSegment(
+                                        isFirst = isFirst,
+                                        isLast = isLast,
+                                        selected = selected,
+                                    ),
                                 title = stringResource(item.titleRes),
                                 subtitle = item.formatSubtitle(),
                                 icon = item.icon,
                                 onPreferenceClick = { navigator.navigate(item.screen, twoPane) },
                             )
                         }
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             },
@@ -168,6 +174,8 @@ object SettingsMainScreen : Screen() {
         val formatSubtitle: @Composable () -> String? = { subtitleRes?.let { stringResource(it) } },
         val icon: ImageVector,
         val screen: VoyagerScreen,
+        /** Items with the same group share one glass card. */
+        val group: Int,
     )
 
     private val items = listOf(
@@ -176,54 +184,63 @@ object SettingsMainScreen : Screen() {
             subtitleRes = MR.strings.pref_appearance_summary,
             icon = MaterialSymbols.Rounded.Palette,
             screen = SettingsAppearanceScreen,
+            group = 0,
         ),
         Item(
             titleRes = MR.strings.pref_category_library,
             subtitleRes = MR.strings.pref_library_summary,
             icon = MaterialSymbols.Rounded.CollectionsBookmark,
             screen = SettingsLibraryScreen,
+            group = 0,
         ),
         Item(
             titleRes = MR.strings.pref_category_reader,
             subtitleRes = MR.strings.pref_reader_summary,
             icon = MaterialSymbols.AutoMirroredRounded.ChromeReaderMode,
             screen = SettingsReaderScreen,
+            group = 0,
         ),
         Item(
             titleRes = MR.strings.pref_category_downloads,
             subtitleRes = MR.strings.pref_downloads_summary,
             icon = MaterialSymbols.Rounded.Download,
             screen = SettingsDownloadScreen,
+            group = 1,
         ),
         Item(
             titleRes = MR.strings.pref_category_tracking,
             subtitleRes = MR.strings.pref_tracking_summary,
             icon = MaterialSymbols.Rounded.Sync,
             screen = SettingsTrackingScreen,
+            group = 1,
         ),
         Item(
             titleRes = MR.strings.browse,
             subtitleRes = MR.strings.pref_browse_summary,
             icon = MaterialSymbols.Rounded.Explore,
             screen = SettingsBrowseScreen,
+            group = 1,
         ),
         Item(
             titleRes = MR.strings.label_data_storage,
             subtitleRes = MR.strings.pref_backup_summary,
             icon = MaterialSymbols.Rounded.Storage,
             screen = SettingsDataScreen,
+            group = 2,
         ),
         Item(
             titleRes = MR.strings.pref_category_security,
             subtitleRes = MR.strings.pref_security_summary,
             icon = MaterialSymbols.Rounded.Security,
             screen = SettingsSecurityScreen,
+            group = 2,
         ),
         Item(
             titleRes = MR.strings.pref_category_advanced,
             subtitleRes = MR.strings.pref_advanced_summary,
             icon = MaterialSymbols.Rounded.Code,
             screen = SettingsAdvancedScreen,
+            group = 2,
         ),
         Item(
             titleRes = MR.strings.pref_category_about,
@@ -232,6 +249,7 @@ object SettingsMainScreen : Screen() {
             },
             icon = MaterialSymbols.Rounded.Info,
             screen = AboutScreen,
+            group = 3,
         ),
     )
 }

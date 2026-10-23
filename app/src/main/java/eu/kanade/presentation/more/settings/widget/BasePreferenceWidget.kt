@@ -55,7 +55,8 @@ internal fun BasePreferenceWidget(
     ) {
         if (icon != null) {
             Box(
-                modifier = Modifier.padding(start = PrefsHorizontalPadding, end = 8.dp),
+                // The icon sits in a tile; the title's own start padding provides the gap
+                modifier = Modifier.padding(start = PrefsHorizontalPadding),
                 content = { icon() },
             )
         }
