@@ -29,9 +29,9 @@ import eu.kanade.presentation.more.settings.screen.about.AboutScreen
 import eu.kanade.presentation.more.settings.widget.OracleCardMargin
 import eu.kanade.presentation.more.settings.widget.OracleIconTile
 import eu.kanade.presentation.more.settings.widget.OracleMenuRow
-import eu.kanade.presentation.oracle.OracleInProgressPill
 import eu.kanade.presentation.more.settings.widget.OracleSettingsCard
 import eu.kanade.presentation.oracle.OracleGlass
+import eu.kanade.presentation.oracle.OracleInProgressPill
 import eu.kanade.tachiyomi.ui.more.DownloadQueueState
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.Help

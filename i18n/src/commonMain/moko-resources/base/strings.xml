@@ -33,6 +33,11 @@
     <string name="library_quick_actions">Quick actions</string>
     <string name="library_my_profile">My profile</string>
     <string name="oracle_in_progress">In progress</string>
+    <string name="library_greeting_morning">Good morning</string>
+    <string name="library_greeting_afternoon">Good afternoon</string>
+    <string name="library_greeting_evening">Good evening</string>
+    <string name="library_greeting_night">Reading late tonight</string>
+    <string name="library_keep_reading">Keep reading</string>
     <string name="oracle_in_progress_message">%1$s is in progress and will arrive in a future update.</string>
     <string name="label_recent_updates">Updates</string>
     <string name="label_upcoming">Upcoming</string>

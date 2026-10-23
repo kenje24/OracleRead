@@ -193,8 +193,7 @@ private fun UpdatesAppBar(
         )
     } else {
         OracleLargeTopBar(
-            // Opaque so list content scrolling underneath never shows through the title
-            modifier = modifier.background(MaterialTheme.colorScheme.background),
+            modifier = modifier,
             title = stringResource(MR.strings.label_recent_updates),
             subtitle = stringResource(MR.strings.updates_last_update_info, relativeTimeSpanString(lastUpdated)),
             actions = {

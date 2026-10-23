@@ -11,6 +11,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
+/**
+ * Lets a parent surface supply the default scaffold background. The OracleRead home shell provides
+ * [Color.Transparent] so every tab sits on its shared textured backdrop; screens pushed on top keep the
+ * opaque theme background.
+ */
+val LocalScaffoldContainerColor = compositionLocalOf<Color?> { null }
+
 @Composable
 fun Scaffold(
     modifier: Modifier = Modifier,
@@ -35,8 +43,12 @@ fun Scaffold(
     snackbarHost: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     floatingActionButtonPosition: FabPosition = FabPosition.End,
-    containerColor: Color = MaterialTheme.colorScheme.background,
-    contentColor: Color = contentColorFor(containerColor),
+    containerColor: Color = LocalScaffoldContainerColor.current ?: MaterialTheme.colorScheme.background,
+    contentColor: Color = if (containerColor.alpha == 0f) {
+        MaterialTheme.colorScheme.onBackground
+    } else {
+        contentColorFor(containerColor)
+    },
     contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
     content: @Composable (PaddingValues) -> Unit,
 ) {

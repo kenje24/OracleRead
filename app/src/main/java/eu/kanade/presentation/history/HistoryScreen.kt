@@ -118,8 +118,6 @@ private fun HistoryToolbar(
     } else {
         val titleCount = remember(state.list) { state.list?.count { it is HistoryUiModel.Item } }
         OracleLargeTopBar(
-            // Opaque so list content scrolling underneath never shows through the title
-            modifier = Modifier.background(MaterialTheme.colorScheme.background),
             title = stringResource(MR.strings.history),
             subtitle = titleCount?.takeIf { it > 0 }?.let {
                 stringResource(

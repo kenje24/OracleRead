@@ -118,6 +118,10 @@
         <item quantity="one">Reading streak: %1$d day</item>
         <item quantity="other">Reading streak: %1$d days</item>
     </plurals>
+    <plurals name="library_chapters_left">
+        <item quantity="one">%1$d chapter left</item>
+        <item quantity="other">%1$d chapters left</item>
+    </plurals>
     <plurals name="library_title_count">
         <item quantity="one">%1$d title</item>
         <item quantity="other">%1$d titles</item>

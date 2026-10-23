@@ -89,6 +89,7 @@ private fun LibraryTitleBar(
 ) {
     OracleLargeTopBar(
         title = title.text,
+        eyebrow = stringResource(greetingForNow()),
         subtitle = title.numberOfManga?.let {
             pluralStringResource(MR.plurals.library_title_count, count = it, it)
         },
@@ -100,7 +101,7 @@ private fun LibraryTitleBar(
         actions = {
             LibraryActions(
                 onClickSearch = onClickSearch,
-                        hasFilters = hasFilters,
+                hasFilters = hasFilters,
                 onClickFilter = onClickFilter,
                 onClickRefresh = onClickRefresh,
                 onClickGlobalUpdate = onClickGlobalUpdate,
@@ -194,3 +195,11 @@ data class LibraryToolbarTitle(
     val text: String,
     val numberOfManga: Int? = null,
 )
+
+/** A greeting for the time of day, shown above the library title. */
+private fun greetingForNow() = when (java.time.LocalTime.now().hour) {
+    in 5..11 -> MR.strings.library_greeting_morning
+    in 12..17 -> MR.strings.library_greeting_afternoon
+    in 18..22 -> MR.strings.library_greeting_evening
+    else -> MR.strings.library_greeting_night
+}

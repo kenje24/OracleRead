@@ -32,6 +32,7 @@ import tachiyomi.presentation.core.theme.OracleSpacing
 fun OracleLargeTopBar(
     title: String,
     modifier: Modifier = Modifier,
+    eyebrow: String? = null,
     subtitle: String? = null,
     applyStatusBarInsets: Boolean = true,
     supportingContent: (@Composable RowScope.() -> Unit)? = null,
@@ -49,13 +50,19 @@ fun OracleLargeTopBar(
             )
             .padding(start = OracleSpacing.gutter, end = 8.dp, top = 18.dp, bottom = 10.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        eyebrow?.let {
             Text(
+                text = it.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Lit by a slow sweep of lantern light
+            OracleShinyText(
                 text = title,
                 style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .weight(1f)
                     .semantics { heading() },

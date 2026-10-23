@@ -39,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import eu.kanade.domain.ui.model.NavigationBarMode
+import eu.kanade.presentation.oracle.OracleAuroraBackdrop
 import eu.kanade.presentation.oracle.OracleDock
 import eu.kanade.presentation.oracle.OracleDockItem
 import eu.kanade.presentation.oracle.OracleDockSpace
@@ -71,6 +73,7 @@ import mihon.app.di.appGraph
 import soup.compose.material.motion.animation.materialFadeThroughIn
 import soup.compose.material.motion.animation.materialFadeThroughOut
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.components.material.LocalScaffoldContainerColor
 import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.util.collectAsState
 
@@ -136,11 +139,9 @@ object HomeScreen : Screen() {
                     label = "dockSpace",
                 )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background),
-                ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Every tab sits on one textured, slowly moving backdrop; tab scaffolds stay transparent over it
+                    OracleAuroraBackdrop(modifier = Modifier.fillMaxSize())
                     Row(modifier = Modifier.fillMaxSize()) {
                         if (tabletUi) {
                             OracleRail(
@@ -184,7 +185,9 @@ object HomeScreen : Screen() {
                                 label = "tabContent",
                             ) {
                                 tabNavigator.saveableState(key = "currentTab", it) {
-                                    it.Content()
+                                    CompositionLocalProvider(LocalScaffoldContainerColor provides Color.Transparent) {
+                                        it.Content()
+                                    }
                                 }
                             }
                         }
