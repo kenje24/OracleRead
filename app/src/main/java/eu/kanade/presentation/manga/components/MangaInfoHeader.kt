@@ -733,6 +733,7 @@ private fun RowScope.MangaActionButton(
             onClick = onClick,
             modifier = Modifier.fillMaxWidth(),
             onLongClick = onLongClick,
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp),
         ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
@@ -747,6 +748,8 @@ private fun RowScope.MangaActionButton(
                 color = color,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         }

@@ -10,6 +10,38 @@ The format is a modified version of [Keep a Changelog](https://keepachangelog.co
 - `Fixed` - for any bug fixes.
 - `Other` - for technical stuff.
 
+## OracleRead [1.4.0]
+OracleRead 1.4.0 brings the app up to date with Mihon and gives it a new, cinematic look. The Mihon entries
+below this section are the upstream changes included in this release.
+
+### Changed
+- Cinematic redesign across the app (see `DESIGN.md`):
+  - a new default **OracleRead** theme, dark-first, with an ink-night canvas, lantern gold and the logo's slate blue
+  - Fraunces display type with Manrope text
+  - a floating navigation dock (a rail on tablets)
+  - a library with a continue-reading hero, folder-coloured tabs, ambient folder backgrounds and poster covers
+  - manga pages staged on their own blurred cover art, with a cover-derived accent colour
+  - redesigned updates, history, browse, more, settings, about, onboarding and reader controls
+- Every previous theme is still available, and light mode is one tap away.
+- Default extension stores (Keiyoushi, Yūzōnō) are added once on first launch, including on fresh installs.
+
+### Other
+- Synced with Mihon `main` at `d001e6f21` (481 upstream commits). This includes Metro DI, Material Symbols,
+  the TachiyomiX 1.6 source API and database migrations 14–19. Libraries from OracleRead 1.3.x upgrade in place.
+- OracleRead features kept across the sync:
+  - Community
+  - reader auto-retry
+  - reading streak
+  - pinned manga
+  - hide decimal chapters
+  - folder styles
+  - source shortcuts
+  - featured manga
+  - compact navigation
+- The fork-specific pieces that upstream replaced are listed with reasons in `docs/sync-notes.md`.
+- Dropped the FlexibleAdapter dependency. Its JitPack build no longer exists, so 1.3.x could no longer be built
+  from source.
+
 ## [Unreleased]
 ### Added
 - Add experimental high quality reader renderer (Settings → Advanced → Use high quality renderer) with better image scaling, page transition animations, dual page view and display cutout handling ([@wwww-wwww](https://github.com/wwww-wwww)) ([#3388](https://github.com/mihonapp/mihon/pull/3388))

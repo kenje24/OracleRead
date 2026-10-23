@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -45,7 +46,8 @@ fun CinematicBackdrop(
 ) {
     val background = MaterialTheme.colorScheme.background
     val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    Box(modifier = modifier) {
+    // Clipped: the enlarged, blurred art would otherwise bleed past the backdrop's bounds
+    Box(modifier = modifier.clipToBounds()) {
         AsyncImage(
             model = data,
             contentDescription = null,
