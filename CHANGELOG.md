@@ -36,6 +36,9 @@ below this section are the upstream changes included in this release.
   by itself when you return to the app. An install the system stops part-way now shows Retry instead of hanging.
 
 ### Other
+- **New signing key.** 1.4.0 is signed with a dedicated OracleRead release key instead of a development key, so it
+  cannot install over 1.3.x. Back up in 1.3.x (Settings → Data and storage → Create backup), uninstall, install
+  1.4.0, then restore the backup. Later versions update in place.
 - Synced with Mihon `main` at `d001e6f21` (481 upstream commits). This includes Metro DI, Material Symbols,
   the TachiyomiX 1.6 source API and database migrations 14–19. Libraries from OracleRead 1.3.x upgrade in place.
 - OracleRead features kept across the sync:
