@@ -66,7 +66,11 @@ android {
         buildConfigField(
             "String",
             "SUPABASE_ANON_KEY",
-            "\"${escapedBuildConfigString(localOrEnv("SUPABASE_ANON_KEY").ifBlank { localOrEnv("SUPABASE_PUBLISHABLE_KEY") })}\"",
+            "\"${escapedBuildConfigString(
+                localOrEnv("SUPABASE_ANON_KEY").ifBlank {
+                    localOrEnv("SUPABASE_PUBLISHABLE_KEY")
+                },
+            )}\"",
         )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:max-line-length")
+
 package mihon.feature.community
 
 import androidx.compose.animation.AnimatedVisibility
@@ -144,7 +146,9 @@ class CommunityScreen(
                 onRefresh = viewModel::refresh,
                 onSignIn = viewModel::signIn,
                 onSignUp = viewModel::signUp,
-                onNewPost = { navigator.push(CommunityNewPostScreen(mangaId, value.community.id, value.community.slug)) },
+                onNewPost = {
+                    navigator.push(CommunityNewPostScreen(mangaId, value.community.id, value.community.slug))
+                },
                 onOpenPost = { navigator.push(CommunityDiscussionScreen(mangaId, it)) },
                 onOpenProfile = { navigator.push(CommunityProfileScreen(it)) },
                 onVotePost = viewModel::votePost,
@@ -634,7 +638,11 @@ private fun CommunityMetric(value: String, label: String, modifier: Modifier = M
     ) {
         Column(modifier = Modifier.padding(MaterialTheme.padding.small)) {
             Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -686,7 +694,10 @@ internal fun AuthPanel(
         modifier = Modifier.padding(MaterialTheme.padding.medium),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
     ) {
-        Text(if (register) "Create OracleRead account" else "Log in to OracleRead", style = MaterialTheme.typography.titleLarge)
+        Text(
+            if (register) "Create OracleRead account" else "Log in to OracleRead",
+            style = MaterialTheme.typography.titleLarge,
+        )
         Text(
             text = if (register) {
                 "Create an account to post, vote, and join manga discussions."
@@ -744,7 +755,7 @@ internal fun AuthPanel(
                 if (register) onSignUp(email, password, username) else onSignIn(email, password)
             },
             enabled = !working && email.isNotBlank() && password.length >= 6 &&
-                (!register || username.length >= 3 && acceptedTerms),
+                (!register || (username.length >= 3 && acceptedTerms)),
         ) {
             Text(
                 when {
@@ -828,7 +839,9 @@ private fun PostItem(
                     if (post.isRemoved) {
                         Text("Deleted discussion", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        post.community?.slug?.let { Text("oracle/$it", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        post.community?.slug?.let {
+                            Text("oracle/$it", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
@@ -938,10 +951,19 @@ private fun DiscussionHeader(post: CommunityPost, onVote: (Int) -> Unit, onDelet
             }
         }
         if (!post.isRemoved) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            ) {
                 Text(
                     post.author?.visibleName ?: "Unknown user",
-                    color = if (post.authorId == ORACLEREAD_CREATOR_ID) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
+                    color = if (post.authorId ==
+                        ORACLEREAD_CREATOR_ID
+                    ) {
+                        MaterialTheme.colorScheme.tertiary
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
                     fontWeight = FontWeight.Medium,
                 )
                 CreatorAwareProfileIcon(post.authorId)
@@ -1085,11 +1107,20 @@ private fun CommentItem(
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
             ) {
                 if (!comment.isRemoved) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+                    ) {
                         Text(
                             comment.author?.visibleName ?: "Unknown user",
                             style = MaterialTheme.typography.labelMedium,
-                            color = if (comment.authorId == ORACLEREAD_CREATOR_ID) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
+                            color = if (comment.authorId ==
+                                ORACLEREAD_CREATOR_ID
+                            ) {
+                                MaterialTheme.colorScheme.tertiary
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
                             modifier = Modifier.clickable { onOpenProfile(comment.authorId) },
                         )
                         CreatorAwareProfileIcon(comment.authorId)
@@ -1353,7 +1384,13 @@ class CommunityHubViewModel(
                     refresh()
                 }
                 .onFailure { error ->
-                    state.update { it.copy(working = false, signedIn = false, message = friendlyAuthError(error.message, "Unable to log in")) }
+                    state.update {
+                        it.copy(
+                            working = false,
+                            signedIn = false,
+                            message = friendlyAuthError(error.message, "Unable to log in"),
+                        )
+                    }
                 }
         }
     }
@@ -1373,7 +1410,13 @@ class CommunityHubViewModel(
                     if (repository.isSignedIn) refresh()
                 }
                 .onFailure { error ->
-                    state.update { it.copy(working = false, signedIn = false, message = friendlyAuthError(error.message, "Unable to register")) }
+                    state.update {
+                        it.copy(
+                            working = false,
+                            signedIn = false,
+                            message = friendlyAuthError(error.message, "Unable to register"),
+                        )
+                    }
                 }
         }
     }
@@ -1398,7 +1441,9 @@ class CommunityHubViewModel(
                         state.copy(posts = state.posts.map { if (it.id == postId) it.copy(isRemoved = true) else it })
                     }
                 }
-                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to delete discussion") } }
+                .onFailure { error ->
+                    state.update { it.copy(message = error.message ?: "Unable to delete discussion") }
+                }
         }
     }
 
@@ -1421,7 +1466,9 @@ class CommunityHubViewModel(
                 ),
             )
                 .onSuccess { state.update { it.copy(message = "Report sent.") } }
-                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to report discussion") } }
+                .onFailure { error ->
+                    state.update { it.copy(message = error.message ?: "Unable to report discussion") }
+                }
         }
     }
 
@@ -1495,7 +1542,9 @@ class CommunityDiscussionViewModel(
     fun refresh() {
         viewModelScope.launch(Dispatchers.IO) {
             repository.getComments(state.value.post.id)
-                .onSuccess { comments -> state.update { it.copy(comments = comments, signedIn = repository.isSignedIn) } }
+                .onSuccess { comments ->
+                    state.update { it.copy(comments = comments, signedIn = repository.isSignedIn) }
+                }
                 .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to load comments") } }
         }
     }
@@ -1528,7 +1577,15 @@ class CommunityDiscussionViewModel(
                     state.update { it.copy(working = false, message = null, replyTarget = null) }
                     refresh()
                 }
-                .onFailure { error -> state.update { it.copy(working = false, message = error.message ?: "Unable to comment") } }
+                .onFailure { error ->
+                    state.update {
+                        it.copy(
+                            working = false,
+                            message =
+                            error.message ?: "Unable to comment",
+                        )
+                    }
+                }
         }
     }
 
@@ -1545,7 +1602,17 @@ class CommunityDiscussionViewModel(
             repository.voteComment(commentId, value)
                 .onSuccess {
                     state.update { state ->
-                        state.copy(comments = state.comments.map { if (it.id == commentId) it.applyVote(value) else it })
+                        state.copy(
+                            comments = state.comments.map {
+                                if (it.id ==
+                                    commentId
+                                ) {
+                                    it.applyVote(value)
+                                } else {
+                                    it
+                                }
+                            },
+                        )
                     }
                 }
                 .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to vote") } }
@@ -1556,7 +1623,9 @@ class CommunityDiscussionViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             repository.softDeletePost(state.value.post.id)
                 .onSuccess { state.update { it.copy(post = it.post.copy(isRemoved = true)) } }
-                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to delete discussion") } }
+                .onFailure { error ->
+                    state.update { it.copy(message = error.message ?: "Unable to delete discussion") }
+                }
         }
     }
 
@@ -1572,7 +1641,9 @@ class CommunityDiscussionViewModel(
                 ),
             )
                 .onSuccess { state.update { it.copy(message = "Report sent.") } }
-                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to report discussion") } }
+                .onFailure { error ->
+                    state.update { it.copy(message = error.message ?: "Unable to report discussion") }
+                }
         }
     }
 
@@ -1581,7 +1652,17 @@ class CommunityDiscussionViewModel(
             repository.softDeleteComment(commentId)
                 .onSuccess {
                     state.update { state ->
-                        state.copy(comments = state.comments.map { if (it.id == commentId) it.copy(isRemoved = true) else it })
+                        state.copy(
+                            comments = state.comments.map {
+                                if (it.id ==
+                                    commentId
+                                ) {
+                                    it.copy(isRemoved = true)
+                                } else {
+                                    it
+                                }
+                            },
+                        )
                     }
                 }
                 .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to delete comment") } }
@@ -1651,13 +1732,19 @@ class CommunityProfileScreen(
                                     modifier = Modifier.size(52.dp),
                                 )
                                 Text(value.page.profile.visibleName, style = MaterialTheme.typography.headlineSmall)
-                                Text("@${value.page.profile.username}", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text(
+                                    "@${value.page.profile.username}",
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
                             }
                         }
                         if (!value.page.isSelf && !value.page.isFriend) {
                             when (value.page.friendRequestStatus) {
-                                FriendRequestStatus.Outgoing -> AssistChip(onClick = {}, label = { Text("Friend request sent") })
-                                FriendRequestStatus.Incoming -> Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small)) {
+                                FriendRequestStatus.Outgoing -> AssistChip(onClick = {
+                                }, label = { Text("Friend request sent") })
+                                FriendRequestStatus.Incoming -> Row(
+                                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+                                ) {
                                     Button(onClick = viewModel::acceptFriendRequest) {
                                         Text("Accept")
                                     }
@@ -1732,7 +1819,9 @@ class CommunityNotificationsScreen : Screen() {
             if (state.loading) {
                 item("loading") { Text("Loading...", modifier = Modifier.padding(MaterialTheme.padding.medium)) }
             } else if (state.notifications.isEmpty()) {
-                item("empty") { Text("No notifications yet.", modifier = Modifier.padding(MaterialTheme.padding.medium)) }
+                item("empty") {
+                    Text("No notifications yet.", modifier = Modifier.padding(MaterialTheme.padding.medium))
+                }
             }
             items(state.notifications, key = { it.id }) { notification ->
                 Column(
@@ -1741,7 +1830,9 @@ class CommunityNotificationsScreen : Screen() {
                 ) {
                     Text(notification.title, fontWeight = FontWeight.SemiBold)
                     notification.body?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    if (notification.type == "friend_request" && notification.friendRequestId != null && !notification.isRead) {
+                    if (notification.type == "friend_request" && notification.friendRequestId != null &&
+                        !notification.isRead
+                    ) {
                         Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small)) {
                             Button(onClick = { viewModel.acceptFriendRequest(notification.friendRequestId) }) {
                                 Text("Accept")
@@ -1864,7 +1955,14 @@ class CommunityNotificationsViewModel(
                     state.update { it.copy(message = "Friend request accepted.") }
                     refresh()
                 }
-                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to accept friend request") } }
+                .onFailure { error ->
+                    state.update {
+                        it.copy(
+                            message =
+                            error.message ?: "Unable to accept friend request",
+                        )
+                    }
+                }
         }
     }
 
@@ -1875,7 +1973,14 @@ class CommunityNotificationsViewModel(
                     state.update { it.copy(message = "Friend request declined.") }
                     refresh()
                 }
-                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to decline friend request") } }
+                .onFailure { error ->
+                    state.update {
+                        it.copy(
+                            message =
+                            error.message ?: "Unable to decline friend request",
+                        )
+                    }
+                }
         }
     }
 

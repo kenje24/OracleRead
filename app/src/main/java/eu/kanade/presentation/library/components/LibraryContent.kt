@@ -88,7 +88,9 @@ fun LibraryContent(
             val scope = rememberCoroutineScope()
             var isRefreshing by remember(pagerState.currentPage) { mutableStateOf(false) }
 
-            if (showPageTabs && categories.isNotEmpty() && (categories.size > 1 || !categories.first().isSystemCategory)) {
+            if (showPageTabs && categories.isNotEmpty() &&
+                (categories.size > 1 || !categories.first().isSystemCategory)
+            ) {
                 LaunchedEffect(categories) {
                     if (categories.size <= pagerState.currentPage) {
                         pagerState.scrollToPage(categories.size - 1)

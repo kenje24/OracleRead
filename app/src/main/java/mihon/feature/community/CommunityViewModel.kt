@@ -166,7 +166,9 @@ class CommunityViewModel(
 
     fun createComment(postId: String, parentCommentId: String?, content: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.createComment(CreateComment(postId = postId, parentCommentId = parentCommentId, content = content.trim()))
+            repository.createComment(
+                CreateComment(postId = postId, parentCommentId = parentCommentId, content = content.trim()),
+            )
                 .onSuccess { selectPost((state.value as? CommunityScreenState.Feed)?.selectedPost) }
                 .onFailure { updateMessage(it.message ?: "Unable to add comment") }
         }

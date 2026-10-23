@@ -90,7 +90,13 @@ internal fun LibraryPageHeaderContent(
             onClickSource = header.onClickSourceShortcut,
         )
         OracleSectionHeader(
-            title = if (category.isSystemCategory) stringResource(MR.strings.library_all_titles) else category.visualName,
+            title = if (category.isSystemCategory) {
+                stringResource(
+                    MR.strings.library_all_titles,
+                )
+            } else {
+                category.visualName
+            },
             supporting = pluralStringResource(MR.plurals.library_title_count, count = itemCount, itemCount),
         )
     }

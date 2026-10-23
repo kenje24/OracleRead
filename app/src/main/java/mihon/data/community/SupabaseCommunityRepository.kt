@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:max-line-length")
+
 package mihon.data.community
 
 import android.content.Context
@@ -170,7 +172,10 @@ class SupabaseCommunityRepository(
             CommunitySort.QA -> "created_at.desc"
         }
         val urlBuilder = "$baseUrl/rest/v1/posts".toHttpUrl().newBuilder()
-            .addQueryParameter("select", "*,communities(title,slug,cover_image),profiles!posts_author_id_fkey(id,username,display_name)")
+            .addQueryParameter(
+                "select",
+                "*,communities(title,slug,cover_image),profiles!posts_author_id_fkey(id,username,display_name)",
+            )
             .addQueryParameter("order", order)
             .addQueryParameter("limit", "100")
 
@@ -222,9 +227,17 @@ class SupabaseCommunityRepository(
         }
     }
 
-    override suspend fun votePost(postId: String, value: Int): Result<Unit> = upsertVote(postId = postId, commentId = null, value = value)
+    override suspend fun votePost(postId: String, value: Int): Result<Unit> = upsertVote(
+        postId = postId,
+        commentId = null,
+        value = value,
+    )
 
-    override suspend fun voteComment(commentId: String, value: Int): Result<Unit> = upsertVote(postId = null, commentId = commentId, value = value)
+    override suspend fun voteComment(commentId: String, value: Int): Result<Unit> = upsertVote(
+        postId = null,
+        commentId = commentId,
+        value = value,
+    )
 
     override suspend fun softDeletePost(postId: String): Result<Unit> = runCatching {
         ensureSignedIn()
@@ -319,7 +332,11 @@ class SupabaseCommunityRepository(
         check(currentUserId != userId) { "You cannot add yourself as a friend." }
 
         val friendRequest = request("$baseUrl/rest/v1/friend_requests?on_conflict=requester_id,recipient_id") {
-            post(json.encodeToString(FriendRequestUpsert(requesterId = currentUserId, recipientId = userId)).toRequestBody(JSON))
+            post(
+                json.encodeToString(
+                    FriendRequestUpsert(requesterId = currentUserId, recipientId = userId),
+                ).toRequestBody(JSON),
+            )
             header("Prefer", "resolution=merge-duplicates,return=representation")
         }.decodeList(FriendRequestLookup.serializer()).first()
 
@@ -393,7 +410,11 @@ class SupabaseCommunityRepository(
         ensureSignedIn()
         val conflict = if (postId != null) "user_id,post_id" else "user_id,comment_id"
         request("$baseUrl/rest/v1/votes?on_conflict=$conflict") {
-            post(json.encodeToString(VoteUpsert(postId = postId, commentId = commentId, value = value.coerceIn(-1, 1))).toRequestBody(JSON))
+            post(
+                json.encodeToString(
+                    VoteUpsert(postId = postId, commentId = commentId, value = value.coerceIn(-1, 1)),
+                ).toRequestBody(JSON),
+            )
             header("Prefer", "resolution=merge-duplicates")
         }
     }
@@ -538,7 +559,8 @@ class SupabaseCommunityRepository(
             )
             .addQueryParameter("limit", "1")
             .build()
-        val request = request(url.toString()) { get() }.decodeList(FriendRequestLookup.serializer()).firstOrNull() ?: return null
+        val request =
+            request(url.toString()) { get() }.decodeList(FriendRequestLookup.serializer()).firstOrNull() ?: return null
         return FriendRequestState(
             id = request.id,
             status = if (request.requesterId == current) FriendRequestStatus.Outgoing else FriendRequestStatus.Incoming,

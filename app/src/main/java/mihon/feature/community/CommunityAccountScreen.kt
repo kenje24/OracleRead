@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:max-line-length")
+
 package mihon.feature.community
 
 import androidx.compose.foundation.layout.Arrangement
@@ -88,7 +90,11 @@ class CommunityAccountViewModel(
             state.update { it.copy(working = true, message = null) }
             repository.signIn(email, password)
                 .onSuccess { state.value = State(signedIn = true, message = "Logged in.") }
-                .onFailure { error -> state.update { it.copy(working = false, message = friendlyAuthError(error.message, "Unable to log in")) } }
+                .onFailure { error ->
+                    state.update {
+                        it.copy(working = false, message = friendlyAuthError(error.message, "Unable to log in"))
+                    }
+                }
         }
     }
 
@@ -102,7 +108,11 @@ class CommunityAccountViewModel(
                         message = if (repository.isSignedIn) "Account created." else "Account created. Log in to continue.",
                     )
                 }
-                .onFailure { error -> state.update { it.copy(working = false, message = friendlyAuthError(error.message, "Unable to register")) } }
+                .onFailure { error ->
+                    state.update {
+                        it.copy(working = false, message = friendlyAuthError(error.message, "Unable to register"))
+                    }
+                }
         }
     }
 
