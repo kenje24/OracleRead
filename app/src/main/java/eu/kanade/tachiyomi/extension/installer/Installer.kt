@@ -115,7 +115,11 @@ abstract class Installer(private val service: Service) {
             logcat(LogPriority.INFO) { "The installer stopped before installing ${it.downloadId}" }
             extensionManager.updateInstallStep(it.downloadId, InstallStep.Error)
         }
-        waitingInstall.store(null)
+        // The install in progress ends with the service too; leaving its step alone kept it at "Installing" forever
+        waitingInstall.exchange(null)?.let {
+            logcat(LogPriority.INFO) { "The installer stopped while installing ${it.downloadId}" }
+            extensionManager.updateInstallStep(it.downloadId, InstallStep.Error)
+        }
     }
 
     protected fun getActiveEntry(): Entry? = waitingInstall.load()

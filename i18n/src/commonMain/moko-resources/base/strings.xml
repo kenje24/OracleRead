@@ -398,6 +398,8 @@
     <string name="ext_content_warning_nsfw_description">Sources from this extension are primarily focused on 18+ content.</string>
     <string name="ext_permission_install_apps_warning">Permissions are needed to install extensions. Tap here to grant.</string>
     <string name="ext_install_service_notif">Installing extension…</string>
+    <string name="ext_install_confirm_notif_title">Extension ready to install</string>
+    <string name="ext_install_confirm_notif_text">Tap to confirm the installation</string>
     <string name="ext_installer_pref">Installer</string>
     <string name="ext_installer_legacy">Legacy</string>
     <string name="ext_installer_packageinstaller" translatable="false">PackageInstaller</string>

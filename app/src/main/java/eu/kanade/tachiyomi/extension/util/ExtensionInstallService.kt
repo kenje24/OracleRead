@@ -59,6 +59,17 @@ class ExtensionInstallService : Service() {
         return START_NOT_STICKY
     }
 
+    // A shortService gets about three minutes. When that runs out (for example a confirmation left waiting), stop
+    // cleanly so the unfinished install reports an error the user can retry, instead of the system killing us
+    override fun onTimeout(startId: Int) {
+        logcat(LogPriority.INFO) { "Extension installer reached its time limit" }
+        stopSelf()
+    }
+
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        onTimeout(startId)
+    }
+
     override fun onDestroy() {
         installer?.onDestroy()
         installer = null
