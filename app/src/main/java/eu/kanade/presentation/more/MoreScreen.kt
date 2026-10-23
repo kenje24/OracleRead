@@ -29,6 +29,7 @@ import eu.kanade.presentation.more.settings.screen.about.AboutScreen
 import eu.kanade.presentation.more.settings.widget.OracleCardMargin
 import eu.kanade.presentation.more.settings.widget.OracleIconTile
 import eu.kanade.presentation.more.settings.widget.OracleMenuRow
+import eu.kanade.presentation.oracle.OracleInProgressPill
 import eu.kanade.presentation.more.settings.widget.OracleSettingsCard
 import eu.kanade.presentation.oracle.OracleGlass
 import eu.kanade.tachiyomi.ui.more.DownloadQueueState
@@ -168,6 +169,7 @@ fun MoreScreen(
                         title = stringResource(MR.strings.oracle_more_account),
                         icon = MaterialSymbols.Rounded.AccountCircle,
                         onClick = onClickAccount,
+                        trailing = { OracleInProgressPill() },
                     )
                 }
             }

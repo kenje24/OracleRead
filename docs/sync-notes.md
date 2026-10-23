@@ -15,6 +15,10 @@ the reason, so nothing disappears silently. Design: `docs/superpowers/specs/2026
 - REPLACED network-helper-test: upstream removed `IgnoreGzipInterceptor`/`BrotliInterceptor` from the default client (#3458) and added zstd (#3465), so the fork test no longer applies. `ExtensionRuntimeDependenciesTest` is kept, because core/common still exposes `okhttp-zstd` to extensions.
 - REPLACED legacy-repo-test: upstream's `ExtensionStoreService.fetchStore` follows `index.min.json` → `repo.json` and `index_v2` redirects itself (#3454), so the fork's model-level redirect test no longer describes the behaviour.
 
+## Removed at the owner's request
+
+- DROPPED community: on 2026-10-23 the owner asked to remove the OracleRead login (Supabase account) and Community for now. Their code was deleted (it is in git history up to commit 3b1644478). The More "OracleRead Account" row, the manga "Community" tile and the library profile/community quick actions stay visible with an "In progress" sign and explain that the feature will arrive in a future update.
+
 ## Re-applied OracleRead behaviour
 
 - Default extension stores (Keiyoushi, Yūzōnō): seeded once by `DefaultExtensionStoresMigration`, which runs on fresh installs too (upstream ships with no stores). A store the user removes stays removed.

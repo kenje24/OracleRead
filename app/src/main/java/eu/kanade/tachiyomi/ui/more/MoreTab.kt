@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -29,14 +30,15 @@ import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.setting.SettingsScreen
 import eu.kanade.tachiyomi.ui.stats.StatsScreen
+import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import mihon.feature.community.CommunityAccountScreen
 import mihon.feature.support.SupportUsScreen
+import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
@@ -62,6 +64,7 @@ data object MoreTab : Tab {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val context = LocalContext.current
         val viewModel = metroViewModel<MoreViewModel>()
         val downloadQueueState by viewModel.downloadQueueState.collectAsState()
         MoreScreen(
@@ -75,7 +78,15 @@ data object MoreTab : Tab {
             onClickStats = { navigator.push(StatsScreen()) },
             onClickDataAndStorage = { navigator.push(SettingsScreen(SettingsScreen.Destination.DataAndStorage)) },
             onClickSettings = { navigator.push(SettingsScreen()) },
-            onClickAccount = { navigator.push(CommunityAccountScreen()) },
+            // OracleRead Account is in progress; the entry only explains that for now
+            onClickAccount = {
+                context.toast(
+                    context.stringResource(
+                        MR.strings.oracle_in_progress_message,
+                        context.stringResource(MR.strings.oracle_more_account),
+                    ),
+                )
+            },
             onClickSupport = { navigator.push(SupportUsScreen()) },
             onClickAbout = { navigator.push(SettingsScreen(SettingsScreen.Destination.About)) },
         )

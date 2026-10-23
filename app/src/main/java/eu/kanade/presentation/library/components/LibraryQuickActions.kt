@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.oracle.OracleGlass
+import eu.kanade.presentation.oracle.OracleInProgressPill
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Add
 import mihon.icons.materialsymbols.rounded.CreateNewFolder
@@ -38,15 +39,14 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
 /**
- * The library's quick actions (new folder, downloads, profile, community) as a lantern FAB that unfolds
- * into labelled glass actions above the dock.
+ * The library's quick actions as a lantern FAB that unfolds into labelled glass actions above the dock. New folder
+ * and downloads open directly; profile and community are in progress and only say so.
  */
 @Composable
 fun LibraryQuickActions(
     onCreateFolder: () -> Unit,
     onOpenDownloads: () -> Unit,
-    onOpenProfile: () -> Unit,
-    onOpenCommunity: () -> Unit,
+    onInProgress: (feature: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -73,13 +73,15 @@ fun LibraryQuickActions(
                     expanded = false
                     onOpenDownloads()
                 }
-                QuickAction(stringResource(MR.strings.library_my_profile), MaterialSymbols.Rounded.Person) {
+                val profile = stringResource(MR.strings.library_my_profile)
+                QuickAction(profile, MaterialSymbols.Rounded.Person, inProgress = true) {
                     expanded = false
-                    onOpenProfile()
+                    onInProgress(profile)
                 }
-                QuickAction(stringResource(MR.strings.action_community), MaterialSymbols.Rounded.Forum) {
+                val community = stringResource(MR.strings.action_community)
+                QuickAction(community, MaterialSymbols.Rounded.Forum, inProgress = true) {
                     expanded = false
-                    onOpenCommunity()
+                    onInProgress(community)
                 }
             }
         }
@@ -103,6 +105,7 @@ fun LibraryQuickActions(
 private fun QuickAction(
     label: String,
     icon: ImageVector,
+    inProgress: Boolean = false,
     onClick: () -> Unit,
 ) {
     OracleGlass(shape = CircleShape, alpha = 0.94f, shadowElevation = 6.dp, onClick = onClick) {
@@ -119,6 +122,9 @@ private fun QuickAction(
                     .size(20.dp),
             )
             Text(text = label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+            if (inProgress) {
+                OracleInProgressPill(modifier = Modifier.padding(start = 8.dp))
+            }
         }
     }
 }

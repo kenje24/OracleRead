@@ -29,10 +29,11 @@
     <string name="library_start_reading">Start reading</string>
     <string name="library_featured">Featured</string>
     <string name="library_all_titles">On your shelf</string>
-    <string name="library_notifications">Notifications</string>
     <string name="library_change_theme">Change theme</string>
     <string name="library_quick_actions">Quick actions</string>
     <string name="library_my_profile">My profile</string>
+    <string name="oracle_in_progress">In progress</string>
+    <string name="oracle_in_progress_message">%1$s is in progress and will arrive in a future update.</string>
     <string name="label_recent_updates">Updates</string>
     <string name="label_upcoming">Upcoming</string>
     <string name="label_recent_manga">History</string>

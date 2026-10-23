@@ -42,6 +42,7 @@ import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
+import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.ui.manga.MangaScreen
@@ -51,9 +52,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import mihon.feature.community.CommunityHubScreen
-import mihon.feature.community.CommunityNotificationsScreen
-import mihon.feature.community.CommunityProfileScreen
 import mihon.feature.migration.config.MigrationConfigScreen
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.Help
@@ -142,7 +140,6 @@ data object LibraryTab : Tab {
                             }
                         }
                     },
-                    onClickNotifications = { navigator.push(CommunityNotificationsScreen()) },
                     onClickChangeTheme = { navigator.push(SettingsAppearanceScreen) },
                     searchQuery = state.searchQuery,
                     onSearchQueryChange = viewModel::search,
@@ -173,8 +170,10 @@ data object LibraryTab : Tab {
                     LibraryQuickActions(
                         onCreateFolder = { navigator.push(CategoryScreen(openCreateDialog = true)) },
                         onOpenDownloads = { navigator.push(DownloadQueueScreen) },
-                        onOpenProfile = { navigator.push(CommunityProfileScreen()) },
-                        onOpenCommunity = { navigator.push(CommunityHubScreen()) },
+                        // Account and community are in progress; their actions only explain that for now
+                        onInProgress = { feature ->
+                            context.toast(context.stringResource(MR.strings.oracle_in_progress_message, feature))
+                        },
                     )
                 }
             },

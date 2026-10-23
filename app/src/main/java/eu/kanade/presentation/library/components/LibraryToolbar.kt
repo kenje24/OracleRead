@@ -36,7 +36,6 @@ fun LibraryToolbar(
     onClickRefresh: () -> Unit,
     onClickGlobalUpdate: () -> Unit,
     onClickOpenRandomManga: () -> Unit,
-    onClickNotifications: () -> Unit,
     onClickChangeTheme: () -> Unit,
     searchQuery: String?,
     onSearchQueryChange: (String?) -> Unit,
@@ -69,7 +68,6 @@ fun LibraryToolbar(
         title = title,
         hasFilters = hasActiveFilters,
         onClickSearch = { onSearchQueryChange("") },
-        onClickNotifications = onClickNotifications,
         onClickChangeTheme = onClickChangeTheme,
         onClickFilter = onClickFilter,
         onClickRefresh = onClickRefresh,
@@ -83,7 +81,6 @@ private fun LibraryTitleBar(
     title: LibraryToolbarTitle,
     hasFilters: Boolean,
     onClickSearch: () -> Unit,
-    onClickNotifications: () -> Unit,
     onClickChangeTheme: () -> Unit,
     onClickFilter: () -> Unit,
     onClickRefresh: () -> Unit,
@@ -103,8 +100,7 @@ private fun LibraryTitleBar(
         actions = {
             LibraryActions(
                 onClickSearch = onClickSearch,
-                onClickNotifications = onClickNotifications,
-                hasFilters = hasFilters,
+                        hasFilters = hasFilters,
                 onClickFilter = onClickFilter,
                 onClickRefresh = onClickRefresh,
                 onClickGlobalUpdate = onClickGlobalUpdate,
@@ -118,7 +114,6 @@ private fun LibraryTitleBar(
 @Composable
 private fun LibraryActions(
     onClickSearch: (() -> Unit)? = null,
-    onClickNotifications: (() -> Unit)? = null,
     hasFilters: Boolean,
     onClickFilter: () -> Unit,
     onClickRefresh: () -> Unit,
@@ -156,14 +151,6 @@ private fun LibraryActions(
                 title = stringResource(MR.strings.action_open_random_manga),
                 onClick = onClickOpenRandomManga,
             ),
-            *listOfNotNull(
-                onClickNotifications?.let {
-                    AppBar.OverflowAction(
-                        title = stringResource(MR.strings.library_notifications),
-                        onClick = it,
-                    )
-                },
-            ).toTypedArray(),
             AppBar.OverflowAction(
                 title = stringResource(MR.strings.library_change_theme),
                 onClick = onClickChangeTheme,

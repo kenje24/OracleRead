@@ -73,6 +73,7 @@ import com.mikepenz.markdown.utils.getUnescapedTextInNode
 import eu.kanade.presentation.components.DropdownMenu
 import eu.kanade.presentation.oracle.CinematicBackdrop
 import eu.kanade.presentation.oracle.OracleGlass
+import eu.kanade.presentation.oracle.OracleInProgressPill
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.getNameForMangaInfo
@@ -234,8 +235,9 @@ fun MangaActionRow(
             MangaActionButton(
                 title = stringResource(MR.strings.action_community),
                 icon = MaterialSymbols.Rounded.Forum,
-                color = MaterialTheme.colorScheme.primary,
+                color = defaultActionButtonColor,
                 onClick = onCommunityClicked,
+                badge = { OracleInProgressPill() },
             )
         }
     }
@@ -722,6 +724,7 @@ private fun RowScope.MangaActionButton(
     color: Color,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
+    badge: (@Composable () -> Unit)? = null,
 ) {
     // Glass tile floating over the cover backdrop
     OracleGlass(
@@ -736,12 +739,17 @@ private fun RowScope.MangaActionButton(
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp),
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.size(20.dp),
-                )
+                // A feature that is not available yet shows its sign where the icon would be
+                if (badge != null) {
+                    badge()
+                } else {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = color,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = title,

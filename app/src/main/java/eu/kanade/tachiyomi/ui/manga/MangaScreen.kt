@@ -56,12 +56,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
-import mihon.feature.community.CommunityScreen
 import mihon.feature.migration.config.MigrationConfigScreen
 import mihon.feature.migration.dialog.MigrateMangaDialog
+import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.model.Manga
+import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.screens.LoadingScreen
 
 class MangaScreen(
@@ -147,7 +148,15 @@ class MangaScreen(
                 }
             },
             onToggleHideDecimalChapters = viewModel::toggleHideDecimalChapters,
-            onCommunityClicked = { navigator.push(CommunityScreen(successState.manga.id)) },
+            // Community is in progress; the tile only explains that for now
+            onCommunityClicked = {
+                context.toast(
+                    context.stringResource(
+                        MR.strings.oracle_in_progress_message,
+                        context.stringResource(MR.strings.action_community),
+                    ),
+                )
+            },
             onTagSearch = { scope.launch { performGenreSearch(navigator, it, viewModel.source!!) } },
             onFilterButtonClicked = viewModel::showSettingsDialog,
             onRefresh = viewModel::fetchAllFromSource,
