@@ -78,6 +78,7 @@ import mihon.domain.source.interactor.UpdateMangaFromRemote
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.TriState
+import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.preference.mapAsCheckboxState
 import tachiyomi.core.common.util.lang.SubscriberGate
 import tachiyomi.core.common.util.lang.pausedWhileUnsubscribed
@@ -106,6 +107,12 @@ import tachiyomi.i18n.MR
 import tachiyomi.source.local.isLocal
 import kotlin.math.floor
 import kotlin.time.Duration.Companion.seconds
+
+/** OracleRead: largest gap between two chapter numbers that is still expanded into missing chapter rows. */
+private const val MAX_MISSING_CHAPTER_GAP = 500
+
+/** OracleRead: upper bound on missing chapter rows expanded for a single entry. */
+private const val MAX_MISSING_CHAPTER_PLACEHOLDERS = 1000
 
 @AssistedInject
 class MangaViewModel(
@@ -201,6 +208,17 @@ class MangaViewModel(
 
     private val hideMissingChapters = libraryPreferences.hideMissingChapters.get()
 
+    // OracleRead: the global setting, overridden per entry in either direction
+    private val hideDecimalChapters = combine(
+        libraryPreferences.hideDecimalChapters.changes(),
+        libraryPreferences.hideDecimalChaptersMangaIds.changes(),
+        libraryPreferences.showDecimalChaptersMangaIds.changes(),
+    ) { globalEnabled, hiddenForIds, shownForIds ->
+        val key = mangaId.toString()
+        if (globalEnabled) key !in shownForIds else key in hiddenForIds
+    }
+        .distinctUntilChanged()
+
     private var hasPromptedToAddBefore = false
 
     private val defaultChapterFlagsJob = viewModelScope.launch {
@@ -254,13 +272,13 @@ class MangaViewModel(
         scanlators,
         trackers,
         combine(selectedChapterIds, queuedDownloadStates.pausedWhileUnsubscribed(), ::Pair),
-        combine(dialog, isRefreshingData, ::Pair),
+        combine(dialog, isRefreshingData, hideDecimalChapters, ::Triple),
     ) {
             mangaAndChapters,
             (availableScanlators, excludedScanlators),
             (trackingCount, hasLoggedInTrackers),
             (selectedIds, downloads),
-            (dialog, isRefreshingData),
+            (dialog, isRefreshingData, hideDecimalChapters),
         ->
         State.Success(
             manga = mangaAndChapters.manga,
@@ -282,6 +300,7 @@ class MangaViewModel(
             isRefreshingData = isRefreshingData,
             dialog = dialog,
             hideMissingChapters = hideMissingChapters,
+            hideDecimalChapters = hideDecimalChapters,
         )
     }
         // Composition would otherwise build these on first read, on the main thread, for every new state
@@ -292,6 +311,7 @@ class MangaViewModel(
             it.selectedChapters
             it.hasUnreadChapters
             it.hasReadChapters
+            it.readChapterCount
             it.missingChapterCount
         }
         .flowOn(Dispatchers.IO)
@@ -1091,6 +1111,24 @@ class MangaViewModel(
         }
     }
 
+    /**
+     * OracleRead: hides or shows decimal chapters (e.g. 12.5) for this entry only. When the global setting is
+     * on, this records an exception that shows them; otherwise it records one that hides them.
+     */
+    fun toggleHideDecimalChapters() {
+        val enabled = successState?.hideDecimalChapters ?: return
+        val key = mangaId.toString()
+        if (libraryPreferences.hideDecimalChapters.get()) {
+            libraryPreferences.showDecimalChaptersMangaIds.getAndSet { ids ->
+                if (enabled) ids + key else ids - key
+            }
+        } else {
+            libraryPreferences.hideDecimalChaptersMangaIds.getAndSet { ids ->
+                if (enabled) ids - key else ids + key
+            }
+        }
+    }
+
     private data class MangaAndChapters(val manga: Manga, val source: Source, val chapters: List<ChapterList.Item>)
 
     sealed interface State {
@@ -1110,6 +1148,8 @@ class MangaViewModel(
             val isRefreshingData: Boolean = false,
             val dialog: Dialog? = null,
             val hideMissingChapters: Boolean = false,
+            // OracleRead: whether decimal chapters (e.g. 12.5) are left out of [processedChapters]
+            val hideDecimalChapters: Boolean = false,
         ) : State {
             val processedChapters by lazy {
                 chapters.applyFilters(manga).toList()
@@ -1131,6 +1171,11 @@ class MangaViewModel(
                 chapters.fastAny { it.chapter.read }
             }
 
+            // OracleRead: read count for the chapter header, over the displayed chapters
+            val readChapterCount by lazy {
+                processedChapters.count { it.chapter.read }
+            }
+
             val missingChapterCount by lazy {
                 if (hideMissingChapters) return@lazy 0
                 processedChapters.fastMap { it.chapter.chapterNumber }.missingChaptersCount()
@@ -1141,6 +1186,8 @@ class MangaViewModel(
                     return@lazy processedChapters
                 }
 
+                // OracleRead: caps the missing chapter rows a single entry can expand into
+                var placeholderBudget = MAX_MISSING_CHAPTER_PLACEHOLDERS
                 processedChapters.insertSeparators { before, after ->
                     val (lowerChapter, higherChapter) = if (manga.sortDescending()) {
                         after to before
@@ -1159,12 +1206,32 @@ class MangaViewModel(
                     }
                         .takeIf { it > 0 }
                         ?.let { missingCount ->
+                            // Sources that put dates or ids in the chapter number would otherwise expand
+                            // into millions of rows, so absurd gaps keep only the count
+                            val withinBudget = missingCount <= minOf(MAX_MISSING_CHAPTER_GAP, placeholderBudget)
+                            val chapterNumbers = if (withinBudget) {
+                                placeholderBudget -= missingCount
+                                missingChapterNumbers(lowerChapter, missingCount)
+                            } else {
+                                emptyList()
+                            }
                             ChapterList.MissingCount(
                                 id = "${lowerChapter?.id}-${higherChapter.id}",
                                 count = missingCount,
+                                chapterNumbers = chapterNumbers,
                             )
                         }
                 }
+            }
+
+            /**
+             * OracleRead: the [missingCount] whole numbers missing right after [lowerChapter] (or from 1 when it is
+             * the first chapter), in display order, so each can be shown as its own row that searches for it.
+             */
+            private fun missingChapterNumbers(lowerChapter: ChapterList.Item?, missingCount: Int): List<Int> {
+                val first = lowerChapter?.let { floor(it.chapter.chapterNumber).toInt() + 1 } ?: 1
+                val numbers = (first..<first + missingCount).toList()
+                return if (manga.sortDescending()) numbers.asReversed() else numbers
             }
 
             val scanlatorFilterActive: Boolean
@@ -1184,6 +1251,10 @@ class MangaViewModel(
                 val bookmarkedFilter = manga.bookmarkedFilter
                 val chapterSort = getChapterSort(manga)
                 return asSequence()
+                    // OracleRead: unrecognized (negative) chapter numbers are never treated as decimal
+                    .filter { (chapter) ->
+                        !hideDecimalChapters || chapter.chapterNumber < 0.0 || chapter.chapterNumber % 1.0 == 0.0
+                    }
                     .filter { (chapter) -> applyFilter(unreadFilter) { !chapter.read } }
                     .filter { (chapter) -> applyFilter(bookmarkedFilter) { chapter.bookmark } }
                     .filter { applyFilter(downloadedFilter) { it.isDownloaded || isLocalManga } }
@@ -1199,6 +1270,8 @@ sealed class ChapterList {
     data class MissingCount(
         val id: String,
         val count: Int,
+        // OracleRead: each missing whole chapter number in display order, empty for absurd gaps
+        val chapterNumbers: List<Int> = emptyList(),
     ) : ChapterList()
 
     @Immutable

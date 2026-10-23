@@ -102,7 +102,8 @@ class ExtensionStoreService(
                         .toAvailableExtensions(store)
                 }
             } else {
-                val storeBaseUrl = store.indexUrl.removeSuffix("/repo.json")
+                // OracleRead 1.3.x stored legacy stores by their index.min.json URL
+                val storeBaseUrl = store.indexUrl.removeSuffix("/repo.json").removeSuffix("/index.min.json")
                 val response = network.client.newCall(GET("$storeBaseUrl/index.min.json")).awaitSuccess()
                 response.body.source().use { source ->
                     json.decodeFromBufferedSource<List<NetworkLegacyExtension>>(source)

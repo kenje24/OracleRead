@@ -3,6 +3,9 @@ package eu.kanade.tachiyomi.ui.category
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -13,12 +16,15 @@ import eu.kanade.presentation.category.CategoryScreen
 import eu.kanade.presentation.category.components.CategoryCreateDialog
 import eu.kanade.presentation.category.components.CategoryDeleteDialog
 import eu.kanade.presentation.category.components.CategoryRenameDialog
+import eu.kanade.presentation.category.folderStyle
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.flow.collectLatest
 import tachiyomi.presentation.core.screens.LoadingScreen
 
-class CategoryScreen : Screen() {
+class CategoryScreen(
+    private val openCreateDialog: Boolean = false,
+) : Screen() {
 
     @Composable
     override fun Content() {
@@ -35,10 +41,19 @@ class CategoryScreen : Screen() {
 
         val successState = state as CategoryScreenState.Success
 
+        var createDialogConsumed by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(openCreateDialog) {
+            if (openCreateDialog && !createDialogConsumed) {
+                createDialogConsumed = true
+                viewModel.showDialog(CategoryDialog.Create)
+            }
+        }
+
         CategoryScreen(
             state = successState,
             onClickCreate = { viewModel.showDialog(CategoryDialog.Create) },
             onClickRename = { viewModel.showDialog(CategoryDialog.Rename(it)) },
+            onClickEditStyle = { viewModel.showDialog(CategoryDialog.Rename(it)) },
             onClickDelete = { viewModel.showDialog(CategoryDialog.Delete(it)) },
             onChangeOrder = viewModel::changeOrder,
             navigateUp = navigator::pop,
@@ -54,11 +69,17 @@ class CategoryScreen : Screen() {
                 )
             }
             is CategoryDialog.Rename -> {
+                val folderStyle = dialog.category.folderStyle(successState.folderStyles)
                 CategoryRenameDialog(
                     onDismissRequest = viewModel::dismissDialog,
-                    onRename = { viewModel.renameCategory(dialog.category, it) },
+                    onRename = { name, color, icon, theme ->
+                        viewModel.renameCategory(dialog.category, name, color, icon, theme)
+                    },
                     categories = successState.categories.fastMap { it.name },
                     category = dialog.category.name,
+                    initialColor = folderStyle.color,
+                    initialIcon = folderStyle.icon,
+                    initialTheme = folderStyle.theme,
                 )
             }
             is CategoryDialog.Delete -> {

@@ -160,7 +160,7 @@ private fun ExtensionContent(
         item(key = "recommended-extensions") {
             ExtensionHeader(
                 text = stringResource(MR.strings.recommended_extensions),
-                modifier = Modifier.animateItemFastScroll(),
+                modifier = Modifier.animateItem(),
             )
         }
 

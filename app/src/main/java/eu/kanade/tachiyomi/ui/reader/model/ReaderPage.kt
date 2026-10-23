@@ -15,4 +15,6 @@ open class ReaderPage(
     /** Set by a viewer before the download; filled during [Page.State.DownloadImage]. */
     @Volatile
     var downloadStream: DownloadStream? = null
+
+    internal val retryState = ReaderPageRetryState()
 }

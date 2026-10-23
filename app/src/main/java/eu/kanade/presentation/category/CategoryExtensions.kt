@@ -1,19 +1,19 @@
 package eu.kanade.presentation.category
 
 import android.content.Context
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoStories
-import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.Nightlight
-import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import eu.kanade.domain.ui.model.AppTheme
+import mihon.icons.materialsymbols.MaterialSymbols
+import mihon.icons.materialsymbols.rounded.Bedtime
+import mihon.icons.materialsymbols.rounded.Bolt
+import mihon.icons.materialsymbols.rounded.Book
+import mihon.icons.materialsymbols.rounded.Bookmark
+import mihon.icons.materialsymbols.rounded.Favorite
+import mihon.icons.materialsymbols.rounded.Folder
+import mihon.icons.materialsymbols.rounded.LocalFireDepartment
+import mihon.icons.materialsymbols.rounded.Star
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.category.model.Category
 import tachiyomi.i18n.MR
@@ -34,7 +34,7 @@ fun Category.visualName(context: Context): String =
 
 object FolderStyleDefaults {
     const val DEFAULT_ICON = "folder"
-    const val DEFAULT_THEME = "fire_spirits"
+    const val DEFAULT_THEME = "lantern"
 
     val colorOptions = listOf(
         0xFFFF6B35,
@@ -59,6 +59,7 @@ object FolderStyleDefaults {
     )
 
     val themeOptions = listOf(
+        "lantern" to AppTheme.ORACLE,
         "fire_spirits" to AppTheme.FIRE_SPIRITS,
         "moon_wisps" to AppTheme.MOON_WISPS,
         "sea_lanterns" to AppTheme.SEA_LANTERNS,
@@ -122,15 +123,15 @@ fun Category.folderThemeKey(styles: Set<String>): String = folderStyle(styles).t
 
 fun Category.folderAmbientTheme(styles: Set<String>): AppTheme =
     FolderStyleDefaults.themeOptions.firstOrNull { it.first == folderThemeKey(styles) }?.second
-        ?: AppTheme.FIRE_SPIRITS
+        ?: AppTheme.ORACLE
 
 fun folderIconForKey(key: String): ImageVector = when (key) {
-    "book" -> Icons.Outlined.AutoStories
-    "star" -> Icons.Outlined.StarBorder
-    "heart" -> Icons.Outlined.FavoriteBorder
-    "bolt" -> Icons.Outlined.Bolt
-    "flame" -> Icons.Outlined.LocalFireDepartment
-    "moon" -> Icons.Outlined.Nightlight
-    "bookmark" -> Icons.Outlined.BookmarkBorder
-    else -> Icons.Outlined.Folder
+    "book" -> MaterialSymbols.Rounded.Book
+    "star" -> MaterialSymbols.Rounded.Star
+    "heart" -> MaterialSymbols.Rounded.Favorite
+    "bolt" -> MaterialSymbols.Rounded.Bolt
+    "flame" -> MaterialSymbols.Rounded.LocalFireDepartment
+    "moon" -> MaterialSymbols.Rounded.Bedtime
+    "bookmark" -> MaterialSymbols.Rounded.Bookmark
+    else -> MaterialSymbols.Rounded.Folder
 }

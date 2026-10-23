@@ -1,9 +1,14 @@
 package mihon.data.community
 
-import android.app.Application
 import android.content.Context
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.NetworkHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
@@ -29,17 +34,19 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import tachiyomi.core.common.util.lang.withIOContext
 import java.io.IOException
 
+@Inject
+@SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
 class SupabaseCommunityRepository(
-    app: Application,
+    context: Context,
     networkHelper: NetworkHelper,
     private val json: Json,
 ) : CommunityRepository {
 
     private val client = networkHelper.client
-    private val prefs = app.getSharedPreferences("oracleread_community", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("oracleread_community", Context.MODE_PRIVATE)
     private val baseUrl = BuildConfig.SUPABASE_URL.trimEnd('/')
     private val anonKey = BuildConfig.SUPABASE_ANON_KEY
 
@@ -631,7 +638,7 @@ class SupabaseCommunityRepository(
     private suspend fun request(
         url: String,
         block: Request.Builder.() -> Request.Builder,
-    ): String = withIOContext {
+    ): String = withContext(Dispatchers.IO) {
         refreshSessionIfNeeded()
         val builder = Request.Builder()
             .url(url)

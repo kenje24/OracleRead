@@ -1,9 +1,20 @@
 package mihon.feature.community
 
 import androidx.compose.runtime.Immutable
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import mihon.data.community.toCommunitySlug
 import mihon.domain.community.model.Community
 import mihon.domain.community.model.CommunityComment
@@ -13,42 +24,50 @@ import mihon.domain.community.model.CreateCommunity
 import mihon.domain.community.model.CreatePost
 import mihon.domain.community.model.PostType
 import mihon.domain.community.repository.CommunityRepository
-import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.manga.interactor.GetManga
 import tachiyomi.domain.manga.model.Manga
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 
-class CommunityScreenModel(
-    private val mangaId: Long,
-    private val getManga: GetManga = Injekt.get(),
-    private val repository: CommunityRepository = Injekt.get(),
-) : StateScreenModel<CommunityScreenState>(CommunityScreenState.Loading) {
+@AssistedInject
+class CommunityViewModel(
+    @Assisted private val mangaId: Long,
+    private val getManga: GetManga,
+    private val repository: CommunityRepository,
+) : ViewModel() {
+
+    @AssistedFactory
+    @ManualViewModelAssistedFactoryKey
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
+        fun create(mangaId: Long): CommunityViewModel
+    }
+
+    val state: StateFlow<CommunityScreenState>
+        field = MutableStateFlow<CommunityScreenState>(CommunityScreenState.Loading)
 
     init {
         refresh()
     }
 
     fun refresh() {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             val manga = getManga.await(mangaId)
             if (manga == null) {
-                mutableState.value = CommunityScreenState.Error("Entry not found")
-                return@launchIO
+                state.value = CommunityScreenState.Error("Entry not found")
+                return@launch
             }
 
             if (!repository.isConfigured) {
-                mutableState.value = CommunityScreenState.Error(
+                state.value = CommunityScreenState.Error(
                     "Community is not configured. Rebuild with SUPABASE_URL and SUPABASE_ANON_KEY.",
                 )
-                return@launchIO
+                return@launch
             }
 
             val mangaIdentifier = manga.communityIdentifier()
             repository.getCommunity(mangaIdentifier, manga.title)
                 .onSuccess { community ->
                     if (community == null) {
-                        mutableState.value = CommunityScreenState.CreateCommunity(
+                        state.value = CommunityScreenState.CreateCommunity(
                             manga = manga,
                             mangaIdentifier = mangaIdentifier,
                             title = manga.title,
@@ -61,12 +80,12 @@ class CommunityScreenModel(
                         loadFeed(manga, mangaIdentifier, community)
                     }
                 }
-                .onFailure { mutableState.value = CommunityScreenState.Error(it.message ?: "Unable to load community") }
+                .onFailure { state.value = CommunityScreenState.Error(it.message ?: "Unable to load community") }
         }
     }
 
     fun signIn(email: String, password: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             setWorkingMessage(true, null)
             repository.signIn(email, password)
                 .onSuccess { refresh() }
@@ -77,7 +96,7 @@ class CommunityScreenModel(
     }
 
     fun signUp(email: String, password: String, username: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             setWorkingMessage(true, null)
             repository.signUp(email, password, username)
                 .onSuccess {
@@ -94,30 +113,30 @@ class CommunityScreenModel(
     }
 
     fun createCommunity(title: String, slug: String, description: String) {
-        val state = state.value as? CommunityScreenState.CreateCommunity ?: return
-        screenModelScope.launchIO {
-            mutableState.value = state.copy(working = true, message = null)
+        val current = state.value as? CommunityScreenState.CreateCommunity ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            state.value = current.copy(working = true, message = null)
             repository.createCommunity(
                 CreateCommunity(
-                    mangaIdentifier = state.mangaIdentifier,
+                    mangaIdentifier = current.mangaIdentifier,
                     title = title.trim(),
                     slug = slug.toCommunitySlug(),
                     description = description.trim().ifBlank { null },
-                    coverImage = state.coverImage,
+                    coverImage = current.coverImage,
                 ),
             )
-                .onSuccess { loadFeed(state.manga, state.mangaIdentifier, it) }
-                .onFailure { mutableState.value = state.copy(working = false, message = it.message) }
+                .onSuccess { loadFeed(current.manga, current.mangaIdentifier, it) }
+                .onFailure { state.value = current.copy(working = false, message = it.message) }
         }
     }
 
     fun createPost(title: String, content: String, type: PostType, spoiler: Boolean) {
-        val state = state.value as? CommunityScreenState.Feed ?: return
-        screenModelScope.launchIO {
-            mutableState.value = state.copy(working = true, message = null)
+        val current = state.value as? CommunityScreenState.Feed ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            state.value = current.copy(working = true, message = null)
             repository.createPost(
                 CreatePost(
-                    communityId = state.community.id,
+                    communityId = current.community.id,
                     title = title.trim(),
                     content = content.trim(),
                     type = type,
@@ -125,18 +144,18 @@ class CommunityScreenModel(
                 ),
             )
                 .onSuccess { refresh() }
-                .onFailure { mutableState.value = state.copy(working = false, message = it.message) }
+                .onFailure { state.value = current.copy(working = false, message = it.message) }
         }
     }
 
     fun selectPost(post: CommunityPost?) {
-        val state = state.value as? CommunityScreenState.Feed ?: return
-        mutableState.value = state.copy(selectedPost = post, comments = emptyList(), message = null)
+        val current = state.value as? CommunityScreenState.Feed ?: return
+        state.value = current.copy(selectedPost = post, comments = emptyList(), message = null)
         if (post != null) {
-            screenModelScope.launchIO {
+            viewModelScope.launch(Dispatchers.IO) {
                 repository.getComments(post.id)
                     .onSuccess { comments ->
-                        mutableState.update {
+                        state.update {
                             (it as? CommunityScreenState.Feed)?.copy(comments = comments) ?: it
                         }
                     }
@@ -146,7 +165,7 @@ class CommunityScreenModel(
     }
 
     fun createComment(postId: String, parentCommentId: String?, content: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.createComment(CreateComment(postId = postId, parentCommentId = parentCommentId, content = content.trim()))
                 .onSuccess { selectPost((state.value as? CommunityScreenState.Feed)?.selectedPost) }
                 .onFailure { updateMessage(it.message ?: "Unable to add comment") }
@@ -156,7 +175,7 @@ class CommunityScreenModel(
     private suspend fun loadFeed(manga: Manga, mangaIdentifier: String, community: Community) {
         repository.getPosts(community.id)
             .onSuccess {
-                mutableState.value = CommunityScreenState.Feed(
+                state.value = CommunityScreenState.Feed(
                     manga = manga,
                     mangaIdentifier = mangaIdentifier,
                     community = community,
@@ -165,14 +184,14 @@ class CommunityScreenModel(
                     currentUserId = repository.currentSession?.userId,
                 )
             }
-            .onFailure { mutableState.value = CommunityScreenState.Error(it.message ?: "Unable to load posts") }
+            .onFailure { state.value = CommunityScreenState.Error(it.message ?: "Unable to load posts") }
     }
 
     fun votePost(postId: String, value: Int) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.votePost(postId, value)
                 .onSuccess {
-                    mutableState.update { state ->
+                    state.update { state ->
                         (state as? CommunityScreenState.Feed)?.copy(
                             posts = state.posts.map { if (it.id == postId) it.applyVote(value) else it },
                         ) ?: state
@@ -183,10 +202,10 @@ class CommunityScreenModel(
     }
 
     fun softDeletePost(postId: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.softDeletePost(postId)
                 .onSuccess {
-                    mutableState.update { state ->
+                    state.update { state ->
                         (state as? CommunityScreenState.Feed)?.copy(
                             posts = state.posts.map { if (it.id == postId) it.copy(isRemoved = true) else it },
                         ) ?: state
@@ -197,31 +216,31 @@ class CommunityScreenModel(
     }
 
     fun toggleFollow() {
-        val state = state.value as? CommunityScreenState.Feed ?: return
-        val nextFollowing = !state.community.isFollowing
-        mutableState.value = state.copy(
-            community = state.community.copy(
+        val current = state.value as? CommunityScreenState.Feed ?: return
+        val nextFollowing = !current.community.isFollowing
+        state.value = current.copy(
+            community = current.community.copy(
                 isFollowing = nextFollowing,
-                memberCount = (state.community.memberCount + if (nextFollowing) 1 else -1).coerceAtLeast(0),
+                memberCount = (current.community.memberCount + if (nextFollowing) 1 else -1).coerceAtLeast(0),
             ),
             message = if (nextFollowing) "Following this community." else "Unfollowed this community.",
         )
-        screenModelScope.launchIO {
-            val result = if (state.community.isFollowing) {
-                repository.unfollowCommunity(state.community.id)
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = if (current.community.isFollowing) {
+                repository.unfollowCommunity(current.community.id)
             } else {
-                repository.followCommunity(state.community.id)
+                repository.followCommunity(current.community.id)
             }
             result
                 .onSuccess { refresh() }
                 .onFailure {
-                    mutableState.value = state.copy(message = it.message ?: "Unable to update follow")
+                    state.value = current.copy(message = it.message ?: "Unable to update follow")
                 }
         }
     }
 
     private fun updateMessage(message: String) {
-        mutableState.update {
+        state.update {
             when (it) {
                 is CommunityScreenState.CreateCommunity -> it.copy(message = message)
                 is CommunityScreenState.Feed -> it.copy(message = message)
@@ -231,7 +250,7 @@ class CommunityScreenModel(
     }
 
     private fun setWorkingMessage(working: Boolean, message: String?) {
-        mutableState.update {
+        state.update {
             when (it) {
                 is CommunityScreenState.CreateCommunity -> it.copy(working = working, message = message)
                 is CommunityScreenState.Feed -> it.copy(working = working, message = message)

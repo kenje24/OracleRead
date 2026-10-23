@@ -34,6 +34,7 @@ fun CategoryScreen(
     state: CategoryScreenState.Success,
     onClickCreate: () -> Unit,
     onClickRename: (Category) -> Unit,
+    onClickEditStyle: (Category) -> Unit,
     onClickDelete: (Category) -> Unit,
     onChangeOrder: (Category, Int) -> Unit,
     navigateUp: () -> Unit,
@@ -64,9 +65,11 @@ fun CategoryScreen(
 
         CategoryContent(
             categories = state.categories,
+            folderStyles = state.folderStyles,
             lazyListState = lazyListState,
             paddingValues = paddingValues,
             onClickRename = onClickRename,
+            onClickEditStyle = onClickEditStyle,
             onClickDelete = onClickDelete,
             onChangeOrder = onChangeOrder,
         )
@@ -76,9 +79,11 @@ fun CategoryScreen(
 @Composable
 private fun CategoryContent(
     categories: List<Category>,
+    folderStyles: Set<String>,
     lazyListState: LazyListState,
     paddingValues: PaddingValues,
     onClickRename: (Category) -> Unit,
+    onClickEditStyle: (Category) -> Unit,
     onClickDelete: (Category) -> Unit,
     onChangeOrder: (Category, Int) -> Unit,
 ) {
@@ -112,7 +117,9 @@ private fun CategoryContent(
                 CategoryListItem(
                     modifier = Modifier.animateItem(),
                     category = category,
+                    folderStyles = folderStyles,
                     onRename = { onClickRename(category) },
+                    onEditStyle = { onClickEditStyle(category) },
                     onDelete = { onClickDelete(category) },
                 )
             }

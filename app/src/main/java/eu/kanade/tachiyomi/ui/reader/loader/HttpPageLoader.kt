@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,7 +48,7 @@ internal class HttpPageLoader(
             if (e is CancellationException) {
                 throw e
             }
-            source.getPageList(chapter.chapter.toSChapter())
+            loadRemotePageList()
         }
         return pages.mapIndexed { index, page ->
             // Don't trust sources and use our own indexing
@@ -59,6 +60,22 @@ internal class HttpPageLoader(
             .also {
                 it.loadByRollingChunked(0, 1, 1)
             }
+    }
+
+    /**
+     * Fetches the page list from the source, automatically retrying while [ReaderChapter.retryState] allows it.
+     */
+    private suspend fun loadRemotePageList(): List<Page> {
+        chapter.retryState.reset()
+        while (true) {
+            try {
+                return source.getPageList(chapter.chapter.toSChapter())
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+                if (!chapter.retryState.recordFailure()) throw e
+                delay(RETRY_DELAY_MS)
+            }
+        }
     }
 
     /**
@@ -94,6 +111,7 @@ internal class HttpPageLoader(
      * Retries a page. This method is only called from user interaction on the viewer.
      */
     override fun retryPage(page: ReaderPage) {
+        page.retryState.reset()
         if (page.status is Page.State.Error) {
             page.status = Page.State.Queue
         }
@@ -101,6 +119,24 @@ internal class HttpPageLoader(
         val pageIndex = page.index
         downloadJobs.remove(pageIndex)?.cancel()
         scope.launch { internalLoadPage(page, force = true) }.trackAsDownloadJob(pageIndex)
+    }
+
+    /**
+     * Retries a page that loaded but failed to decode, while its retry budget allows it.
+     *
+     * @return whether another retry was scheduled.
+     */
+    override fun retryPageAutomatically(page: ReaderPage): Boolean {
+        if (!page.retryState.recordFailure()) return false
+        page.status = Page.State.Queue
+
+        val pageIndex = page.index
+        downloadJobs.remove(pageIndex)?.cancel()
+        scope.launch {
+            delay(RETRY_DELAY_MS)
+            internalLoadPage(page, force = true)
+        }.trackAsDownloadJob(pageIndex)
+        return true
     }
 
     override fun recycle() {
@@ -223,40 +259,58 @@ internal class HttpPageLoader(
      * @param page the page whose source image has to be downloaded.
      */
     private suspend fun internalLoadPage(page: ReaderPage, force: Boolean = false) {
-        try {
-            if (page.imageUrl.isNullOrEmpty()) {
-                page.status = Page.State.LoadPage
-                page.imageUrl = source.getImageUrl(page)
-            }
-            val imageUrl = page.imageUrl!!
+        var forceReload = force
+        while (true) {
+            try {
+                if (page.imageUrl.isNullOrEmpty()) {
+                    page.status = Page.State.LoadPage
+                    page.imageUrl = source.getImageUrl(page)
+                }
+                val imageUrl = page.imageUrl!!
 
-            if (force || !chapterCache.isImageInCache(imageUrl)) {
-                val live = page.downloadStream
-                page.status = Page.State.DownloadImage
-                try {
-                    val imageResponse = source.getImage(page)
-                    chapterCache.putImageToCache(imageUrl, imageResponse, live)
-                    live?.finish()
-                } catch (e: Throwable) {
-                    live?.finish(e)
+                if (forceReload || !chapterCache.isImageInCache(imageUrl)) {
+                    val live = page.downloadStream
+                    page.status = Page.State.DownloadImage
+                    try {
+                        val imageResponse = source.getImage(page)
+                        chapterCache.putImageToCache(imageUrl, imageResponse, live)
+                        live?.finish()
+                    } catch (e: Throwable) {
+                        live?.finish(e)
+                        throw e
+                    }
+                }
+
+                page.downloadStream = null
+                page.stream = { chapterCache.getImageFile(imageUrl).inputStream() }
+                // The retry count isn't reset here: the page holders reset it once the image decodes, otherwise a
+                // page that downloads fine but fails to decode would retry forever.
+                page.status = Page.State.Ready
+                return
+            } catch (e: Throwable) {
+                page.downloadStream = null
+                if (e is CancellationException) {
+                    // Chunk chains get cancelled on every page turn, so a cancelled page isn't an error. Put it back
+                    // in the queue, otherwise it's stuck in a state no later pass will pick up.
+                    page.status = Page.State.Queue
                     throw e
+                }
+                if (!page.retryState.recordFailure()) {
+                    page.status = Page.State.Error(e)
+                    return
                 }
             }
 
-            page.downloadStream = null
-            page.stream = { chapterCache.getImageFile(imageUrl).inputStream() }
-            page.status = Page.State.Ready
-        } catch (e: Throwable) {
-            page.downloadStream = null
-            if (e is CancellationException) {
-                // Chunk chains get cancelled on every page turn, so a cancelled page isn't an error. Put it back in
-                // the queue, otherwise it's stuck in a state no later pass will pick up.
+            try {
+                delay(RETRY_DELAY_MS)
+            } catch (e: CancellationException) {
                 page.status = Page.State.Queue
                 throw e
             }
-            page.status = Page.State.Error(e)
+            forceReload = true
         }
     }
 }
 
 private const val LIMITED_PAGES_AHEAD = 4
+private const val RETRY_DELAY_MS = 1_000L

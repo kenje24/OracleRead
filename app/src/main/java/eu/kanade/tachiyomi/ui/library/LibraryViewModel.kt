@@ -17,6 +17,7 @@ import eu.kanade.core.util.fastFilterNot
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.chapter.interactor.SetReadStatus
 import eu.kanade.domain.manga.interactor.UpdateManga
+import eu.kanade.domain.source.interactor.GetEnabledSources
 import eu.kanade.presentation.library.components.LibraryToolbarTitle
 import eu.kanade.presentation.manga.DownloadAction
 import eu.kanade.tachiyomi.data.cache.CoverCache
@@ -51,6 +52,7 @@ import mihon.domain.library.model.search.QueryNode
 import mihon.feature.library.matches
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.TriState
+import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.util.lang.SubscriberGate
 import tachiyomi.core.common.util.lang.compareToWithCollator
 import tachiyomi.core.common.util.lang.pausedWhileUnsubscribed
@@ -70,10 +72,13 @@ import tachiyomi.domain.manga.interactor.GetLibraryManga
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.manga.model.MangaUpdate
 import tachiyomi.domain.manga.model.applyFilter
+import tachiyomi.domain.source.model.Pin
+import tachiyomi.domain.source.model.Source
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracksPerManga
 import tachiyomi.domain.track.model.Track
 import tachiyomi.source.local.isLocal
+import java.time.LocalDate
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
@@ -88,6 +93,7 @@ class LibraryViewModel(
     private val getNextChapters: GetNextChapters,
     private val getChaptersByMangaId: GetChaptersByMangaId,
     private val getBookmarkedChaptersByMangaId: GetBookmarkedChaptersByMangaId,
+    private val getEnabledSources: GetEnabledSources,
     private val setReadStatus: SetReadStatus,
     private val updateManga: UpdateManga,
     private val setMangaCategories: SetMangaCategories,
@@ -114,8 +120,24 @@ class LibraryViewModel(
         libraryPreferences.categoryTabs.changes(),
         libraryPreferences.categoryNumberOfItems.changes(),
         libraryPreferences.showContinueReadingButton.changes(),
+        libraryPreferences.showFeaturedManga.changes(),
+        libraryPreferences.folderStyles.changes(),
         ::DisplayPreferences,
     )
+
+    // OracleRead: pinned sources, shown as library source shortcuts
+    private val pinnedSources = getEnabledSources.subscribe()
+        .map { sources -> sources.filter { Pin.Pinned in it.pin }.distinctBy { it.id } }
+        .distinctUntilChanged()
+
+    // OracleRead: a streak whose last reading day is before yesterday is broken and reads as 0
+    private val readingStreakDays = combine(
+        libraryPreferences.readingStreakDays.changes(),
+        libraryPreferences.readingStreakDate.changes(),
+    ) { days, date ->
+        if (isReadingStreakBroken(date)) 0 else days
+    }
+        .distinctUntilChanged()
 
     private val hasActiveFilters = combine(
         getLibraryItemPreferencesFlow(),
@@ -189,7 +211,13 @@ class LibraryViewModel(
         library,
         combine(searchQuery, selection, dialog, ::Triple),
         combine(activeCategoryIndex, displayPreferences, hasActiveFilters, ::Triple),
-    ) { library, (searchQuery, selection, dialog), (activeCategoryIndex, display, hasActiveFilters) ->
+        combine(pinnedSources, readingStreakDays, ::Pair),
+    ) {
+            library,
+            (searchQuery, selection, dialog),
+            (activeCategoryIndex, display, hasActiveFilters),
+            (pinnedSources, readingStreakDays),
+        ->
         State(
             isLoading = library == null,
             searchQuery = searchQuery,
@@ -198,6 +226,10 @@ class LibraryViewModel(
             showCategoryTabs = display.showCategoryTabs,
             showMangaCount = display.showMangaCount,
             showMangaContinueButton = display.showMangaContinueButton,
+            showFeaturedManga = display.showFeaturedManga,
+            folderStyles = display.folderStyles,
+            pinnedSources = pinnedSources,
+            readingStreakDays = readingStreakDays,
             dialog = dialog,
             libraryData = library?.data ?: LibraryData(),
             activeCategoryIndex = activeCategoryIndex,
@@ -206,11 +238,25 @@ class LibraryViewModel(
     }
         .stateIn(viewModelScope + subscriberGate, subscriberGate.whileSubscribed(5.seconds), State())
 
+    init {
+        // OracleRead: reset a broken reading streak, as the fork's library toolbar did
+        if (isReadingStreakBroken(libraryPreferences.readingStreakDate.get())) {
+            libraryPreferences.readingStreakDays.set(0)
+        }
+    }
+
     private data class DisplayPreferences(
         val showCategoryTabs: Boolean,
         val showMangaCount: Boolean,
         val showMangaContinueButton: Boolean,
+        val showFeaturedManga: Boolean,
+        val folderStyles: Set<String>,
     )
+
+    private fun isReadingStreakBroken(lastReadDate: String): Boolean {
+        val date = runCatching { LocalDate.parse(lastReadDate) }.getOrNull() ?: return false
+        return date.isBefore(LocalDate.now().minusDays(1))
+    }
 
     private data class Library(
         val data: LibraryData,
@@ -367,17 +413,21 @@ class LibraryViewModel(
         }
 
         return mapValues { (key, value) ->
-            if (key.sort.type == LibrarySort.Type.Random) {
-                return@mapValues value.shuffled(Random(libraryPreferences.randomSortSeed.get()))
-            }
-
             val manga = value.mapNotNull { favoritesById[it] }
+
+            // OracleRead: pinned entries come first, whatever the category's sort
+            if (key.sort.type == LibrarySort.Type.Random) {
+                val (pinned, others) = manga.partition { it.isPinned }
+                return@mapValues pinned.sortedWith(sortAlphabetically)
+                    .plus(others.shuffled(Random(libraryPreferences.randomSortSeed.get())))
+                    .map { it.id }
+            }
 
             val comparator = key.sort.comparator()
                 .let { if (key.sort.isAscending) it else it.reversed() }
                 .thenComparator(sortAlphabetically)
 
-            manga.sortedWith(comparator).map { it.id }
+            manga.sortedWith(compareByDescending<LibraryItem> { it.isPinned }.then(comparator)).map { it.id }
         }
     }
 
@@ -418,8 +468,9 @@ class LibraryViewModel(
         return combine(
             getLibraryManga.subscribe(),
             getLibraryItemPreferencesFlow(),
+            libraryPreferences.pinnedMangaIds.changes(),
             downloadCache.changes.pausedWhileUnsubscribed(),
-        ) { libraryManga, preferences, _ ->
+        ) { libraryManga, preferences, pinnedMangaIds, _ ->
             val sources = libraryManga
                 .mapTo(mutableSetOf()) { it.manga.source }
                 .associateWith { sourceManager.getOrStub(it) }
@@ -456,6 +507,7 @@ class LibraryViewModel(
                             ""
                         },
                     ),
+                    isPinned = manga.id.toString() in pinnedMangaIds,
                 )
             }
         }
@@ -550,6 +602,19 @@ class LibraryViewModel(
                     read = read,
                 )
             }
+        }
+        clearSelection()
+    }
+
+    /**
+     * OracleRead: pins the selected manga, or unpins them when every one is already pinned.
+     */
+    fun togglePinSelection() {
+        // Reads from [selection] rather than [state], which can lag right after a toggle
+        val selectedIds = selection.value.mapTo(mutableSetOf()) { it.toString() }
+        if (selectedIds.isEmpty()) return
+        libraryPreferences.pinnedMangaIds.getAndSet { pinned ->
+            if (pinned.containsAll(selectedIds)) pinned - selectedIds else pinned + selectedIds
         }
         clearSelection()
     }
@@ -797,6 +862,11 @@ class LibraryViewModel(
         val showCategoryTabs: Boolean = false,
         val showMangaCount: Boolean = false,
         val showMangaContinueButton: Boolean = false,
+        // OracleRead
+        val showFeaturedManga: Boolean = false,
+        val folderStyles: Set<String> = emptySet(),
+        val pinnedSources: List<Source> = emptyList(),
+        val readingStreakDays: Int = 0,
         val dialog: Dialog? = null,
         val libraryData: LibraryData = LibraryData(),
         private val activeCategoryIndex: Int = 0,
@@ -825,6 +895,15 @@ class LibraryViewModel(
 
         fun getItemsForCategory(category: Category): List<LibraryItem> {
             return groupedFavorites[category].orEmpty().mapNotNull { libraryData.favoritesById[it] }
+        }
+
+        /**
+         * OracleRead: the entry featured at the top of a category, the one with the most recent
+         * chapter upload. None while searching or when the featured card is turned off.
+         */
+        fun getFeaturedItem(category: Category): LibraryItem? {
+            if (!showFeaturedManga || !searchQuery.isNullOrEmpty()) return null
+            return getItemsForCategory(category).maxWithOrNull(compareBy { it.libraryManga.latestUpload })
         }
 
         fun getItemCountForCategory(category: Category): Int? {

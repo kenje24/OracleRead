@@ -12,7 +12,6 @@
 -keep,allowoptimization class kotlin.time.** { public protected *; }
 -keep,allowoptimization class okhttp3.** { public protected *; }
 -keep,allowoptimization class okio.** { public protected *; }
--keep,allowoptimization class com.squareup.zstd.** { public protected *; }
 -keep,allowoptimization class org.brotli.** { public protected *; }
 -keep,allowoptimization class org.jsoup.** { public protected *; }
 -keep,allowoptimization class rx.** { public protected *; }

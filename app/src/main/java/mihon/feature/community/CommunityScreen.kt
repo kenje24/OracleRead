@@ -4,60 +4,38 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Bookmark
-import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Forum
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.PersonAdd
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Sort
-import androidx.compose.material.icons.outlined.WorkspacePremium
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,35 +46,71 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.Screen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import mihon.domain.community.model.CommunityComment
 import mihon.domain.community.model.CommunityNotification
 import mihon.domain.community.model.CommunityPost
 import mihon.domain.community.model.CommunityProfilePage
 import mihon.domain.community.model.CommunitySort
 import mihon.domain.community.model.CreateComment
-import mihon.domain.community.model.CreateReport
 import mihon.domain.community.model.CreatePost
+import mihon.domain.community.model.CreateReport
 import mihon.domain.community.model.FriendRequestStatus
 import mihon.domain.community.model.PostType
 import mihon.domain.community.repository.CommunityRepository
-import tachiyomi.core.common.util.lang.launchIO
+import mihon.icons.materialsymbols.MaterialSymbols
+import mihon.icons.materialsymbols.automirroredrounded.Sort
+import mihon.icons.materialsymbols.rounded.AccountCircle
+import mihon.icons.materialsymbols.rounded.Add
+import mihon.icons.materialsymbols.rounded.ArrowDownward
+import mihon.icons.materialsymbols.rounded.ArrowUpward
+import mihon.icons.materialsymbols.rounded.AutoAwesome
+import mihon.icons.materialsymbols.rounded.Bookmark
+import mihon.icons.materialsymbols.rounded.Delete
+import mihon.icons.materialsymbols.rounded.Forum
+import mihon.icons.materialsymbols.rounded.KeyboardArrowDown
+import mihon.icons.materialsymbols.rounded.KeyboardArrowUp
+import mihon.icons.materialsymbols.rounded.Lock
+import mihon.icons.materialsymbols.rounded.Mail
+import mihon.icons.materialsymbols.rounded.MoreVert
+import mihon.icons.materialsymbols.rounded.Person
+import mihon.icons.materialsymbols.rounded.PersonAdd
+import mihon.icons.materialsymbols.rounded.Refresh
+import mihon.icons.materialsymbols.rounded.Search
+import mihon.icons.materialsymbols.rounded.WorkspacePremium
+import mihon.icons.materialsymbols.roundedfilled.Bookmark
+import mihon.icons.materialsymbols.roundedfilled.CheckCircle
+import mihon.icons.materialsymbols.roundedfilled.Error
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.screens.LoadingScreen
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 
 class CommunityScreen(
     private val mangaId: Long,
@@ -106,34 +120,36 @@ class CommunityScreen(
     @OptIn(ExperimentalMaterial3Api::class)
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { CommunityScreenModel(mangaId) }
-        val state by screenModel.state.collectAsState()
+        val viewModel = assistedMetroViewModel<CommunityViewModel, CommunityViewModel.Factory> {
+            create(mangaId = mangaId)
+        }
+        val state by viewModel.state.collectAsStateWithLifecycle()
 
         when (val value = state) {
             CommunityScreenState.Loading -> LoadingScreen()
-            is CommunityScreenState.Error -> CommunityScaffold("Community", navigator::pop, screenModel::refresh) {
+            is CommunityScreenState.Error -> CommunityScaffold("Community", navigator::pop, viewModel::refresh) {
                 item("error") { ErrorText(value.message) }
             }
             is CommunityScreenState.CreateCommunity -> CreateCommunityContent(
                 state = value,
                 navigateUp = navigator::pop,
-                onRefresh = screenModel::refresh,
-                onSignIn = screenModel::signIn,
-                onSignUp = screenModel::signUp,
-                onCreate = screenModel::createCommunity,
+                onRefresh = viewModel::refresh,
+                onSignIn = viewModel::signIn,
+                onSignUp = viewModel::signUp,
+                onCreate = viewModel::createCommunity,
             )
             is CommunityScreenState.Feed -> CommunityFeedContent(
                 state = value,
                 navigateUp = navigator::pop,
-                onRefresh = screenModel::refresh,
-                onSignIn = screenModel::signIn,
-                onSignUp = screenModel::signUp,
+                onRefresh = viewModel::refresh,
+                onSignIn = viewModel::signIn,
+                onSignUp = viewModel::signUp,
                 onNewPost = { navigator.push(CommunityNewPostScreen(mangaId, value.community.id, value.community.slug)) },
                 onOpenPost = { navigator.push(CommunityDiscussionScreen(mangaId, it)) },
                 onOpenProfile = { navigator.push(CommunityProfileScreen(it)) },
-                onVotePost = screenModel::votePost,
-                onDeletePost = screenModel::softDeletePost,
-                onToggleFollow = screenModel::toggleFollow,
+                onVotePost = viewModel::votePost,
+                onDeletePost = viewModel::softDeletePost,
+                onToggleFollow = viewModel::toggleFollow,
             )
         }
     }
@@ -145,19 +161,19 @@ class CommunityHubScreen : Screen() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { CommunityHubScreenModel() }
-        val state by screenModel.state.collectAsState()
+        val viewModel = metroViewModel<CommunityHubViewModel>()
+        val state by viewModel.state.collectAsStateWithLifecycle()
         var showSortSheet by remember { mutableStateOf(false) }
 
-        CommunityScaffold("Oracle discussions", navigator::pop, screenModel::refresh) {
+        CommunityScaffold("Oracle discussions", navigator::pop, viewModel::refresh) {
             if (!state.signedIn) {
                 item("auth-only") {
                     AuthPanel(
                         signedIn = false,
                         working = state.working,
                         message = state.message ?: "Please log in to OracleRead to browse community discussions.",
-                        onSignIn = screenModel::signIn,
-                        onSignUp = screenModel::signUp,
+                        onSignIn = viewModel::signIn,
+                        onSignUp = viewModel::signUp,
                     )
                 }
                 return@CommunityScaffold
@@ -170,14 +186,14 @@ class CommunityHubScreen : Screen() {
                 ) {
                     OutlinedTextField(
                         value = state.query,
-                        onValueChange = screenModel::search,
+                        onValueChange = viewModel::search,
                         label = { Text("Search discussions") },
-                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                        leadingIcon = { Icon(MaterialSymbols.Rounded.Search, contentDescription = null) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
                     IconButton(onClick = { showSortSheet = true }) {
-                        Icon(Icons.Outlined.Sort, contentDescription = "Sort discussions")
+                        Icon(MaterialSymbols.AutoMirroredRounded.Sort, contentDescription = "Sort discussions")
                     }
                 }
                 state.message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -199,10 +215,10 @@ class CommunityHubScreen : Screen() {
                     currentUserId = state.currentUserId,
                     onOpen = { navigator.push(CommunityDiscussionScreen(-1L, post)) },
                     onOpenProfile = { userId -> navigator.push(CommunityProfileScreen(userId)) },
-                    onVote = { screenModel.votePost(post.id, it) },
-                    onDelete = { screenModel.softDeletePost(post.id) },
-                    onHide = { screenModel.hidePost(post.id) },
-                    onReport = { screenModel.reportPost(post) },
+                    onVote = { viewModel.votePost(post.id, it) },
+                    onDelete = { viewModel.softDeletePost(post.id) },
+                    onHide = { viewModel.hidePost(post.id) },
+                    onReport = { viewModel.reportPost(post) },
                 )
             }
         }
@@ -216,7 +232,7 @@ class CommunityHubScreen : Screen() {
                 CommunitySort.entries.forEach { sort ->
                     TextButton(
                         onClick = {
-                            screenModel.setSort(sort)
+                            viewModel.setSort(sort)
                             showSortSheet = false
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -226,7 +242,7 @@ class CommunityHubScreen : Screen() {
                             modifier = Modifier.weight(1f),
                         )
                         if (state.sort == sort) {
-                            Icon(Icons.Filled.CheckCircle, contentDescription = "Selected")
+                            Icon(MaterialSymbols.RoundedFilled.CheckCircle, contentDescription = "Selected")
                         }
                     }
                 }
@@ -244,8 +260,14 @@ class CommunityNewPostScreen(
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { NewPostScreenModel(communityId) }
-        val state by screenModel.state.collectAsState()
+        val viewModel = assistedMetroViewModel<CommunityNewPostViewModel, CommunityNewPostViewModel.Factory> {
+            create(communityId = communityId)
+        }
+        val state by viewModel.state.collectAsStateWithLifecycle()
+
+        LaunchedEffect(state.posted) {
+            if (state.posted) navigator.replace(CommunityScreen(mangaId))
+        }
 
         var title by remember { mutableStateOf("") }
         var content by remember { mutableStateOf("") }
@@ -299,9 +321,7 @@ class CommunityNewPostScreen(
                     Button(
                         enabled = !state.working && title.isNotBlank() && content.isNotBlank(),
                         onClick = {
-                            screenModel.createPost(title, content, type, spoiler) {
-                                navigator.replace(CommunityScreen(mangaId))
-                            }
+                            viewModel.createPost(title, content, type, spoiler)
                         },
                     ) {
                         Text(if (state.working) "Posting..." else "Post discussion")
@@ -320,16 +340,18 @@ class CommunityDiscussionScreen(
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { DiscussionScreenModel(initialPost) }
-        val state by screenModel.state.collectAsState()
+        val viewModel = assistedMetroViewModel<CommunityDiscussionViewModel, CommunityDiscussionViewModel.Factory> {
+            create(initialPost = initialPost)
+        }
+        val state by viewModel.state.collectAsStateWithLifecycle()
 
-        CommunityScaffold("Discussion", navigator::pop, screenModel::refresh) {
+        CommunityScaffold("Discussion", navigator::pop, viewModel::refresh) {
             item("post") {
                 DiscussionHeader(
                     post = state.post,
-                    onVote = screenModel::votePost,
-                    onDelete = screenModel::softDeletePost,
-                    onReport = screenModel::reportPost,
+                    onVote = viewModel::votePost,
+                    onDelete = viewModel::softDeletePost,
+                    onReport = viewModel::reportPost,
                 )
             }
             item("reply") {
@@ -338,8 +360,8 @@ class CommunityDiscussionScreen(
                     working = state.working,
                     message = state.message,
                     replyTarget = state.replyTarget,
-                    onCancelReply = { screenModel.setReplyTarget(null) },
-                    onReply = { screenModel.createComment(it) },
+                    onCancelReply = { viewModel.setReplyTarget(null) },
+                    onReply = { viewModel.createComment(it) },
                 )
             }
             if (state.comments.isEmpty()) {
@@ -356,12 +378,12 @@ class CommunityDiscussionScreen(
                 CommentThreadPreview(
                     comment = comment,
                     allComments = state.comments,
-                    onVote = { commentId, value -> screenModel.voteComment(commentId, value) },
-                    onDelete = screenModel::softDeleteComment,
-                    onReply = screenModel::setReplyTarget,
+                    onVote = { commentId, value -> viewModel.voteComment(commentId, value) },
+                    onDelete = viewModel::softDeleteComment,
+                    onReply = viewModel::setReplyTarget,
                     onOpenProfile = { navigator.push(CommunityProfileScreen(it)) },
                     onOpenThread = { navigator.push(CommunityCommentThreadScreen(initialPost, comment)) },
-                    onReport = screenModel::reportComment,
+                    onReport = viewModel::reportComment,
                 )
             }
         }
@@ -376,20 +398,22 @@ class CommunityCommentThreadScreen(
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { DiscussionScreenModel(post) }
-        val state by screenModel.state.collectAsState()
+        val viewModel = assistedMetroViewModel<CommunityDiscussionViewModel, CommunityDiscussionViewModel.Factory> {
+            create(initialPost = post)
+        }
+        val state by viewModel.state.collectAsStateWithLifecycle()
         val comments = state.comments.threadFor(rootComment.id)
 
-        CommunityScaffold("Replies", navigator::pop, screenModel::refresh) {
+        CommunityScaffold("Replies", navigator::pop, viewModel::refresh) {
             item("root") {
                 CommentItem(
                     comment = rootComment,
                     indentLevel = 0,
-                    onVote = { screenModel.voteComment(rootComment.id, it) },
-                    onDelete = { screenModel.softDeleteComment(rootComment.id) },
-                    onReply = { screenModel.setReplyTarget(rootComment) },
+                    onVote = { viewModel.voteComment(rootComment.id, it) },
+                    onDelete = { viewModel.softDeleteComment(rootComment.id) },
+                    onReply = { viewModel.setReplyTarget(rootComment) },
                     onOpenProfile = { navigator.push(CommunityProfileScreen(it)) },
-                    onReport = { screenModel.reportComment(rootComment) },
+                    onReport = { viewModel.reportComment(rootComment) },
                 )
             }
             item("reply-box") {
@@ -398,19 +422,19 @@ class CommunityCommentThreadScreen(
                     working = state.working,
                     message = state.message,
                     replyTarget = state.replyTarget ?: rootComment,
-                    onCancelReply = { screenModel.setReplyTarget(null) },
-                    onReply = { screenModel.createComment(it) },
+                    onCancelReply = { viewModel.setReplyTarget(null) },
+                    onReply = { viewModel.createComment(it) },
                 )
             }
             items(comments, key = { it.id }) { comment ->
                 CommentItem(
                     comment = comment,
                     indentLevel = 1,
-                    onVote = { screenModel.voteComment(comment.id, it) },
-                    onDelete = { screenModel.softDeleteComment(comment.id) },
-                    onReply = { screenModel.setReplyTarget(comment) },
+                    onVote = { viewModel.voteComment(comment.id, it) },
+                    onDelete = { viewModel.softDeleteComment(comment.id) },
+                    onReply = { viewModel.setReplyTarget(comment) },
                     onOpenProfile = { navigator.push(CommunityProfileScreen(it)) },
-                    onReport = { screenModel.reportComment(comment) },
+                    onReport = { viewModel.reportComment(comment) },
                 )
             }
         }
@@ -505,7 +529,7 @@ private fun CommunityFeedContent(
             if (state.signedIn) {
                 ExtendedFloatingActionButton(
                     text = { Text("New post") },
-                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                    icon = { Icon(MaterialSymbols.Rounded.Add, contentDescription = null) },
                     onClick = onNewPost,
                 )
             }
@@ -540,7 +564,11 @@ private fun CommunityFeedContent(
                     state.community.description?.takeIf { it.isNotBlank() }?.let {
                         TextButton(onClick = { showDescription = !showDescription }) {
                             Icon(
-                                imageVector = if (showDescription) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                                imageVector = if (showDescription) {
+                                    MaterialSymbols.Rounded.KeyboardArrowUp
+                                } else {
+                                    MaterialSymbols.Rounded.KeyboardArrowDown
+                                },
                                 contentDescription = null,
                             )
                             Text(if (showDescription) "Hide description" else "About this community")
@@ -557,7 +585,11 @@ private fun CommunityFeedContent(
                     }
                     Button(onClick = onToggleFollow, modifier = Modifier.fillMaxWidth()) {
                         Icon(
-                            imageVector = if (state.community.isFollowing) Icons.Outlined.Bookmark else Icons.Outlined.BookmarkBorder,
+                            imageVector = if (state.community.isFollowing) {
+                                MaterialSymbols.RoundedFilled.Bookmark
+                            } else {
+                                MaterialSymbols.Rounded.Bookmark
+                            },
                             contentDescription = null,
                         )
                         Text(if (state.community.isFollowing) "Following community" else "Follow community")
@@ -622,7 +654,7 @@ private fun CommunityScaffold(
                 navigateUp = navigateUp,
                 actions = {
                     IconButton(onClick = onRefresh) {
-                        Icon(imageVector = Icons.Outlined.Refresh, contentDescription = "Refresh community")
+                        Icon(imageVector = MaterialSymbols.Rounded.Refresh, contentDescription = "Refresh community")
                     }
                 },
             )
@@ -670,7 +702,7 @@ internal fun AuthPanel(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
+            leadingIcon = { Icon(MaterialSymbols.Rounded.Mail, contentDescription = null) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -678,7 +710,7 @@ internal fun AuthPanel(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
-            leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
+            leadingIcon = { Icon(MaterialSymbols.Rounded.Lock, contentDescription = null) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -687,7 +719,7 @@ internal fun AuthPanel(
                 value = username,
                 onValueChange = { username = it },
                 label = { Text("Username") },
-                leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
+                leadingIcon = { Icon(MaterialSymbols.Rounded.Person, contentDescription = null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -780,7 +812,7 @@ private fun PostItem(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Outlined.Forum, contentDescription = null)
+                            Icon(MaterialSymbols.Rounded.Forum, contentDescription = null)
                         }
                     }
                 }
@@ -821,7 +853,7 @@ private fun PostItem(
             }
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Outlined.MoreVert, contentDescription = "Discussion options")
+                    Icon(MaterialSymbols.Rounded.MoreVert, contentDescription = "Discussion options")
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
@@ -856,7 +888,7 @@ private fun PostItem(
             VoteButton(value = -1, selected = post.myVote == -1, count = post.downvotes, onVote = onVote)
             if (!post.isRemoved && currentUserId == post.authorId) {
                 IconButton(onClick = { confirmDelete = true }) {
-                    Icon(Icons.Outlined.Delete, contentDescription = "Delete discussion")
+                    Icon(MaterialSymbols.Rounded.Delete, contentDescription = "Delete discussion")
                 }
             }
         }
@@ -892,7 +924,7 @@ private fun DiscussionHeader(post: CommunityPost, onVote: (Int) -> Unit, onDelet
             )
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Outlined.MoreVert, contentDescription = "Discussion options")
+                    Icon(MaterialSymbols.Rounded.MoreVert, contentDescription = "Discussion options")
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
@@ -921,7 +953,7 @@ private fun DiscussionHeader(post: CommunityPost, onVote: (Int) -> Unit, onDelet
             VoteButton(value = -1, selected = post.myVote == -1, count = post.downvotes, onVote = onVote)
             if (!post.isRemoved) {
                 TextButton(onClick = { confirmDelete = true }) {
-                    Icon(Icons.Outlined.Delete, contentDescription = null)
+                    Icon(MaterialSymbols.Rounded.Delete, contentDescription = null)
                     Text("Delete")
                 }
             }
@@ -1067,7 +1099,7 @@ private fun CommentItem(
             }
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Outlined.MoreVert, contentDescription = "Comment options")
+                    Icon(MaterialSymbols.Rounded.MoreVert, contentDescription = "Comment options")
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
@@ -1132,19 +1164,19 @@ private fun CreatorAwareProfileIcon(authorId: String) {
     if (authorId == ORACLEREAD_CREATOR_ID) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Outlined.WorkspacePremium,
+                imageVector = MaterialSymbols.Rounded.WorkspacePremium,
                 contentDescription = "OracleRead creator",
                 tint = MaterialTheme.colorScheme.tertiary,
             )
             Icon(
-                imageVector = Icons.Outlined.AutoAwesome,
+                imageVector = MaterialSymbols.Rounded.AutoAwesome,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.tertiary,
             )
         }
     } else {
         Icon(
-            imageVector = Icons.Outlined.AccountCircle,
+            imageVector = MaterialSymbols.Rounded.AccountCircle,
             contentDescription = "Profile",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -1158,7 +1190,11 @@ private fun AuthFeedbackRow(feedback: AuthFeedback) {
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
     ) {
         Icon(
-            imageVector = if (feedback.success) Icons.Filled.CheckCircle else Icons.Filled.Error,
+            imageVector = if (feedback.success) {
+                MaterialSymbols.RoundedFilled.CheckCircle
+            } else {
+                MaterialSymbols.RoundedFilled.Error
+            },
             contentDescription = null,
             tint = feedback.color,
         )
@@ -1178,7 +1214,7 @@ private fun VoteButton(value: Int, selected: Boolean, count: Int, onVote: (Int) 
     )
     TextButton(onClick = { onVote(value) }) {
         Icon(
-            imageVector = if (value > 0) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward,
+            imageVector = if (value > 0) MaterialSymbols.Rounded.ArrowUpward else MaterialSymbols.Rounded.ArrowDownward,
             contentDescription = if (value > 0) "Upvote" else "Downvote",
             tint = color,
             modifier = Modifier.graphicsLayer(scaleX = scale, scaleY = scale),
@@ -1199,7 +1235,7 @@ private fun PostTypePicker(type: PostType, onTypeChange: (PostType) -> Unit) {
             label = { Text("Post type") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth(),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -1225,50 +1261,69 @@ private fun ErrorText(message: String) {
     )
 }
 
-class NewPostScreenModel(
-    private val communityId: String,
-    private val repository: CommunityRepository = Injekt.get(),
-) : StateScreenModel<NewPostScreenModel.State>(State()) {
+@AssistedInject
+class CommunityNewPostViewModel(
+    @Assisted private val communityId: String,
+    private val repository: CommunityRepository,
+) : ViewModel() {
 
-    fun createPost(title: String, content: String, type: PostType, spoiler: Boolean, onSuccess: () -> Unit) {
-        screenModelScope.launchIO {
-            mutableState.value = state.value.copy(working = true, message = null)
+    @AssistedFactory
+    @ManualViewModelAssistedFactoryKey
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
+        fun create(communityId: String): CommunityNewPostViewModel
+    }
+
+    val state: StateFlow<State>
+        field = MutableStateFlow(State())
+
+    fun createPost(title: String, content: String, type: PostType, spoiler: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            state.update { it.copy(working = true, message = null) }
             repository.createPost(CreatePost(communityId, title.trim(), content.trim(), type, spoiler))
-                .onSuccess { onSuccess() }
-                .onFailure { mutableState.value = state.value.copy(working = false, message = it.message ?: "Unable to create post") }
+                .onSuccess { state.update { it.copy(posted = true) } }
+                .onFailure { error ->
+                    state.update { it.copy(working = false, message = error.message ?: "Unable to create post") }
+                }
         }
     }
 
-    data class State(val working: Boolean = false, val message: String? = null)
+    data class State(val working: Boolean = false, val message: String? = null, val posted: Boolean = false)
 }
 
-class CommunityHubScreenModel(
-    private val repository: CommunityRepository = Injekt.get(),
-) : StateScreenModel<CommunityHubScreenModel.State>(
-    State(currentUserId = repository.currentSession?.userId, signedIn = repository.isSignedIn),
-) {
+@Inject
+@ViewModelKey
+@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
+class CommunityHubViewModel(
+    private val repository: CommunityRepository,
+) : ViewModel() {
+
+    val state: StateFlow<State>
+        field = MutableStateFlow(
+            State(currentUserId = repository.currentSession?.userId, signedIn = repository.isSignedIn),
+        )
 
     init {
         refresh()
     }
 
     fun search(query: String) {
-        mutableState.update { it.copy(query = query) }
+        state.update { it.copy(query = query) }
         refresh()
     }
 
     fun setSort(sort: CommunitySort) {
-        mutableState.update { it.copy(sort = sort) }
+        state.update { it.copy(sort = sort) }
         refresh()
     }
 
     fun refresh() {
-        screenModelScope.launchIO {
-            mutableState.update { it.copy(loading = true, message = null) }
-            val state = state.value
-            repository.searchPosts(state.query, state.sort)
+        viewModelScope.launch(Dispatchers.IO) {
+            state.update { it.copy(loading = true, message = null) }
+            val current = state.value
+            repository.searchPosts(current.query, current.sort)
                 .onSuccess { posts ->
-                    mutableState.update {
+                    state.update {
                         it.copy(
                             loading = false,
                             posts = posts,
@@ -1278,7 +1333,7 @@ class CommunityHubScreenModel(
                     }
                 }
                 .onFailure { error ->
-                    mutableState.update {
+                    state.update {
                         it.copy(
                             loading = false,
                             signedIn = repository.isSignedIn,
@@ -1290,25 +1345,25 @@ class CommunityHubScreenModel(
     }
 
     fun signIn(email: String, password: String) {
-        screenModelScope.launchIO {
-            mutableState.update { it.copy(working = true, message = null) }
+        viewModelScope.launch(Dispatchers.IO) {
+            state.update { it.copy(working = true, message = null) }
             repository.signIn(email, password)
                 .onSuccess {
-                    mutableState.update { it.copy(working = false, signedIn = true, message = "Logged in successfully!") }
+                    state.update { it.copy(working = false, signedIn = true, message = "Logged in successfully!") }
                     refresh()
                 }
                 .onFailure { error ->
-                    mutableState.update { it.copy(working = false, signedIn = false, message = friendlyAuthError(error.message, "Unable to log in")) }
+                    state.update { it.copy(working = false, signedIn = false, message = friendlyAuthError(error.message, "Unable to log in")) }
                 }
         }
     }
 
     fun signUp(email: String, password: String, username: String) {
-        screenModelScope.launchIO {
-            mutableState.update { it.copy(working = true, message = null) }
+        viewModelScope.launch(Dispatchers.IO) {
+            state.update { it.copy(working = true, message = null) }
             repository.signUp(email, password, username)
                 .onSuccess {
-                    mutableState.update {
+                    state.update {
                         it.copy(
                             working = false,
                             signedIn = repository.isSignedIn,
@@ -1318,45 +1373,45 @@ class CommunityHubScreenModel(
                     if (repository.isSignedIn) refresh()
                 }
                 .onFailure { error ->
-                    mutableState.update { it.copy(working = false, signedIn = false, message = friendlyAuthError(error.message, "Unable to register")) }
+                    state.update { it.copy(working = false, signedIn = false, message = friendlyAuthError(error.message, "Unable to register")) }
                 }
         }
     }
 
     fun votePost(postId: String, value: Int) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.votePost(postId, value)
                 .onSuccess {
-                    mutableState.update { state ->
+                    state.update { state ->
                         state.copy(posts = state.posts.map { if (it.id == postId) it.applyVote(value) else it })
                     }
                 }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to vote") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to vote") } }
         }
     }
 
     fun softDeletePost(postId: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.softDeletePost(postId)
                 .onSuccess {
-                    mutableState.update { state ->
+                    state.update { state ->
                         state.copy(posts = state.posts.map { if (it.id == postId) it.copy(isRemoved = true) else it })
                     }
                 }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to delete discussion") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to delete discussion") } }
         }
     }
 
     fun hidePost(postId: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.hidePost(postId)
-                .onSuccess { mutableState.update { state -> state.copy(posts = state.posts.filterNot { it.id == postId }) } }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to hide discussion") } }
+                .onSuccess { state.update { state -> state.copy(posts = state.posts.filterNot { it.id == postId }) } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to hide discussion") } }
         }
     }
 
     fun reportPost(post: CommunityPost) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.report(
                 CreateReport(
                     communityId = post.communityId,
@@ -1365,8 +1420,8 @@ class CommunityHubScreenModel(
                     reason = "Reported from app",
                 ),
             )
-                .onSuccess { mutableState.update { it.copy(message = "Report sent.") } }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to report discussion") } }
+                .onSuccess { state.update { it.copy(message = "Report sent.") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to report discussion") } }
         }
     }
 
@@ -1417,30 +1472,41 @@ private fun friendlyAuthError(message: String?, fallback: String): String {
 
 private const val ORACLEREAD_CREATOR_ID = "9b01c237-695d-429d-9812-780edc73b6c6"
 
-class DiscussionScreenModel(
-    initialPost: CommunityPost,
-    private val repository: CommunityRepository = Injekt.get(),
-) : StateScreenModel<DiscussionScreenModel.State>(State(post = initialPost, signedIn = repository.isSignedIn)) {
+@AssistedInject
+class CommunityDiscussionViewModel(
+    @Assisted initialPost: CommunityPost,
+    private val repository: CommunityRepository,
+) : ViewModel() {
+
+    @AssistedFactory
+    @ManualViewModelAssistedFactoryKey
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
+        fun create(initialPost: CommunityPost): CommunityDiscussionViewModel
+    }
+
+    val state: StateFlow<State>
+        field = MutableStateFlow(State(post = initialPost, signedIn = repository.isSignedIn))
 
     init {
         refresh()
     }
 
     fun refresh() {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.getComments(state.value.post.id)
-                .onSuccess { comments -> mutableState.update { it.copy(comments = comments, signedIn = repository.isSignedIn) } }
-                .onFailure { mutableState.update { it.copy(message = it.message ?: "Unable to load comments") } }
+                .onSuccess { comments -> state.update { it.copy(comments = comments, signedIn = repository.isSignedIn) } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to load comments") } }
         }
     }
 
     fun setReplyTarget(comment: CommunityComment?) {
-        mutableState.update { it.copy(replyTarget = comment) }
+        state.update { it.copy(replyTarget = comment) }
     }
 
     fun createComment(content: String) {
-        screenModelScope.launchIO {
-            mutableState.update { it.copy(working = true, message = null) }
+        viewModelScope.launch(Dispatchers.IO) {
+            state.update { it.copy(working = true, message = null) }
             val current = state.value
             val replyTarget = current.replyTarget
             val cleanedContent = content.trim()
@@ -1459,43 +1525,43 @@ class DiscussionScreenModel(
                 ),
             )
                 .onSuccess {
-                    mutableState.update { current -> current.copy(working = false, message = null, replyTarget = null) }
+                    state.update { it.copy(working = false, message = null, replyTarget = null) }
                     refresh()
                 }
-                .onFailure { error -> mutableState.update { it.copy(working = false, message = error.message ?: "Unable to comment") } }
+                .onFailure { error -> state.update { it.copy(working = false, message = error.message ?: "Unable to comment") } }
         }
     }
 
     fun votePost(value: Int) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.votePost(state.value.post.id, value)
-                .onSuccess { mutableState.update { it.copy(post = it.post.applyVote(value)) } }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to vote") } }
+                .onSuccess { state.update { it.copy(post = it.post.applyVote(value)) } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to vote") } }
         }
     }
 
     fun voteComment(commentId: String, value: Int) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.voteComment(commentId, value)
                 .onSuccess {
-                    mutableState.update { state ->
+                    state.update { state ->
                         state.copy(comments = state.comments.map { if (it.id == commentId) it.applyVote(value) else it })
                     }
                 }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to vote") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to vote") } }
         }
     }
 
     fun softDeletePost() {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.softDeletePost(state.value.post.id)
-                .onSuccess { mutableState.update { it.copy(post = it.post.copy(isRemoved = true)) } }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to delete discussion") } }
+                .onSuccess { state.update { it.copy(post = it.post.copy(isRemoved = true)) } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to delete discussion") } }
         }
     }
 
     fun reportPost() {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             val post = state.value.post
             repository.report(
                 CreateReport(
@@ -1505,25 +1571,25 @@ class DiscussionScreenModel(
                     reason = "Reported from app",
                 ),
             )
-                .onSuccess { mutableState.update { it.copy(message = "Report sent.") } }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to report discussion") } }
+                .onSuccess { state.update { it.copy(message = "Report sent.") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to report discussion") } }
         }
     }
 
     fun softDeleteComment(commentId: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.softDeleteComment(commentId)
                 .onSuccess {
-                    mutableState.update { state ->
+                    state.update { state ->
                         state.copy(comments = state.comments.map { if (it.id == commentId) it.copy(isRemoved = true) else it })
                     }
                 }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to delete comment") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to delete comment") } }
         }
     }
 
     fun reportComment(comment: CommunityComment) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.report(
                 CreateReport(
                     communityId = state.value.post.communityId,
@@ -1532,8 +1598,8 @@ class DiscussionScreenModel(
                     reason = "Reported from app",
                 ),
             )
-                .onSuccess { mutableState.update { it.copy(message = "Report sent.") } }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to report comment") } }
+                .onSuccess { state.update { it.copy(message = "Report sent.") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to report comment") } }
         }
     }
 
@@ -1554,16 +1620,18 @@ class CommunityProfileScreen(
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { CommunityProfileScreenModel(userId) }
-        val state by screenModel.state.collectAsState()
+        val viewModel = assistedMetroViewModel<CommunityProfileViewModel, CommunityProfileViewModel.Factory> {
+            create(userId = userId)
+        }
+        val state by viewModel.state.collectAsStateWithLifecycle()
 
-        CommunityScaffold("Profile", navigator::pop, screenModel::refresh) {
+        CommunityScaffold("Profile", navigator::pop, viewModel::refresh) {
             when (val value = state) {
-                CommunityProfileScreenModel.State.Loading -> item("loading") {
+                CommunityProfileViewModel.State.Loading -> item("loading") {
                     Text("Loading...", modifier = Modifier.padding(MaterialTheme.padding.medium))
                 }
-                is CommunityProfileScreenModel.State.Error -> item("error") { ErrorText(value.message) }
-                is CommunityProfileScreenModel.State.Ready -> item("profile") {
+                is CommunityProfileViewModel.State.Error -> item("error") { ErrorText(value.message) }
+                is CommunityProfileViewModel.State.Ready -> item("profile") {
                     Column(
                         modifier = Modifier.padding(MaterialTheme.padding.medium),
                         verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
@@ -1577,7 +1645,11 @@ class CommunityProfileScreen(
                                 modifier = Modifier.padding(MaterialTheme.padding.medium),
                                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
                             ) {
-                                Icon(Icons.Outlined.AccountCircle, contentDescription = null, modifier = Modifier.size(52.dp))
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.AccountCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(52.dp),
+                                )
                                 Text(value.page.profile.visibleName, style = MaterialTheme.typography.headlineSmall)
                                 Text("@${value.page.profile.username}", color = MaterialTheme.colorScheme.onPrimaryContainer)
                             }
@@ -1586,15 +1658,15 @@ class CommunityProfileScreen(
                             when (value.page.friendRequestStatus) {
                                 FriendRequestStatus.Outgoing -> AssistChip(onClick = {}, label = { Text("Friend request sent") })
                                 FriendRequestStatus.Incoming -> Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small)) {
-                                    Button(onClick = screenModel::acceptFriendRequest) {
+                                    Button(onClick = viewModel::acceptFriendRequest) {
                                         Text("Accept")
                                     }
-                                    TextButton(onClick = screenModel::declineFriendRequest) {
+                                    TextButton(onClick = viewModel::declineFriendRequest) {
                                         Text("Decline")
                                     }
                                 }
-                                null -> Button(onClick = screenModel::requestFriend) {
-                                    Icon(Icons.Outlined.PersonAdd, contentDescription = null)
+                                null -> Button(onClick = viewModel::requestFriend) {
+                                    Icon(MaterialSymbols.Rounded.PersonAdd, contentDescription = null)
                                     Text("Add friend")
                                 }
                             }
@@ -1654,9 +1726,9 @@ class CommunityNotificationsScreen : Screen() {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { CommunityNotificationsScreenModel() }
-        val state by screenModel.state.collectAsState()
-        CommunityScaffold("Notifications", navigator::pop, screenModel::refresh) {
+        val viewModel = metroViewModel<CommunityNotificationsViewModel>()
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        CommunityScaffold("Notifications", navigator::pop, viewModel::refresh) {
             if (state.loading) {
                 item("loading") { Text("Loading...", modifier = Modifier.padding(MaterialTheme.padding.medium)) }
             } else if (state.notifications.isEmpty()) {
@@ -1671,10 +1743,10 @@ class CommunityNotificationsScreen : Screen() {
                     notification.body?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     if (notification.type == "friend_request" && notification.friendRequestId != null && !notification.isRead) {
                         Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small)) {
-                            Button(onClick = { screenModel.acceptFriendRequest(notification.friendRequestId) }) {
+                            Button(onClick = { viewModel.acceptFriendRequest(notification.friendRequestId) }) {
                                 Text("Accept")
                             }
-                            TextButton(onClick = { screenModel.declineFriendRequest(notification.friendRequestId) }) {
+                            TextButton(onClick = { viewModel.declineFriendRequest(notification.friendRequestId) }) {
                                 Text("Decline")
                             }
                         }
@@ -1687,60 +1759,71 @@ class CommunityNotificationsScreen : Screen() {
     }
 }
 
-class CommunityProfileScreenModel(
-    private val userId: String?,
-    private val repository: CommunityRepository = Injekt.get(),
-) : StateScreenModel<CommunityProfileScreenModel.State>(State.Loading) {
+@AssistedInject
+class CommunityProfileViewModel(
+    @Assisted private val userId: String?,
+    private val repository: CommunityRepository,
+) : ViewModel() {
+
+    @AssistedFactory
+    @ManualViewModelAssistedFactoryKey
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
+        fun create(userId: String?): CommunityProfileViewModel
+    }
+
+    val state: StateFlow<State>
+        field = MutableStateFlow<State>(State.Loading)
 
     init {
         refresh()
     }
 
     fun refresh() {
-        screenModelScope.launchIO {
-            mutableState.value = State.Loading
+        viewModelScope.launch(Dispatchers.IO) {
+            state.value = State.Loading
             repository.getProfile(userId)
-                .onSuccess { mutableState.value = State.Ready(it) }
-                .onFailure { mutableState.value = State.Error(it.message ?: "Unable to load profile") }
+                .onSuccess { state.value = State.Ready(it) }
+                .onFailure { state.value = State.Error(it.message ?: "Unable to load profile") }
         }
     }
 
     fun requestFriend() {
         val current = state.value as? State.Ready ?: return
         val target = current.page.profile.id ?: return
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.requestFriend(target)
                 .onSuccess {
                     repository.getProfile(userId)
-                        .onSuccess { mutableState.value = State.Ready(it, message = "Friend request sent.") }
+                        .onSuccess { state.value = State.Ready(it, message = "Friend request sent.") }
                 }
-                .onFailure { mutableState.value = current.copy(message = it.message ?: "Unable to send friend request") }
+                .onFailure { state.value = current.copy(message = it.message ?: "Unable to send friend request") }
         }
     }
 
     fun acceptFriendRequest() {
         val current = state.value as? State.Ready ?: return
         val requestId = current.page.friendRequestId ?: return
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.acceptFriendRequest(requestId)
                 .onSuccess {
                     repository.getProfile(userId)
-                        .onSuccess { mutableState.value = State.Ready(it, message = "Friend request accepted.") }
+                        .onSuccess { state.value = State.Ready(it, message = "Friend request accepted.") }
                 }
-                .onFailure { mutableState.value = current.copy(message = it.message ?: "Unable to accept friend request") }
+                .onFailure { state.value = current.copy(message = it.message ?: "Unable to accept friend request") }
         }
     }
 
     fun declineFriendRequest() {
         val current = state.value as? State.Ready ?: return
         val requestId = current.page.friendRequestId ?: return
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.declineFriendRequest(requestId)
                 .onSuccess {
                     repository.getProfile(userId)
-                        .onSuccess { mutableState.value = State.Ready(it, message = "Friend request declined.") }
+                        .onSuccess { state.value = State.Ready(it, message = "Friend request declined.") }
                 }
-                .onFailure { mutableState.value = current.copy(message = it.message ?: "Unable to decline friend request") }
+                .onFailure { state.value = current.copy(message = it.message ?: "Unable to decline friend request") }
         }
     }
 
@@ -1751,42 +1834,48 @@ class CommunityProfileScreenModel(
     }
 }
 
-class CommunityNotificationsScreenModel(
-    private val repository: CommunityRepository = Injekt.get(),
-) : StateScreenModel<CommunityNotificationsScreenModel.State>(State()) {
+@Inject
+@ViewModelKey
+@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
+class CommunityNotificationsViewModel(
+    private val repository: CommunityRepository,
+) : ViewModel() {
+
+    val state: StateFlow<State>
+        field = MutableStateFlow(State())
 
     init {
         refresh()
     }
 
     fun refresh() {
-        screenModelScope.launchIO {
-            mutableState.update { it.copy(loading = true, message = null) }
+        viewModelScope.launch(Dispatchers.IO) {
+            state.update { it.copy(loading = true, message = null) }
             repository.getNotifications()
-                .onSuccess { notifications -> mutableState.value = State(notifications = notifications) }
-                .onFailure { error -> mutableState.value = State(message = error.message ?: "Unable to load notifications") }
+                .onSuccess { notifications -> state.value = State(notifications = notifications) }
+                .onFailure { error -> state.value = State(message = error.message ?: "Unable to load notifications") }
         }
     }
 
     fun acceptFriendRequest(requestId: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.acceptFriendRequest(requestId)
                 .onSuccess {
-                    mutableState.update { it.copy(message = "Friend request accepted.") }
+                    state.update { it.copy(message = "Friend request accepted.") }
                     refresh()
                 }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to accept friend request") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to accept friend request") } }
         }
     }
 
     fun declineFriendRequest(requestId: String) {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.declineFriendRequest(requestId)
                 .onSuccess {
-                    mutableState.update { it.copy(message = "Friend request declined.") }
+                    state.update { it.copy(message = "Friend request declined.") }
                     refresh()
                 }
-                .onFailure { error -> mutableState.update { it.copy(message = error.message ?: "Unable to decline friend request") } }
+                .onFailure { error -> state.update { it.copy(message = error.message ?: "Unable to decline friend request") } }
         }
     }
 

@@ -33,7 +33,7 @@ val keystorePropertiesFile = layout.settingsDirectory.file("keystore.properties"
 
 val oracleReadVersionName = "1.4.0"
 val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
+    val file = layout.settingsDirectory.file("local.properties").asFile
     if (file.exists()) {
         file.inputStream().use(::load)
     }

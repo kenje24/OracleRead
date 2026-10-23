@@ -7,30 +7,37 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import cafe.adriel.voyager.core.model.StateScreenModel
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.util.Screen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import mihon.domain.community.repository.CommunityRepository
-import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.components.material.padding
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 
 class CommunityAccountScreen : Screen() {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val screenModel = rememberScreenModel { CommunityAccountScreenModel() }
-        val state by screenModel.state.collectAsState()
+        val viewModel = metroViewModel<CommunityAccountViewModel>()
+        val state by viewModel.state.collectAsStateWithLifecycle()
 
         Scaffold(
             topBar = {
@@ -41,7 +48,7 @@ class CommunityAccountScreen : Screen() {
             },
         ) { padding ->
             Column(
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .padding(padding)
                     .padding(MaterialTheme.padding.medium),
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
@@ -49,7 +56,7 @@ class CommunityAccountScreen : Screen() {
                 if (state.signedIn) {
                     Text("You are logged in.", style = MaterialTheme.typography.titleMedium)
                     state.message?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    Button(onClick = screenModel::logout) {
+                    Button(onClick = viewModel::logout) {
                         Text("Log out")
                     }
                 } else {
@@ -57,8 +64,8 @@ class CommunityAccountScreen : Screen() {
                         signedIn = false,
                         working = state.working,
                         message = state.message,
-                        onSignIn = screenModel::signIn,
-                        onSignUp = screenModel::signUp,
+                        onSignIn = viewModel::signIn,
+                        onSignUp = viewModel::signUp,
                     )
                 }
             }
@@ -66,39 +73,43 @@ class CommunityAccountScreen : Screen() {
     }
 }
 
-class CommunityAccountScreenModel(
-    private val repository: CommunityRepository = Injekt.get(),
-) : StateScreenModel<CommunityAccountScreenModel.State>(
-    State(signedIn = repository.isSignedIn),
-) {
+@Inject
+@ViewModelKey
+@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
+class CommunityAccountViewModel(
+    private val repository: CommunityRepository,
+) : ViewModel() {
+
+    val state: StateFlow<State>
+        field = MutableStateFlow(State(signedIn = repository.isSignedIn))
 
     fun signIn(email: String, password: String) {
-        screenModelScope.launchIO {
-            mutableState.update { it.copy(working = true, message = null) }
+        viewModelScope.launch(Dispatchers.IO) {
+            state.update { it.copy(working = true, message = null) }
             repository.signIn(email, password)
-                .onSuccess { mutableState.value = State(signedIn = true, message = "Logged in.") }
-                .onFailure { error -> mutableState.update { it.copy(working = false, message = friendlyAuthError(error.message, "Unable to log in")) } }
+                .onSuccess { state.value = State(signedIn = true, message = "Logged in.") }
+                .onFailure { error -> state.update { it.copy(working = false, message = friendlyAuthError(error.message, "Unable to log in")) } }
         }
     }
 
     fun signUp(email: String, password: String, username: String) {
-        screenModelScope.launchIO {
-            mutableState.update { it.copy(working = true, message = null) }
+        viewModelScope.launch(Dispatchers.IO) {
+            state.update { it.copy(working = true, message = null) }
             repository.signUp(email, password, username)
                 .onSuccess {
-                    mutableState.value = State(
+                    state.value = State(
                         signedIn = repository.isSignedIn,
                         message = if (repository.isSignedIn) "Account created." else "Account created. Log in to continue.",
                     )
                 }
-                .onFailure { error -> mutableState.update { it.copy(working = false, message = friendlyAuthError(error.message, "Unable to register")) } }
+                .onFailure { error -> state.update { it.copy(working = false, message = friendlyAuthError(error.message, "Unable to register")) } }
         }
     }
 
     fun logout() {
-        screenModelScope.launchIO {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.clearSession()
-            mutableState.value = State(signedIn = false, message = "Logged out.")
+            state.value = State(signedIn = false, message = "Logged out.")
         }
     }
 

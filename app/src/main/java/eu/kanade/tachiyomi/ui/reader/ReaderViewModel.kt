@@ -95,6 +95,7 @@ import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.source.local.image.LocalCoverManager
 import tachiyomi.source.local.isLocal
+import java.time.LocalDate
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -144,6 +145,12 @@ class ReaderViewModel(
 
     private val mutableState = MutableStateFlow(State())
     val state = mutableState.asStateFlow()
+
+    /**
+     * Automatic retry count of the initial chapter's page list, shown while the reader is loading.
+     */
+    private val _initialChapterRetryCount = MutableStateFlow(0)
+    val initialChapterRetryCount = _initialChapterRetryCount.asStateFlow()
 
     /**
      * Ids of the manga and chapter the reader was launched with, taken from the activity intent.
@@ -365,7 +372,16 @@ class ReaderViewModel(
                 )
 
                 chapterList = loadChapterList()
-                loadChapter(loader!!, chapterList.first { chapterId == it.chapter.id })
+                val initialChapter = chapterList.first { chapterId == it.chapter.id }
+                val retryProgressJob = initialChapter.retryState.retryCount
+                    .onEach { retryCount -> _initialChapterRetryCount.value = retryCount }
+                    .launchIn(viewModelScope)
+                try {
+                    loadChapter(loader!!, initialChapter)
+                } finally {
+                    retryProgressJob.cancel()
+                    _initialChapterRetryCount.value = 0
+                }
             } catch (e: Throwable) {
                 if (e is CancellationException) {
                     throw e
@@ -707,6 +723,7 @@ class ReaderViewModel(
     }
 
     private suspend fun updateChapterProgressOnComplete(readerChapter: ReaderChapter) {
+        updateReadingStreak()
         updateTrackChapterRead(readerChapter)
         deleteChapterIfNeeded(readerChapter)
 
@@ -755,7 +772,27 @@ class ReaderViewModel(
             chapterReadStartTime = null
 
             upsertHistory.await(HistoryUpdate(chapterId, endTime, sessionReadDuration))
+            updateReadingStreak()
         }
+    }
+
+    /**
+     * Extends the reading streak if the last read was yesterday, or starts a new one if it was earlier.
+     */
+    private fun updateReadingStreak() {
+        val today = LocalDate.now()
+        val lastReadDate = runCatching {
+            LocalDate.parse(libraryPreferences.readingStreakDate.get())
+        }.getOrNull()
+
+        when (lastReadDate) {
+            today -> return
+            today.minusDays(1) -> libraryPreferences.readingStreakDays.set(
+                libraryPreferences.readingStreakDays.get() + 1,
+            )
+            else -> libraryPreferences.readingStreakDays.set(1)
+        }
+        libraryPreferences.readingStreakDate.set(today.toString())
     }
 
     /**

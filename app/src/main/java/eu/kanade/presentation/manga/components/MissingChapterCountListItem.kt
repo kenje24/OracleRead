@@ -4,8 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Search
+import mihon.icons.materialsymbols.MaterialSymbols
+import mihon.icons.materialsymbols.rounded.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,7 +62,7 @@ fun MissingChapterListItem(
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
     ) {
         Icon(
-            imageVector = Icons.Outlined.Search,
+            imageVector = MaterialSymbols.Rounded.Search,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
         )

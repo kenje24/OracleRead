@@ -1,15 +1,24 @@
 package eu.kanade.presentation.category.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -25,7 +34,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import dev.icerock.moko.resources.StringResource
 import eu.kanade.core.preference.asToggleableState
+import eu.kanade.presentation.category.FolderStyleDefaults
+import eu.kanade.presentation.category.folderIconForKey
 import eu.kanade.presentation.category.visualName
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.domain.category.model.Category
@@ -36,10 +50,13 @@ import tachiyomi.presentation.core.i18n.stringResource
 @Composable
 fun CategoryCreateDialog(
     onDismissRequest: () -> Unit,
-    onCreate: (String) -> Unit,
+    onCreate: (name: String, color: Long, icon: String, theme: String) -> Unit,
     categories: List<String>,
 ) {
     var name by remember { mutableStateOf("") }
+    var selectedColor by remember { mutableStateOf(FolderStyleDefaults.colorOptions.first()) }
+    var selectedIcon by remember { mutableStateOf(FolderStyleDefaults.DEFAULT_ICON) }
+    var selectedTheme by remember { mutableStateOf(FolderStyleDefaults.DEFAULT_THEME) }
 
     val focusRequester = remember { FocusRequester() }
     val nameAlreadyExists = remember(name) { categories.contains(name) }
@@ -50,7 +67,7 @@ fun CategoryCreateDialog(
             TextButton(
                 enabled = name.isNotEmpty() && !nameAlreadyExists,
                 onClick = {
-                    onCreate(name)
+                    onCreate(name, selectedColor, selectedIcon, selectedTheme)
                     onDismissRequest()
                 },
             ) {
@@ -66,24 +83,17 @@ fun CategoryCreateDialog(
             Text(text = stringResource(MR.strings.action_add_category))
         },
         text = {
-            OutlinedTextField(
-                modifier = Modifier
-                    .focusRequester(focusRequester),
-                value = name,
-                onValueChange = { name = it },
-                label = {
-                    Text(text = stringResource(MR.strings.name))
-                },
-                supportingText = {
-                    val msgRes = if (name.isNotEmpty() && nameAlreadyExists) {
-                        MR.strings.error_category_exists
-                    } else {
-                        MR.strings.information_required_plain
-                    }
-                    Text(text = stringResource(msgRes))
-                },
-                isError = name.isNotEmpty() && nameAlreadyExists,
-                singleLine = true,
+            FolderForm(
+                name = name,
+                onNameChange = { name = it },
+                showNameError = name.isNotEmpty() && nameAlreadyExists,
+                focusRequester = focusRequester,
+                selectedColor = selectedColor,
+                onColorSelected = { selectedColor = it },
+                selectedIcon = selectedIcon,
+                onIconSelected = { selectedIcon = it },
+                selectedTheme = selectedTheme,
+                onThemeSelected = { selectedTheme = it },
             )
         },
     )
@@ -93,26 +103,40 @@ fun CategoryCreateDialog(
     }
 }
 
+/**
+ * Edits a folder's name together with its OracleRead style (accent color, icon and ambient theme).
+ */
 @Composable
 fun CategoryRenameDialog(
     onDismissRequest: () -> Unit,
-    onRename: (String) -> Unit,
+    onRename: (name: String, color: Long, icon: String, theme: String) -> Unit,
     categories: List<String>,
     category: String,
+    initialColor: Long,
+    initialIcon: String,
+    initialTheme: String,
 ) {
     var name by remember { mutableStateOf(category) }
     var valueHasChanged by remember { mutableStateOf(false) }
+    var selectedColor by remember { mutableStateOf(initialColor) }
+    var selectedIcon by remember { mutableStateOf(initialIcon) }
+    var selectedTheme by remember { mutableStateOf(initialTheme) }
 
     val focusRequester = remember { FocusRequester() }
     val nameAlreadyExists = remember(name) { categories.contains(name) }
+    val styleHasChanged = selectedColor != initialColor ||
+        selectedIcon != initialIcon ||
+        selectedTheme != initialTheme
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(
-                enabled = valueHasChanged && name.isNotEmpty() && !nameAlreadyExists,
+                enabled = (valueHasChanged || styleHasChanged) &&
+                    name.isNotEmpty() &&
+                    !(valueHasChanged && nameAlreadyExists),
                 onClick = {
-                    onRename(name)
+                    onRename(name, selectedColor, selectedIcon, selectedTheme)
                     onDismissRequest()
                 },
             ) {
@@ -125,34 +149,151 @@ fun CategoryRenameDialog(
             }
         },
         title = {
-            Text(text = stringResource(MR.strings.action_rename_category))
+            Text(text = stringResource(MR.strings.action_edit_folder_style))
         },
         text = {
-            OutlinedTextField(
-                modifier = Modifier.focusRequester(focusRequester),
-                value = name,
-                onValueChange = {
-                    valueHasChanged = name != it
+            FolderForm(
+                name = name,
+                onNameChange = {
+                    valueHasChanged = category != it
                     name = it
                 },
-                label = { Text(text = stringResource(MR.strings.name)) },
-                supportingText = {
-                    val msgRes = if (valueHasChanged && nameAlreadyExists) {
-                        MR.strings.error_category_exists
-                    } else {
-                        MR.strings.information_required_plain
-                    }
-                    Text(text = stringResource(msgRes))
-                },
-                isError = valueHasChanged && nameAlreadyExists,
-                singleLine = true,
+                showNameError = valueHasChanged && nameAlreadyExists,
+                focusRequester = focusRequester,
+                selectedColor = selectedColor,
+                onColorSelected = { selectedColor = it },
+                selectedIcon = selectedIcon,
+                onIconSelected = { selectedIcon = it },
+                selectedTheme = selectedTheme,
+                onThemeSelected = { selectedTheme = it },
             )
         },
     )
+}
 
-    LaunchedEffect(focusRequester) {
-        focusRequester.requestFocus()
+@Composable
+private fun FolderForm(
+    name: String,
+    onNameChange: (String) -> Unit,
+    showNameError: Boolean,
+    focusRequester: FocusRequester,
+    selectedColor: Long,
+    onColorSelected: (Long) -> Unit,
+    selectedIcon: String,
+    onIconSelected: (String) -> Unit,
+    selectedTheme: String,
+    onThemeSelected: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium),
+    ) {
+        OutlinedTextField(
+            modifier = Modifier.focusRequester(focusRequester),
+            value = name,
+            onValueChange = onNameChange,
+            label = {
+                Text(text = stringResource(MR.strings.name))
+            },
+            supportingText = {
+                val msgRes = if (showNameError) {
+                    MR.strings.error_category_exists
+                } else {
+                    MR.strings.information_required_plain
+                }
+                Text(text = stringResource(msgRes))
+            },
+            isError = showNameError,
+            singleLine = true,
+        )
+
+        Text(
+            text = stringResource(MR.strings.folder_color),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+        ) {
+            FolderStyleDefaults.colorOptions.forEach { color ->
+                val selected = selectedColor == color
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(Color(color), CircleShape)
+                        .border(
+                            width = if (selected) 3.dp else 1.dp,
+                            color = if (selected) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant
+                            },
+                            shape = CircleShape,
+                        )
+                        .clickable { onColorSelected(color) },
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(MR.strings.folder_icon),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+        ) {
+            FolderStyleDefaults.iconOptions.forEach { icon ->
+                FilterChip(
+                    selected = selectedIcon == icon,
+                    onClick = { onIconSelected(icon) },
+                    label = {
+                        Text(text = folderIconLabel(icon)?.let { stringResource(it) } ?: icon)
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = folderIconForKey(icon),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(MR.strings.folder_theme),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
+        ) {
+            FolderStyleDefaults.themeOptions.forEach { (themeKey, theme) ->
+                FilterChip(
+                    selected = selectedTheme == themeKey,
+                    onClick = { onThemeSelected(themeKey) },
+                    label = {
+                        Text(text = theme.titleRes?.let { stringResource(it) } ?: themeKey)
+                    },
+                )
+            }
+        }
     }
+}
+
+private fun folderIconLabel(key: String): StringResource? = when (key) {
+    "folder" -> MR.strings.folder_icon_folder
+    "book" -> MR.strings.folder_icon_book
+    "star" -> MR.strings.folder_icon_star
+    "heart" -> MR.strings.folder_icon_heart
+    "bolt" -> MR.strings.folder_icon_bolt
+    "flame" -> MR.strings.folder_icon_flame
+    "moon" -> MR.strings.folder_icon_moon
+    "bookmark" -> MR.strings.folder_icon_bookmark
+    else -> null
 }
 
 @Composable

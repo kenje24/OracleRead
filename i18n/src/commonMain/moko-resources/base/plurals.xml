@@ -114,4 +114,12 @@
         <item quantity="one">%1$d update failed</item>
         <item quantity="other">%1$d updates failed</item>
     </plurals>
+    <plurals name="reading_streak_days">
+        <item quantity="one">Reading streak: %1$d day</item>
+        <item quantity="other">Reading streak: %1$d days</item>
+    </plurals>
+    <plurals name="library_title_count">
+        <item quantity="one">%1$d title</item>
+        <item quantity="other">%1$d titles</item>
+    </plurals>
 </resources>

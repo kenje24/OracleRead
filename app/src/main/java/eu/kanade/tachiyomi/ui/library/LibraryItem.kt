@@ -10,6 +10,8 @@ data class LibraryItem(
     val sourceName: String,
     val sourceLanguage: String,
     val badges: Badges,
+    // OracleRead: pinned entries sort first within their category
+    val isPinned: Boolean = false,
 ) {
     val id: Long = libraryManga.id
 

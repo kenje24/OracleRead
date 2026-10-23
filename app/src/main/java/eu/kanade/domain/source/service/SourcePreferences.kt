@@ -65,10 +65,7 @@ class SourcePreferences(
 
     val hideInLibraryItems: Preference<Boolean> = preferenceStore.getBoolean("browse_hide_in_library_items", false)
 
-    val extensionRepos: Preference<Set<String>> = preferenceStore.getStringSet(
-        "extension_repos",
-        DEFAULT_EXTENSION_REPOS,
-    )
+    val extensionRepos: Preference<Set<String>> = preferenceStore.getStringSet("extension_repos", emptySet())
 
     val extensionUpdatesCount: Preference<Int> = preferenceStore.getInt("ext_updates_count", 0)
 
@@ -104,8 +101,4 @@ class SourcePreferences(
         "migration_hide_without_updates",
         false,
     )
-
-    companion object {
-        val DEFAULT_EXTENSION_REPOS = setOf("https://raw.githubusercontent.com/keiyoushi/extensions/repo")
-    }
 }
