@@ -37,6 +37,7 @@ import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
+import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
@@ -145,6 +146,7 @@ data object LibraryTab : Tab {
                 LibraryBottomActionMenu(
                     visible = state.selectionMode,
                     onChangeCategoryClicked = viewModel::openChangeCategoryDialog,
+                    onPinClicked = viewModel::togglePinSelection,
                     onMarkAsReadClicked = { viewModel.markReadSelection(true) },
                     onMarkAsUnreadClicked = { viewModel.markReadSelection(false) },
                     onDownloadClicked = viewModel::performDownloadAction
@@ -188,6 +190,19 @@ data object LibraryTab : Tab {
                         showPageTabs = state.showCategoryTabs || !state.searchQuery.isNullOrEmpty(),
                         onChangeCurrentPage = viewModel::updateActiveCategoryIndex,
                         onClickManga = { navigator.push(MangaScreen(it)) },
+                        onLongClickFolder = { navigator.push(CategoryScreen()) },
+                        onHeroContinueReading = { manga: LibraryManga ->
+                            scope.launch {
+                                val chapter = viewModel.getNextUnreadChapter(manga.manga)
+                                if (chapter != null) {
+                                    context.startActivity(
+                                        ReaderActivity.newIntent(context, chapter.mangaId, chapter.id),
+                                    )
+                                } else {
+                                    navigator.push(MangaScreen(manga.manga.id))
+                                }
+                            }
+                        },
                         onContinueReadingClicked = { it: LibraryManga ->
                             scope.launch {
                                 val chapter = viewModel.getNextUnreadChapter(it.manga)
@@ -210,6 +225,8 @@ data object LibraryTab : Tab {
                         onGlobalSearchClicked = {
                             navigator.push(GlobalSearchScreen(viewModel.state.value.searchQuery ?: ""))
                         },
+                        sourceShortcuts = state.pinnedSources,
+                        onClickSourceShortcut = { source -> navigator.push(BrowseSourceScreen(source.id, null)) },
                         getItemCountForCategory = { state.getItemCountForCategory(it) },
                         getDisplayMode = { viewModel.getDisplayMode() },
                         getColumnsForOrientation = { viewModel.getColumnsForOrientation(it) },

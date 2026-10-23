@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import eu.kanade.domain.ui.model.AppTheme
+import eu.kanade.presentation.oracle.rememberReducedMotion
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -22,18 +23,26 @@ internal fun LibraryAmbientBackground(
     appTheme: AppTheme,
     modifier: Modifier = Modifier,
 ) {
-    val transition = rememberInfiniteTransition(label = "libraryAmbient")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "sparkProgress",
-    )
+    // With animations removed system-wide the ambience is drawn as one still frame
+    val reducedMotion = rememberReducedMotion()
+    val progress = if (reducedMotion) {
+        0.37f
+    } else {
+        val transition = rememberInfiniteTransition(label = "libraryAmbient")
+        val animated by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 9000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "sparkProgress",
+        )
+        animated
+    }
 
     val palette = when (appTheme) {
+        AppTheme.ORACLE -> listOf(Color(0xFFE9C987), Color(0xFF8FAAD3), Color(0xFFEEE7D7))
         AppTheme.FIRE_SPIRITS -> listOf(Color(0xFFFFB347), Color(0xFFFF6B35), Color(0xFFFFF1A8))
         AppTheme.MOON_WISPS -> listOf(Color(0xFFD8E6FF), Color(0xFFB8A7FF), Color(0xFFFFFFFF))
         AppTheme.SEA_LANTERNS -> listOf(Color(0xFF6FFFE9), Color(0xFF5BC0EB), Color(0xFFFFE66D))

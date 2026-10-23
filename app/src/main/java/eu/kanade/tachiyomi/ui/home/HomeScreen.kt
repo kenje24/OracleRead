@@ -2,37 +2,59 @@ package eu.kanade.tachiyomi.ui.home
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material3.Badge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
-import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastForEach
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
+import eu.kanade.domain.ui.model.NavigationBarMode
+import eu.kanade.presentation.oracle.OracleDock
+import eu.kanade.presentation.oracle.OracleDockItem
+import eu.kanade.presentation.oracle.OracleDockSpace
+import eu.kanade.presentation.oracle.OracleRail
+import eu.kanade.presentation.oracle.OracleRailItem
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.ui.browse.BrowseTab
 import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.history.HistoryTab
@@ -50,6 +72,7 @@ import soup.compose.material.motion.animation.materialFadeThroughIn
 import soup.compose.material.motion.animation.materialFadeThroughOut
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.pluralStringResource
+import tachiyomi.presentation.core.util.collectAsState
 
 object HomeScreen : Screen() {
 
@@ -71,57 +94,116 @@ object HomeScreen : Screen() {
         MoreTab,
     )
 
+    // Compact navigation keeps the dock to three destinations until Browse is opened
+    private val COMPACT_TABS = listOf(
+        LibraryTab,
+        UpdatesTab,
+        BrowseTab,
+    )
+
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val context = LocalContext.current
+        val uiPreferences = remember { context.appGraph.uiPreferences }
+        val navigationBarMode by uiPreferences.navigationBarMode.collectAsState()
         TabNavigator(
             tab = LibraryTab,
             key = TabNavigatorKey,
         ) { tabNavigator ->
+            var expandedNav by rememberSaveable { mutableStateOf(false) }
+            val tabs = if (navigationBarMode == NavigationBarMode.FULL || expandedNav) TABS else COMPACT_TABS
+            val onTabSelected: (eu.kanade.presentation.util.Tab) -> Unit = { selectedTab ->
+                if (navigationBarMode == NavigationBarMode.COMPACT) {
+                    when (selectedTab) {
+                        LibraryTab -> expandedNav = false
+                        BrowseTab -> expandedNav = true
+                        else -> Unit
+                    }
+                }
+            }
+
             // Provide usable navigator to content screen
             CompositionLocalProvider(LocalNavigator provides navigator) {
                 val tabletUi = isTabletUi()
-                val navigationSuiteType = if (tabletUi) {
-                    NavigationSuiteType.NavigationRail
-                } else {
-                    NavigationSuiteType.NavigationBar
+                val bottomNavVisible by produceState(initialValue = true) {
+                    showBottomNavEvent.receiveAsFlow().collectLatest { value = it }
                 }
-                val navigationSuiteState = rememberNavigationSuiteScaffoldState()
-                LaunchedEffect(navigationSuiteState, tabletUi) {
-                    if (tabletUi) navigationSuiteState.show()
-                    showBottomNavEvent.receiveAsFlow().collectLatest { show ->
-                        if (tabletUi || show) {
-                            navigationSuiteState.show()
-                        } else {
-                            navigationSuiteState.hide()
+                val dockVisible = !tabletUi && bottomNavVisible
+                val navBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                val contentBottom by animateDpAsState(
+                    if (dockVisible) OracleDockSpace + navBarInset else 0.dp,
+                    label = "dockSpace",
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
+                ) {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        if (tabletUi) {
+                            OracleRail(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .windowInsetsPadding(
+                                        WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Vertical),
+                                    )
+                                    .padding(12.dp),
+                                header = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_mihon),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier
+                                            .padding(bottom = 12.dp)
+                                            .size(32.dp),
+                                    )
+                                },
+                            ) {
+                                tabs.forEach { tab -> RailItem(tab, onTabSelected) }
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .padding(bottom = contentBottom)
+                                .consumeWindowInsets(PaddingValues(bottom = contentBottom)),
+                        ) {
+                            AnimatedContent(
+                                targetState = tabNavigator.current,
+                                transitionSpec = {
+                                    materialFadeThroughIn(
+                                        initialScale = 0.98f,
+                                        durationMillis = TabFadeDuration,
+                                    ) togetherWith materialFadeThroughOut(durationMillis = TabFadeDuration)
+                                },
+                                label = "tabContent",
+                            ) {
+                                tabNavigator.saveableState(key = "currentTab", it) {
+                                    it.Content()
+                                }
+                            }
                         }
                     }
-                }
 
-                NavigationSuiteScaffold(
-                    navigationSuiteType = navigationSuiteType,
-                    state = navigationSuiteState,
-                    navigationSuiteColors = NavigationSuiteDefaults.colors(
-                        navigationRailContainerColor = MaterialTheme.colorScheme
-                            .surfaceColorAtElevation(3.dp),
-                    ),
-                    navigationItemVerticalArrangement = Arrangement.Center,
-                    navigationItems = {
-                        TABS.fastForEach { NavigationSuiteItem(it, navigationSuiteType) }
-                    },
-                ) {
-                    AnimatedContent(
-                        targetState = tabNavigator.current,
-                        transitionSpec = {
-                            materialFadeThroughIn(
-                                initialScale = 1f,
-                                durationMillis = TabFadeDuration,
-                            ) togetherWith materialFadeThroughOut(durationMillis = TabFadeDuration)
-                        },
-                        label = "tabContent",
+                    AnimatedVisibility(
+                        visible = dockVisible,
+                        enter = slideInVertically { it } + fadeIn(),
+                        exit = slideOutVertically { it } + fadeOut(),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .windowInsetsPadding(WindowInsets.navigationBars)
+                            .padding(bottom = 12.dp),
                     ) {
-                        tabNavigator.saveableState(key = "currentTab", it) {
-                            it.Content()
+                        AnimatedContent(
+                            targetState = tabs,
+                            label = "dockTabs",
+                        ) { dockTabs ->
+                            OracleDock {
+                                dockTabs.forEach { tab -> DockItem(tab, onTabSelected) }
+                            }
                         }
                     }
                 }
@@ -130,6 +212,18 @@ object HomeScreen : Screen() {
             val goToLibraryTab = { tabNavigator.current = LibraryTab }
 
             BackHandler(enabled = tabNavigator.current != LibraryTab, onBack = goToLibraryTab)
+
+            // Keep the compact dock's expanded state in sync when the tab changes programmatically
+            // (app shortcuts, deep links, search) instead of via a dock tap
+            LaunchedEffect(tabNavigator.current, navigationBarMode) {
+                if (navigationBarMode == NavigationBarMode.COMPACT) {
+                    when (tabNavigator.current) {
+                        LibraryTab -> expandedNav = false
+                        HistoryTab, MoreTab -> expandedNav = true
+                        else -> Unit
+                    }
+                }
+            }
 
             LaunchedEffect(Unit) {
                 launch {
@@ -166,44 +260,62 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    private fun NavigationSuiteItem(
+    private fun androidx.compose.foundation.layout.RowScope.DockItem(
         tab: eu.kanade.presentation.util.Tab,
-        navigationSuiteType: NavigationSuiteType,
+        onTabSelected: (eu.kanade.presentation.util.Tab) -> Unit,
     ) {
         val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val selected = tabNavigator.current::class == tab::class
-        NavigationSuiteItem(
-            navigationSuiteType = navigationSuiteType,
+        val (badge, badgeDescription) = tabBadge(tab)
+        OracleDockItem(
             selected = selected,
+            icon = tab.options.icon!!,
+            label = tab.options.title,
+            badge = badge,
+            badgeDescription = badgeDescription,
             onClick = {
                 if (!selected) {
                     tabNavigator.current = tab
+                    onTabSelected(tab)
                 } else {
                     scope.launch { tab.onReselect(navigator) }
                 }
             },
-            icon = {
-                Icon(
-                    painter = tab.options.icon!!,
-                    contentDescription = tab.options.title,
-                )
-            },
-            label = {
-                Text(
-                    text = tab.options.title,
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            badge = tabBadge(tab),
         )
     }
 
     @Composable
-    private fun tabBadge(tab: eu.kanade.presentation.util.Tab): (@Composable () -> Unit)? {
+    private fun androidx.compose.foundation.layout.ColumnScope.RailItem(
+        tab: eu.kanade.presentation.util.Tab,
+        onTabSelected: (eu.kanade.presentation.util.Tab) -> Unit,
+    ) {
+        val tabNavigator = LocalTabNavigator.current
+        val navigator = LocalNavigator.currentOrThrow
+        val scope = rememberCoroutineScope()
+        val selected = tabNavigator.current::class == tab::class
+        val (badge, badgeDescription) = tabBadge(tab)
+        OracleRailItem(
+            selected = selected,
+            icon = tab.options.icon!!,
+            label = tab.options.title,
+            badge = badge,
+            badgeDescription = badgeDescription,
+            onClick = {
+                if (!selected) {
+                    tabNavigator.current = tab
+                    onTabSelected(tab)
+                } else {
+                    scope.launch { tab.onReselect(navigator) }
+                }
+            },
+        )
+    }
+
+    /** Badge text and its spoken description for a tab, or nulls when there is nothing to show. */
+    @Composable
+    private fun tabBadge(tab: eu.kanade.presentation.util.Tab): Pair<String?, String?> {
         val context = LocalContext.current
         val count by produceState(initialValue = 0, tab) {
             val graph = context.appGraph
@@ -226,32 +338,13 @@ object HomeScreen : Screen() {
                 else -> value = 0
             }
         }
-        if (count <= 0) return null
-        return {
-            Badge {
-                val desc = when (tab) {
-                    is UpdatesTab -> pluralStringResource(
-                        MR.plurals.notification_chapters_generic,
-                        count = count,
-                        count,
-                    )
-
-                    is BrowseTab -> pluralStringResource(
-                        MR.plurals.update_check_notification_ext_updates,
-                        count = count,
-                        count,
-                    )
-
-                    else -> null
-                }
-                Text(
-                    text = count.toString(),
-                    modifier = Modifier.semantics {
-                        if (desc != null) contentDescription = desc
-                    },
-                )
-            }
+        if (count <= 0) return null to null
+        val description = when (tab) {
+            is UpdatesTab -> pluralStringResource(MR.plurals.notification_chapters_generic, count = count, count)
+            is BrowseTab -> pluralStringResource(MR.plurals.update_check_notification_ext_updates, count = count, count)
+            else -> null
         }
+        return count.toString() to description
     }
 
     suspend fun search(query: String) {

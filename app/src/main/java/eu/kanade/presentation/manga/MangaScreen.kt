@@ -47,6 +47,7 @@ import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastMap
 import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.manga.components.ChapterDownloadAction
+import eu.kanade.presentation.oracle.CoverColorTheme
 import eu.kanade.presentation.manga.components.ChapterHeader
 import eu.kanade.presentation.manga.components.ExpandableMangaDescription
 import eu.kanade.presentation.manga.components.MangaActionRow
@@ -93,6 +94,8 @@ fun MangaScreen(
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
+    onToggleHideDecimalChapters: () -> Unit,
+    onCommunityClicked: (() -> Unit)?,
 
     // For tags menu
     onTagSearch: (String) -> Unit,
@@ -134,6 +137,8 @@ fun MangaScreen(
         }
     }
 
+    // The whole page takes its accent from the cover art
+    CoverColorTheme(state.manga) {
     if (!isTabletUi) {
         MangaScreenSmallImpl(
             state = state,
@@ -149,6 +154,8 @@ fun MangaScreen(
             onWebViewClicked = onWebViewClicked,
             onWebViewLongClicked = onWebViewLongClicked,
             onTrackingClicked = onTrackingClicked,
+            onToggleHideDecimalChapters = onToggleHideDecimalChapters,
+            onCommunityClicked = onCommunityClicked,
             onTagSearch = onTagSearch,
             onCopyTagToClipboard = onCopyTagToClipboard,
             onFilterClicked = onFilterButtonClicked,
@@ -186,6 +193,8 @@ fun MangaScreen(
             onWebViewClicked = onWebViewClicked,
             onWebViewLongClicked = onWebViewLongClicked,
             onTrackingClicked = onTrackingClicked,
+            onToggleHideDecimalChapters = onToggleHideDecimalChapters,
+            onCommunityClicked = onCommunityClicked,
             onTagSearch = onTagSearch,
             onCopyTagToClipboard = onCopyTagToClipboard,
             onFilterButtonClicked = onFilterButtonClicked,
@@ -209,6 +218,7 @@ fun MangaScreen(
             onInvertSelection = onInvertSelection,
         )
     }
+    }
 }
 
 @Composable
@@ -226,6 +236,8 @@ private fun MangaScreenSmallImpl(
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
+    onToggleHideDecimalChapters: () -> Unit,
+    onCommunityClicked: (() -> Unit)?,
 
     // For tags menu
     onTagSearch: (String) -> Unit,
@@ -302,6 +314,8 @@ private fun MangaScreenSmallImpl(
                 onClickRefresh = onRefresh,
                 onClickMigrate = onMigrateClicked,
                 onClickEditNotes = onEditNotesClicked,
+                hideDecimalChapters = state.hideDecimalChapters,
+                onClickHideDecimalChapters = onToggleHideDecimalChapters,
                 actionModeCounter = state.selectedChapters.size,
                 onCancelActionMode = { onAllChapterSelected(false) },
                 onSelectAll = { onAllChapterSelected(true) },
@@ -393,6 +407,7 @@ private fun MangaScreenSmallImpl(
                             onWebViewClicked = onWebViewClicked,
                             onWebViewLongClicked = onWebViewLongClicked,
                             onTrackingClicked = onTrackingClicked,
+                            onCommunityClicked = onCommunityClicked,
                             onEditIntervalClicked = onEditIntervalClicked,
                             onEditCategory = onEditCategoryClicked,
                         )
@@ -420,6 +435,7 @@ private fun MangaScreenSmallImpl(
                         ChapterHeader(
                             enabled = !isAnySelected,
                             chapterCount = chapters.size,
+                            readChapterCount = state.readChapterCount,
                             missingChapterCount = state.missingChapterCount,
                             onClick = onFilterClicked,
                         )
@@ -458,6 +474,8 @@ fun MangaScreenLargeImpl(
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
+    onToggleHideDecimalChapters: () -> Unit,
+    onCommunityClicked: (() -> Unit)?,
 
     // For tags menu
     onTagSearch: (String) -> Unit,
@@ -527,6 +545,8 @@ fun MangaScreenLargeImpl(
                 onClickRefresh = onRefresh,
                 onClickMigrate = onMigrateClicked,
                 onClickEditNotes = onEditNotesClicked,
+                hideDecimalChapters = state.hideDecimalChapters,
+                onClickHideDecimalChapters = onToggleHideDecimalChapters,
                 onCancelActionMode = { onAllChapterSelected(false) },
                 actionModeCounter = state.selectedChapters.size,
                 onSelectAll = { onAllChapterSelected(true) },
@@ -611,6 +631,7 @@ fun MangaScreenLargeImpl(
                             onWebViewClicked = onWebViewClicked,
                             onWebViewLongClicked = onWebViewLongClicked,
                             onTrackingClicked = onTrackingClicked,
+                            onCommunityClicked = onCommunityClicked,
                             onEditIntervalClicked = onEditIntervalClicked,
                             onEditCategory = onEditCategoryClicked,
                         )
@@ -645,6 +666,7 @@ fun MangaScreenLargeImpl(
                                 ChapterHeader(
                                     enabled = !isAnySelected,
                                     chapterCount = chapters.size,
+                                    readChapterCount = state.readChapterCount,
                                     missingChapterCount = state.missingChapterCount,
                                     onClick = onFilterButtonClicked,
                                 )

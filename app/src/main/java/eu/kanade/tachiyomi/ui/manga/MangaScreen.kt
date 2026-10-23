@@ -56,6 +56,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
+import mihon.feature.community.CommunityScreen
 import mihon.feature.migration.config.MigrationConfigScreen
 import mihon.feature.migration.dialog.MigrateMangaDialog
 import tachiyomi.core.common.util.system.logcat
@@ -145,6 +146,8 @@ class MangaScreen(
                     viewModel.showTrackDialog()
                 }
             },
+            onToggleHideDecimalChapters = viewModel::toggleHideDecimalChapters,
+            onCommunityClicked = { navigator.push(CommunityScreen(successState.manga.id)) },
             onTagSearch = { scope.launch { performGenreSearch(navigator, it, viewModel.source!!) } },
             onFilterButtonClicked = viewModel::showSettingsDialog,
             onRefresh = viewModel::fetchAllFromSource,

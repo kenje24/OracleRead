@@ -71,6 +71,8 @@ import com.mikepenz.markdown.model.markdownAnnotator
 import com.mikepenz.markdown.model.markdownAnnotatorConfig
 import com.mikepenz.markdown.utils.getUnescapedTextInNode
 import eu.kanade.presentation.components.DropdownMenu
+import eu.kanade.presentation.oracle.CinematicBackdrop
+import eu.kanade.presentation.oracle.OracleGlass
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.getNameForMangaInfo
@@ -80,6 +82,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import mihon.app.di.appGraph
 import mihon.icons.materialsymbols.MaterialSymbols
+import mihon.icons.materialsymbols.rounded.Forum
 import mihon.icons.materialsymbols.rounded.AttachMoney
 import mihon.icons.materialsymbols.rounded.Block
 import mihon.icons.materialsymbols.rounded.Check
@@ -107,6 +110,7 @@ import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.clickableNoIndication
 import tachiyomi.presentation.core.util.secondaryItemAlpha
+import tachiyomi.presentation.core.theme.OracleCoverShape
 import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -123,29 +127,8 @@ fun MangaInfoBox(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
-        // Backdrop
-        val backdropGradientColors = listOf(
-            Color.Transparent,
-            MaterialTheme.colorScheme.background,
-        )
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(manga)
-                .crossfade(true)
-                .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .matchParentSize()
-                .drawWithContent {
-                    drawContent()
-                    drawRect(
-                        brush = Brush.verticalGradient(colors = backdropGradientColors),
-                    )
-                }
-                .blur(4.dp)
-                .alpha(0.2f),
-        )
+        // Cinematic backdrop: the cover itself, blurred and fading into the page
+        CinematicBackdrop(data = manga, modifier = Modifier.matchParentSize())
 
         // Manga & source info
         CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
@@ -185,6 +168,7 @@ fun MangaActionRow(
     onEditIntervalClicked: (() -> Unit)?,
     onEditCategory: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    onCommunityClicked: (() -> Unit)? = null,
 ) {
     val defaultActionButtonColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
 
@@ -198,7 +182,10 @@ fun MangaActionRow(
         }
     }
 
-    Row(modifier = modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp)) {
+    Row(
+        modifier = modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         MangaActionButton(
             title = if (favorite) {
                 stringResource(MR.strings.in_library)
@@ -241,6 +228,14 @@ fun MangaActionRow(
                 color = defaultActionButtonColor,
                 onClick = onWebViewClicked,
                 onLongClick = onWebViewLongClicked,
+            )
+        }
+        if (onCommunityClicked != null) {
+            MangaActionButton(
+                title = stringResource(MR.strings.action_community),
+                icon = MaterialSymbols.Rounded.Forum,
+                color = MaterialTheme.colorScheme.primary,
+                onClick = onCommunityClicked,
             )
         }
     }
@@ -365,6 +360,7 @@ private fun MangaAndSourceTitlesLarge(
                 .build(),
             contentDescription = stringResource(MR.strings.manga_cover),
             onClick = onCoverClick,
+            shape = OracleCoverShape,
         )
         Spacer(modifier = Modifier.height(16.dp))
         MangaContentInfo(
@@ -398,7 +394,7 @@ private fun MangaAndSourceTitlesSmall(
     ) {
         MangaCover.Book(
             modifier = Modifier
-                .sizeIn(maxWidth = 100.dp)
+                .sizeIn(maxWidth = 124.dp)
                 .align(Alignment.Top),
             data = ImageRequest.Builder(LocalContext.current)
                 .data(manga)
@@ -406,6 +402,7 @@ private fun MangaAndSourceTitlesSmall(
                 .build(),
             contentDescription = stringResource(MR.strings.manga_cover),
             onClick = onCoverClick,
+            shape = OracleCoverShape,
         )
         Column(
             verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -437,7 +434,7 @@ private fun ColumnScope.MangaContentInfo(
     val context = LocalContext.current
     Text(
         text = title.ifBlank { stringResource(MR.strings.unknown_title) },
-        style = MaterialTheme.typography.titleLarge,
+        style = MaterialTheme.typography.headlineSmall,
         modifier = Modifier.clickableNoIndication(
             onLongClick = {
                 if (title.isNotBlank()) {
@@ -726,11 +723,17 @@ private fun RowScope.MangaActionButton(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
 ) {
-    TextButton(
-        onClick = onClick,
+    // Glass tile floating over the cover backdrop
+    OracleGlass(
         modifier = Modifier.weight(1f),
-        onLongClick = onLongClick,
+        shape = MaterialTheme.shapes.medium,
+        alpha = 0.62f,
     ) {
+        TextButton(
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+            onLongClick = onLongClick,
+        ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 imageVector = icon,
@@ -745,6 +748,7 @@ private fun RowScope.MangaActionButton(
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
             )
+        }
         }
     }
 }

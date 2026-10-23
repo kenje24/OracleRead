@@ -6,13 +6,14 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import eu.kanade.tachiyomi.ui.library.LibraryItem
+import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryManga
-import tachiyomi.domain.manga.model.MangaCover
 
 @Composable
 internal fun LibraryCompactGrid(
     items: List<LibraryItem>,
-    featuredItem: LibraryItem?,
+    category: Category,
+    header: LibraryPageHeader?,
     showTitle: Boolean,
     columns: Int,
     contentPadding: PaddingValues,
@@ -20,7 +21,6 @@ internal fun LibraryCompactGrid(
     onClick: (LibraryManga) -> Unit,
     onLongClick: (LibraryManga) -> Unit,
     onClickContinueReading: ((LibraryManga) -> Unit)?,
-    onFeaturedContinueReading: (LibraryManga) -> Unit,
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
 ) {
@@ -30,50 +30,20 @@ internal fun LibraryCompactGrid(
         contentPadding = contentPadding,
     ) {
         globalSearchItem(searchQuery, onGlobalSearchClicked)
-
-        featuredItem?.let { featured ->
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                FeaturedMangaCard(
-                    item = featured,
-                    onClick = { onClick(featured.libraryManga) },
-                    onContinue = { onFeaturedContinueReading(featured.libraryManga) },
-                )
-            }
-        }
+        libraryHeaderItem(header, category, items, onClick)
 
         items(
             items = items,
             contentType = { "library_compact_grid_item" },
         ) { libraryItem ->
-            val manga = libraryItem.libraryManga.manga
-            MangaCompactGridItem(
-                isSelected = manga.id in selection,
-                title = manga.title.takeIf { showTitle },
-                coverData = MangaCover(
-                    mangaId = manga.id,
-                    sourceId = manga.source,
-                    isMangaFavorite = manga.favorite,
-                    url = manga.thumbnailUrl,
-                    lastModified = manga.coverLastModified,
-                ),
-                coverBadgeStart = {
-                    PinnedBadge(isPinned = libraryItem.isPinned)
-                    DownloadsBadge(count = libraryItem.badges.downloadCount)
-                    UnreadBadge(count = libraryItem.badges.unreadCount)
-                },
-                coverBadgeEnd = {
-                    LanguageBadge(
-                        isLocal = libraryItem.badges.isLocal,
-                        sourceLanguage = libraryItem.badges.sourceLanguage,
-                    )
-                },
-                onLongClick = { onLongClick(libraryItem.libraryManga) },
-                onClick = { onClick(libraryItem.libraryManga) },
-                onClickContinueReading = if (onClickContinueReading != null && libraryItem.unreadCount > 0) {
-                    { onClickContinueReading(libraryItem.libraryManga) }
-                } else {
-                    null
-                },
+            LibraryPoster(
+                libraryItem = libraryItem,
+                selection = selection,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                onClickContinueReading = onClickContinueReading,
+                titleInside = true,
+                showTitle = showTitle,
             )
         }
     }

@@ -8,21 +8,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import eu.kanade.tachiyomi.ui.library.LibraryItem
+import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryManga
-import tachiyomi.domain.manga.model.MangaCover
 import tachiyomi.presentation.core.components.FastScrollLazyColumn
 import tachiyomi.presentation.core.util.plus
 
 @Composable
 internal fun LibraryList(
     items: List<LibraryItem>,
-    featuredItem: LibraryItem?,
+    category: Category,
+    header: LibraryPageHeader?,
     contentPadding: PaddingValues,
     selection: Set<Long>,
     onClick: (LibraryManga) -> Unit,
     onLongClick: (LibraryManga) -> Unit,
     onClickContinueReading: ((LibraryManga) -> Unit)?,
-    onFeaturedContinueReading: (LibraryManga) -> Unit,
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
 ) {
@@ -39,15 +39,7 @@ internal fun LibraryList(
                 )
             }
         }
-        featuredItem?.let { featured ->
-            item(contentType = "featured_manga") {
-                FeaturedMangaCard(
-                    item = featured,
-                    onClick = { onClick(featured.libraryManga) },
-                    onContinue = { onFeaturedContinueReading(featured.libraryManga) },
-                )
-            }
-        }
+        libraryHeaderItem(header, category, items, onClick)
 
         items(
             items = items,
@@ -57,13 +49,7 @@ internal fun LibraryList(
             MangaListItem(
                 isSelected = manga.id in selection,
                 title = manga.title,
-                coverData = MangaCover(
-                    mangaId = manga.id,
-                    sourceId = manga.source,
-                    isMangaFavorite = manga.favorite,
-                    url = manga.thumbnailUrl,
-                    lastModified = manga.coverLastModified,
-                ),
+                coverData = libraryItem.coverData(),
                 badge = {
                     PinnedBadge(isPinned = libraryItem.isPinned)
                     DownloadsBadge(count = libraryItem.badges.downloadCount)

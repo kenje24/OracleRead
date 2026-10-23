@@ -4,18 +4,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import eu.kanade.presentation.oracle.OraclePill
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Folder
+import mihon.icons.materialsymbols.rounded.Keep
 import tachiyomi.presentation.core.components.Badge
 
 @Composable
 internal fun DownloadsBadge(count: Int) {
     if (count > 0) {
-        Badge(
+        OraclePill(
             text = "$count",
-            color = MaterialTheme.colorScheme.tertiary,
-            textColor = MaterialTheme.colorScheme.onTertiary,
+            container = MaterialTheme.colorScheme.tertiary,
+            content = MaterialTheme.colorScheme.onTertiary,
         )
     }
 }
@@ -23,7 +25,18 @@ internal fun DownloadsBadge(count: Int) {
 @Composable
 internal fun UnreadBadge(count: Long) {
     if (count > 0) {
-        Badge(text = "$count")
+        OraclePill(text = "$count")
+    }
+}
+
+@Composable
+internal fun PinnedBadge(isPinned: Boolean) {
+    if (isPinned) {
+        Badge(
+            imageVector = MaterialSymbols.Rounded.Keep,
+            color = MaterialTheme.colorScheme.secondary,
+            iconColor = MaterialTheme.colorScheme.onSecondary,
+        )
     }
 }
 
@@ -35,14 +48,14 @@ internal fun LanguageBadge(
     if (isLocal) {
         Badge(
             imageVector = MaterialSymbols.Rounded.Folder,
-            color = MaterialTheme.colorScheme.tertiary,
-            iconColor = MaterialTheme.colorScheme.onTertiary,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            iconColor = MaterialTheme.colorScheme.onSurface,
         )
     } else if (sourceLanguage.isNotEmpty()) {
-        Badge(
+        OraclePill(
             text = sourceLanguage.uppercase(),
-            color = MaterialTheme.colorScheme.tertiary,
-            textColor = MaterialTheme.colorScheme.onTertiary,
+            container = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.9f),
+            content = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -52,6 +65,7 @@ internal fun LanguageBadge(
 private fun BadgePreview() {
     TachiyomiPreviewTheme {
         Column {
+            PinnedBadge(isPinned = true)
             DownloadsBadge(count = 10)
             UnreadBadge(count = 10)
             LanguageBadge(isLocal = true, sourceLanguage = "EN")
