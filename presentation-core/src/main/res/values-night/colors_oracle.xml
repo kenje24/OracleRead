@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ OracleRead cinematic theme. Palette derived from the OracleRead logo (slate #5675A0, ivory #EEE7D7)
+  ~ with a lantern-gold accent. See DESIGN.md.
+-->
+<resources>
+    <color name="oracle_primary">#E9C987</color>
+    <color name="oracle_onPrimary">#2A1F05</color>
+    <color name="oracle_primaryContainer">#3D3218</color>
+    <color name="oracle_onPrimaryContainer">#F7E2B0</color>
+    <color name="oracle_secondary">#8FAAD3</color>
+    <color name="oracle_onSecondary">#0F2340</color>
+    <color name="oracle_secondaryContainer">#24324A</color>
+    <color name="oracle_onSecondaryContainer">#D6E2F7</color>
+    <color name="oracle_tertiary">#E79C8A</color>
+    <color name="oracle_onTertiary">#4A1A10</color>
+    <color name="oracle_tertiaryContainer">#4A2620</color>
+    <color name="oracle_onTertiaryContainer">#FFDAD2</color>
+    <color name="oracle_error">#FFB4AB</color>
+    <color name="oracle_onError">#690005</color>
+    <color name="oracle_errorContainer">#93000A</color>
+    <color name="oracle_onErrorContainer">#FFDAD6</color>
+    <color name="oracle_background">#0A0D13</color>
+    <color name="oracle_onBackground">#ECE6D8</color>
+    <color name="oracle_surface">#0A0D13</color>
+    <color name="oracle_onSurface">#ECE6D8</color>
+    <color name="oracle_surfaceVariant">#1B212C</color>
+    <color name="oracle_onSurfaceVariant">#A7AEBC</color>
+    <color name="oracle_outline">#5C6577</color>
+    <color name="oracle_outlineVariant">#262D3A</color>
+    <color name="oracle_scrim">#000000</color>
+    <color name="oracle_inverseSurface">#ECE6D8</color>
+    <color name="oracle_inverseOnSurface">#1A1C21</color>
+    <color name="oracle_inversePrimary">#7A5A12</color>
+    <color name="oracle_surfaceDim">#0A0D13</color>
+    <color name="oracle_surfaceBright">#2A303C</color>
+    <color name="oracle_surfaceContainerLowest">#06080C</color>
+    <color name="oracle_surfaceContainerLow">#10141C</color>
+    <color name="oracle_surfaceContainer">#151A23</color>
+    <color name="oracle_surfaceContainerHigh">#1B212C</color>
+    <color name="oracle_surfaceContainerHighest">#232A37</color>
+</resources>

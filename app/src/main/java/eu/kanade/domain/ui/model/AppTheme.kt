@@ -4,6 +4,7 @@ import dev.icerock.moko.resources.StringResource
 import tachiyomi.i18n.MR
 
 enum class AppTheme(val titleRes: StringResource?) {
+    ORACLE(MR.strings.theme_oracle),
     DEFAULT(MR.strings.label_default),
     MONET(MR.strings.theme_monet),
     CATPPUCCIN(MR.strings.theme_catppuccin),

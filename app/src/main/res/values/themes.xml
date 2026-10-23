@@ -91,6 +91,46 @@
     <!-- Monet theme only support S+ -->
     <style name="Theme.Tachiyomi.Monet" />
 
+    <!--== OracleRead Theme ==-->
+    <style name="Theme.Tachiyomi.Oracle">
+        <!-- Theme Colors -->
+        <item name="colorPrimary">@color/oracle_primary</item>
+        <item name="colorOnPrimary">@color/oracle_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/oracle_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/oracle_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/oracle_inversePrimary</item>
+        <item name="colorSecondary">@color/oracle_secondary</item>
+        <item name="colorOnSecondary">@color/oracle_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/oracle_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/oracle_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/oracle_tertiary</item>
+        <item name="colorOnTertiary">@color/oracle_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/oracle_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/oracle_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/oracle_background</item>
+        <item name="colorOnBackground">@color/oracle_onBackground</item>
+        <item name="colorSurface">@color/oracle_surface</item>
+        <item name="colorOnSurface">@color/oracle_onSurface</item>
+        <item name="colorSurfaceVariant">@color/oracle_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/oracle_onSurfaceVariant</item>
+        <item name="colorSurfaceInverse">@color/oracle_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/oracle_inverseOnSurface</item>
+        <item name="colorError">@color/oracle_error</item>
+        <item name="colorOnError">@color/oracle_onError</item>
+        <item name="colorErrorContainer">@color/oracle_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/oracle_onErrorContainer</item>
+        <item name="colorOutline">@color/oracle_outline</item>
+        <item name="colorOutlineVariant">@color/oracle_outlineVariant</item>
+        <item name="scrimBackground">@color/oracle_scrim</item>
+        <item name="colorSurfaceBright">@color/oracle_surfaceBright</item>
+        <item name="colorSurfaceDim">@color/oracle_surfaceDim</item>
+        <item name="colorSurfaceContainer">@color/oracle_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/oracle_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/oracle_surfaceContainerHighest</item>
+        <item name="colorSurfaceContainerLow">@color/oracle_surfaceContainerLow</item>
+        <item name="colorSurfaceContainerLowest">@color/oracle_surfaceContainerLowest</item>
+    </style>
+
     <!--== Catppuccin Theme ==-->
     <style name="Theme.Tachiyomi.Catppuccin">
         <!-- Theme Colors -->

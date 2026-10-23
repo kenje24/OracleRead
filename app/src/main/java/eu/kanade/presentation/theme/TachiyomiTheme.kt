@@ -16,6 +16,7 @@ import eu.kanade.presentation.theme.colorscheme.MidnightDuskColorScheme
 import eu.kanade.presentation.theme.colorscheme.MonetColorScheme
 import eu.kanade.presentation.theme.colorscheme.MonochromeColorScheme
 import eu.kanade.presentation.theme.colorscheme.NordColorScheme
+import eu.kanade.presentation.theme.colorscheme.OracleColorScheme
 import eu.kanade.presentation.theme.colorscheme.StrawberryColorScheme
 import eu.kanade.presentation.theme.colorscheme.TachiyomiColorScheme
 import eu.kanade.presentation.theme.colorscheme.TakoColorScheme
@@ -25,6 +26,8 @@ import eu.kanade.presentation.theme.colorscheme.TokyoNightColorScheme
 import eu.kanade.presentation.theme.colorscheme.YinYangColorScheme
 import eu.kanade.presentation.theme.colorscheme.YotsubaColorScheme
 import mihon.app.di.appGraph
+import tachiyomi.presentation.core.theme.OracleShapes
+import tachiyomi.presentation.core.theme.OracleTypography
 
 @Composable
 fun TachiyomiTheme(
@@ -43,7 +46,7 @@ fun TachiyomiTheme(
 
 @Composable
 fun TachiyomiPreviewTheme(
-    appTheme: AppTheme = AppTheme.DEFAULT,
+    appTheme: AppTheme = AppTheme.ORACLE,
     isAmoled: Boolean = false,
     content: @Composable () -> Unit,
 ) = BaseTachiyomiTheme(appTheme, isAmoled, content)
@@ -65,6 +68,9 @@ private fun BaseTachiyomiTheme(
                 isAmoled = isAmoled,
             )
         },
+        // The cinematic type and shape system applies under every color theme
+        typography = OracleTypography,
+        shapes = OracleShapes,
         content = content,
     )
 }
@@ -78,7 +84,7 @@ private fun getThemeColorScheme(
     val colorScheme = if (appTheme == AppTheme.MONET) {
         MonetColorScheme(context)
     } else {
-        colorSchemes.getOrDefault(appTheme, TachiyomiColorScheme)
+        colorSchemes.getOrDefault(appTheme, OracleColorScheme)
     }
     return colorScheme.getColorScheme(
         isDark = isDark,
@@ -88,6 +94,7 @@ private fun getThemeColorScheme(
 }
 
 private val colorSchemes: Map<AppTheme, BaseColorScheme> = mapOf(
+    AppTheme.ORACLE to OracleColorScheme,
     AppTheme.DEFAULT to TachiyomiColorScheme,
     AppTheme.CATPPUCCIN to CatppuccinColorScheme,
     AppTheme.TOKYONIGHT to TokyoNightColorScheme,
