@@ -95,24 +95,15 @@ private fun LibraryTitleBar(
         subtitle = title.numberOfManga?.let {
             pluralStringResource(MR.plurals.library_title_count, count = it, it)
         },
-        actions = {
+        // Incognito and the streak sit under the title so the title never has to make room for them
+        supportingContent = {
             IncognitoToggle()
-            Spacer(Modifier.width(6.dp))
             ReadingStreak()
-            AppBarActions(
-                listOf(
-                    AppBar.Action(
-                        title = stringResource(MR.strings.action_search),
-                        icon = MaterialSymbols.Rounded.Search,
-                        onClick = onClickSearch,
-                    ),
-                    AppBar.OverflowAction(
-                        title = stringResource(MR.strings.library_notifications),
-                        onClick = onClickNotifications,
-                    ),
-                ),
-            )
+        },
+        actions = {
             LibraryActions(
+                onClickSearch = onClickSearch,
+                onClickNotifications = onClickNotifications,
                 hasFilters = hasFilters,
                 onClickFilter = onClickFilter,
                 onClickRefresh = onClickRefresh,
@@ -126,6 +117,8 @@ private fun LibraryTitleBar(
 
 @Composable
 private fun LibraryActions(
+    onClickSearch: (() -> Unit)? = null,
+    onClickNotifications: (() -> Unit)? = null,
     hasFilters: Boolean,
     onClickFilter: () -> Unit,
     onClickRefresh: () -> Unit,
@@ -136,6 +129,15 @@ private fun LibraryActions(
     val filterTint = if (hasFilters) MaterialTheme.colorScheme.active else LocalContentColor.current
     AppBarActions(
         listOf(
+            *listOfNotNull(
+                onClickSearch?.let {
+                    AppBar.Action(
+                        title = stringResource(MR.strings.action_search),
+                        icon = MaterialSymbols.Rounded.Search,
+                        onClick = it,
+                    )
+                },
+            ).toTypedArray(),
             AppBar.Action(
                 title = stringResource(MR.strings.action_filter),
                 icon = MaterialSymbols.Rounded.FilterList,
@@ -154,6 +156,14 @@ private fun LibraryActions(
                 title = stringResource(MR.strings.action_open_random_manga),
                 onClick = onClickOpenRandomManga,
             ),
+            *listOfNotNull(
+                onClickNotifications?.let {
+                    AppBar.OverflowAction(
+                        title = stringResource(MR.strings.library_notifications),
+                        onClick = it,
+                    )
+                },
+            ).toTypedArray(),
             AppBar.OverflowAction(
                 title = stringResource(MR.strings.library_change_theme),
                 onClick = onClickChangeTheme,

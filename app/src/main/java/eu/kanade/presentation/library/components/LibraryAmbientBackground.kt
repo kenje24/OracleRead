@@ -58,8 +58,10 @@ internal fun LibraryAmbientBackground(
         val height = size.height
         drawRect(
             brush = Brush.verticalGradient(
+                // Starts transparent so the ambience melts into the header instead of starting at a seam
                 colors = listOf(
-                    palette[0].copy(alpha = 0.10f),
+                    Color.Transparent,
+                    palette[0].copy(alpha = 0.06f),
                     Color.Transparent,
                     palette[1].copy(alpha = 0.05f),
                 ),
