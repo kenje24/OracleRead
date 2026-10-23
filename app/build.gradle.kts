@@ -31,17 +31,43 @@ if (Config.includeTelemetry) {
 
 val keystorePropertiesFile = layout.settingsDirectory.file("keystore.properties").asFile
 
+val oracleReadVersionName = "1.4.0"
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use(::load)
+    }
+}
+
+fun localOrEnv(name: String): String {
+    return providers.environmentVariable(name).orNull
+        ?: localProperties.getProperty(name)
+        ?: ""
+}
+
+fun escapedBuildConfigString(value: String): String {
+    return value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+}
+
 android {
     namespace = "eu.kanade.tachiyomi"
 
     defaultConfig {
-        applicationId = "app.mihon"
+        applicationId = "io.github.kenje24.oracleread"
 
-        versionCode = 38
-        versionName = "0.21.2"
+        versionCode = 1400
+        versionName = oracleReadVersionName
 
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")
         buildConfigField("boolean", "UPDATER_ENABLED", "${Config.enableUpdater}")
+        buildConfigField("String", "SUPABASE_URL", "\"${escapedBuildConfigString(localOrEnv("SUPABASE_URL"))}\"")
+        buildConfigField(
+            "String",
+            "SUPABASE_ANON_KEY",
+            "\"${escapedBuildConfigString(localOrEnv("SUPABASE_ANON_KEY").ifBlank { localOrEnv("SUPABASE_PUBLISHABLE_KEY") })}\"",
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -448,5 +474,17 @@ androidComponents {
         // Only excluding in standard flavor because this breaks
         // Layout Inspector's Compose tree
         it.packaging.resources.excludes.add("META-INF/*.version")
+    }
+
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set(
+                "OracleRead-${variant.name}-$oracleReadVersionName-${output.filters.joinToString("-") {
+                    it.identifier
+                }}.apk"
+                    .replace("--", "-")
+                    .replace("-.", "."),
+            )
+        }
     }
 }
