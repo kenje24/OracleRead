@@ -30,6 +30,10 @@
     <string name="library_start_reading">Start reading</string>
     <string name="library_featured">Featured</string>
     <string name="library_all_titles">On your shelf</string>
+    <string name="library_notifications">Notifications</string>
+    <string name="library_change_theme">Change theme</string>
+    <string name="library_quick_actions">Quick actions</string>
+    <string name="library_my_profile">My profile</string>
     <string name="label_recent_updates">Updates</string>
     <string name="label_upcoming">Upcoming</string>
     <string name="label_recent_manga">History</string>
@@ -1176,4 +1180,35 @@
     <string name="donationCampaign.paragraph3">OracleRead does not host, store, or distribute any content.</string>
     <string name="donationCampaign.contactPlatform">Discord</string>
     <string name="donationCampaign.dismiss">Dismiss</string>
+
+    <!-- OracleRead: History tab subtitle, e.g. "12 titles read" ("12 titles" comes from a plural) -->
+    <string name="oracle_history_titles_read">%1$s read</string>
+
+    <!-- OracleRead: Browse, search pill above the sources list that opens global search -->
+    <string name="oracle_browse_search_all_sources">Search all sources</string>
+
+    <!-- OracleRead: More tab, About and onboarding -->
+    <string name="oracle_more_tagline">Community Manga Reader</string>
+    <string name="oracle_more_account">OracleRead Account</string>
+    <string name="oracle_about_credits">Credits</string>
+    <string name="oracle_about_credits_built_upon">Built upon the Mihon open-source project</string>
+    <string name="oracle_about_credits_thanks">Special thanks to</string>
+    <string name="oracle_about_credits_mihon">Mihon Open Source Project</string>
+    <string name="oracle_about_credits_tachiyomi">The original Tachiyomi contributors</string>
+    <string name="oracle_about_credits_extensions">Extension developers</string>
+    <string name="oracle_about_credits_open_source">Open source contributors</string>
+    <string name="oracle_about_lineage">Lineage</string>
+    <string name="oracle_about_lineage_summary">A community-driven fork of Mihon focused on a clean, stable, and modern manga reading experience.</string>
+    <string name="oracle_about_lineage_chain" translatable="false">Tachiyomi → Mihon → OracleRead</string>
+    <string name="oracle_about_legal">Legal</string>
+    <string name="oracle_about_legal_no_hosting">OracleRead does not host, store, or distribute any content.</string>
+    <string name="oracle_about_legal_third_party">All content is provided by third-party sources and extensions.</string>
+    <string name="oracle_about_legal_independent">OracleRead is an independent open-source project and is not affiliated with content providers.</string>
+    <string name="oracle_about_links">Links</string>
+    <string name="oracle_about_repository">OracleRead Repository</string>
+    <string name="oracle_about_mihon_github">Mihon GitHub</string>
+    <string name="oracle_onboarding_heading">Welcome to %s</string>
+    <string name="oracle_onboarding_navigation_layout">Navigation layout</string>
+    <string name="oracle_onboarding_navigation_compact">Compact: 3 tabs, Browse expands</string>
+    <string name="oracle_onboarding_navigation_full">Always show 5 tabs</string>
 </resources>

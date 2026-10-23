@@ -37,7 +37,10 @@ import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.library.LibraryUpdateWorker
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
+import eu.kanade.presentation.library.components.LibraryQuickActions
+import eu.kanade.presentation.more.settings.screen.SettingsAppearanceScreen
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen
+import eu.kanade.tachiyomi.ui.download.DownloadQueueScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
@@ -48,6 +51,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import mihon.feature.community.CommunityHubScreen
+import mihon.feature.community.CommunityNotificationsScreen
+import mihon.feature.community.CommunityProfileScreen
 import mihon.feature.migration.config.MigrationConfigScreen
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.Help
@@ -136,6 +142,8 @@ data object LibraryTab : Tab {
                             }
                         }
                     },
+                    onClickNotifications = { navigator.push(CommunityNotificationsScreen()) },
+                    onClickChangeTheme = { navigator.push(SettingsAppearanceScreen) },
                     searchQuery = state.searchQuery,
                     onSearchQueryChange = viewModel::search,
                     // For scroll overlay when no tab
@@ -160,6 +168,16 @@ data object LibraryTab : Tab {
                 )
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            floatingActionButton = {
+                if (!state.selectionMode && state.searchQuery == null && !state.isLoading) {
+                    LibraryQuickActions(
+                        onCreateFolder = { navigator.push(CategoryScreen(openCreateDialog = true)) },
+                        onOpenDownloads = { navigator.push(DownloadQueueScreen) },
+                        onOpenProfile = { navigator.push(CommunityProfileScreen()) },
+                        onOpenCommunity = { navigator.push(CommunityHubScreen()) },
+                    )
+                }
+            },
         ) { contentPadding ->
             when {
                 state.isLoading -> {

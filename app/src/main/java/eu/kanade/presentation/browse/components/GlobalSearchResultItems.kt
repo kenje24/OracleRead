@@ -18,7 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.automirroredrounded.ArrowForward
@@ -26,6 +29,7 @@ import mihon.icons.materialsymbols.roundedfilled.Error
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.theme.OracleSpacing
 
 @Composable
 fun GlobalSearchResultItem(
@@ -38,24 +42,34 @@ fun GlobalSearchResultItem(
     Column(modifier = modifier) {
         Row(
             modifier = Modifier
-                .padding(
-                    start = MaterialTheme.padding.medium,
-                    end = MaterialTheme.padding.extraSmall,
-                )
                 .fillMaxWidth()
-                .clickable(onClick = onClick),
+                .clickable(onClick = onClick)
+                .padding(start = OracleSpacing.gutter, end = 4.dp, top = 16.dp, bottom = 2.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.semantics { heading() },
                 )
-                Text(text = subtitle)
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
             }
             IconButton(onClick = onClick) {
-                Icon(imageVector = MaterialSymbols.AutoMirroredRounded.ArrowForward, contentDescription = null)
+                Icon(
+                    imageVector = MaterialSymbols.AutoMirroredRounded.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
             }
         }
         content()

@@ -146,6 +146,7 @@ private fun NoChapterNotification(
 ) {
     OutlinedCard(
         modifier = modifier,
+        shape = MaterialTheme.shapes.large,
         colors = CardColor,
     ) {
         Row(
@@ -175,6 +176,7 @@ private fun ChapterGapWarning(
 ) {
     OutlinedCard(
         modifier = modifier,
+        shape = MaterialTheme.shapes.large,
         colors = CardColor,
     ) {
         Row(
@@ -204,7 +206,8 @@ private fun ChapterHeaderText(
     Text(
         text = text,
         modifier = modifier,
-        style = MaterialTheme.typography.titleMedium,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
     )
 }
 
@@ -229,10 +232,10 @@ private fun ChapterText(
                 }
                 append(name)
             },
-            fontSize = 20.sp,
             maxLines = 5,
             overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.titleLarge,
+            // Chapter names read like a title card between chapters
+            style = MaterialTheme.typography.headlineSmall,
             inlineContent = mapOf(
                 DOWNLOADED_ICON_ID to InlineTextContent(
                     Placeholder(

@@ -36,7 +36,7 @@ fun GlobalSearchCardRow(
     }
 
     LazyRow(
-        contentPadding = PaddingValues(MaterialTheme.padding.small),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = MaterialTheme.padding.small),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.extraSmall),
     ) {
         items(titles) {
@@ -60,7 +60,7 @@ private fun MangaItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
-    Box(modifier = Modifier.width(96.dp)) {
+    Box(modifier = Modifier.width(108.dp)) {
         MangaComfortableGridItem(
             title = title,
             titleMaxLines = 3,

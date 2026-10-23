@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.ui.reader.viewer.webgpu.WebGpuViewerSettings
 import eu.kanade.tachiyomi.ui.reader.viewer.webtoon.WebtoonViewer
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.CheckboxItem
-import tachiyomi.presentation.core.components.HeadingItem
 import tachiyomi.presentation.core.components.SettingsChipRow
 import tachiyomi.presentation.core.components.SliderItem
 import tachiyomi.presentation.core.i18n.stringResource
@@ -35,7 +34,7 @@ internal fun ColumnScope.ReadingModePage(viewModel: ReaderSettingsViewModel) {
         return
     }
 
-    HeadingItem(MR.strings.pref_category_for_this_series)
+    ReaderSettingsHeading(MR.strings.pref_category_for_this_series)
     val manga by viewModel.mangaFlow.collectAsState()
     val readingMode = remember(manga) { ReadingMode.fromPreference(manga?.readingMode?.toInt()) }
     SettingsChipRow(MR.strings.pref_category_reading_mode) {
@@ -68,7 +67,7 @@ internal fun ColumnScope.ReadingModePage(viewModel: ReaderSettingsViewModel) {
 
 @Composable
 private fun ColumnScope.PagerViewerSettings(viewModel: ReaderSettingsViewModel) {
-    HeadingItem(MR.strings.pager_viewer)
+    ReaderSettingsHeading(MR.strings.pager_viewer)
 
     val navigationModePager by viewModel.preferences.navigationModePager.collectAsState()
     val pagerNavInverted by viewModel.preferences.pagerNavInverted.collectAsState()
@@ -147,7 +146,7 @@ private fun ColumnScope.PagerViewerSettings(viewModel: ReaderSettingsViewModel) 
 private fun ColumnScope.WebtoonViewerSettings(viewModel: ReaderSettingsViewModel) {
     val numberFormat = remember { NumberFormat.getPercentInstance() }
 
-    HeadingItem(MR.strings.webtoon_viewer)
+    ReaderSettingsHeading(MR.strings.webtoon_viewer)
 
     val navigationModeWebtoon by viewModel.preferences.navigationModeWebtoon.collectAsState()
     val webtoonNavInverted by viewModel.preferences.webtoonNavInverted.collectAsState()

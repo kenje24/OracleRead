@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import tachiyomi.domain.source.model.Source
 import tachiyomi.presentation.core.components.material.padding
-import tachiyomi.presentation.core.util.secondaryItemAlpha
 
 @Composable
 fun BaseSourceItem(
@@ -41,7 +40,18 @@ fun BaseSourceItem(
 }
 
 private val defaultIcon: @Composable RowScope.(Source) -> Unit = { source ->
-    SourceIcon(source = source, modifier = Modifier.size(48.dp))
+    SourceIconTile(source = source)
+}
+
+/** A source icon framed in a rounded tile, the leading element of browse cards. */
+@Composable
+fun SourceIconTile(
+    source: Source,
+    modifier: Modifier = Modifier,
+) {
+    BrowseIconTile(modifier = modifier) {
+        SourceIcon(source = source, modifier = Modifier.size(36.dp))
+    }
 }
 
 private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { source, sourceLangString ->
@@ -54,15 +64,16 @@ private val defaultContent: @Composable RowScope.(Source, String?) -> Unit = { s
             text = source.name,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         if (sourceLangString != null) {
             Text(
-                modifier = Modifier.secondaryItemAlpha(),
                 text = sourceLangString,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

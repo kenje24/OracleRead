@@ -4,22 +4,21 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,11 +39,13 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.presentation.browse.components.BaseBrowseItem
+import eu.kanade.presentation.browse.components.BrowseIconTile
 import eu.kanade.presentation.browse.components.ExtensionIcon
 import eu.kanade.presentation.browse.components.ExtensionPill
 import eu.kanade.presentation.browse.components.label
 import eu.kanade.presentation.components.WarningBanner
 import eu.kanade.presentation.more.settings.screen.browse.ExtensionStoresScreen
+import eu.kanade.presentation.oracle.OracleSectionHeader
 import eu.kanade.presentation.util.rememberRequestPackageInstallsPermissionState
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.InstallStep
@@ -71,7 +73,6 @@ import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
-import tachiyomi.presentation.core.theme.header
 import tachiyomi.presentation.core.util.plus
 
 @Composable
@@ -182,25 +183,12 @@ private fun ExtensionContent(
             ) {
                 when (header) {
                     is ExtensionUiModel.Header.Resource -> {
-                        val action: @Composable RowScope.() -> Unit =
-                            if (header.textRes == MR.strings.ext_updates_pending) {
-                                {
-                                    Button(onClick = { onClickUpdateAll() }) {
-                                        Text(
-                                            text = stringResource(MR.strings.ext_update_all),
-                                            style = LocalTextStyle.current.copy(
-                                                color = MaterialTheme.colorScheme.onPrimary,
-                                            ),
-                                        )
-                                    }
-                                }
-                            } else {
-                                {}
-                            }
+                        val isUpdatesPending = header.textRes == MR.strings.ext_updates_pending
                         ExtensionHeader(
                             textRes = header.textRes,
                             modifier = Modifier.animateItem(),
-                            action = action,
+                            actionLabel = if (isUpdatesPending) stringResource(MR.strings.ext_update_all) else null,
+                            onAction = if (isUpdatesPending) onClickUpdateAll else null,
                         )
                     }
                     is ExtensionUiModel.Header.Text -> {
@@ -346,13 +334,14 @@ private fun ExtensionItemContent(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(start = MaterialTheme.padding.medium),
+        modifier = modifier.padding(horizontal = MaterialTheme.padding.medium),
     ) {
         Text(
             text = extension.name,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         if (store != null) {
@@ -360,7 +349,7 @@ private fun ExtensionItemContent(
                 text = store.name,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -375,20 +364,17 @@ private fun ExtensionItemIcon(
     installStep: InstallStep,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.size(48.dp),
-        contentAlignment = Alignment.Center,
-    ) {
+    BrowseIconTile(modifier = modifier) {
         val idle = installStep.isCompleted()
         if (!idle) {
             CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(44.dp),
                 strokeWidth = 2.dp,
             )
         }
 
         val padding by animateDpAsState(
-            targetValue = if (idle) 0.dp else 8.dp,
+            targetValue = if (idle) 6.dp else 12.dp,
             label = "iconPadding",
         )
         ExtensionIcon(
@@ -428,7 +414,7 @@ private fun ExtensionItemMetadata(
                 text = facts.joinToString(" \u2022 "),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -482,22 +468,37 @@ private fun ExtensionItemActions(
             return@Row
         }
 
+        val isUntrusted = extension is Extension.NotLoaded &&
+            extension.reason is Extension.NotLoaded.Reason.Untrusted
         val secondaryAction = when (extension) {
             is Extension.Available -> {
                 (MaterialSymbols.Rounded.Public to MR.strings.action_open_in_web_view)
                     .takeIf { extension.sources.isNotEmpty() }
             }
             is Extension.Loaded -> MaterialSymbols.Rounded.Settings to MR.strings.action_settings
-            is Extension.NotLoaded -> if (extension.reason is Extension.NotLoaded.Reason.Untrusted) {
-                MaterialSymbols.Rounded.VerifiedUser to MR.strings.ext_trust
+            is Extension.NotLoaded -> if (isUntrusted) {
+                null
             } else {
                 MaterialSymbols.Rounded.Info to MR.strings.ext_not_loaded_details
             }
         }
         secondaryAction?.let { (icon, label) ->
             IconButton(onClick = { onClickItemSecondaryAction(extension) }) {
-                Icon(imageVector = icon, contentDescription = stringResource(label))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = stringResource(label),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+        }
+
+        // Trusting is the one thing an untrusted extension needs, so it gets the pill
+        if (isUntrusted) {
+            ExtensionActionPill(
+                icon = MaterialSymbols.Rounded.VerifiedUser,
+                label = stringResource(MR.strings.ext_trust),
+                onClick = { onClickItemSecondaryAction(extension) },
+            )
         }
 
         val action = when {
@@ -509,10 +510,38 @@ private fun ExtensionItemActions(
             else -> null
         }
         action?.let { (icon, label) ->
-            IconButton(onClick = { onClickItemAction(extension) }) {
-                Icon(imageVector = icon, contentDescription = stringResource(label))
-            }
+            ExtensionActionPill(
+                icon = icon,
+                label = stringResource(label),
+                onClick = { onClickItemAction(extension) },
+            )
         }
+    }
+}
+
+/** Install, update, retry or trust: the row's main action as a filled tonal pill. */
+@Composable
+private fun ExtensionActionPill(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        shape = CircleShape,
+        contentPadding = PaddingValues(start = 10.dp, top = 6.dp, end = 14.dp, bottom = 6.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+        )
     }
 }
 
@@ -520,12 +549,14 @@ private fun ExtensionItemActions(
 private fun ExtensionHeader(
     textRes: StringResource,
     modifier: Modifier = Modifier,
-    action: @Composable RowScope.() -> Unit = {},
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     ExtensionHeader(
         text = stringResource(textRes),
         modifier = modifier,
-        action = action,
+        actionLabel = actionLabel,
+        onAction = onAction,
     )
 }
 
@@ -533,21 +564,15 @@ private fun ExtensionHeader(
 private fun ExtensionHeader(
     text: String,
     modifier: Modifier = Modifier,
-    action: @Composable RowScope.() -> Unit = {},
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
-    Row(
-        modifier = modifier.padding(horizontal = MaterialTheme.padding.medium),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .weight(1f),
-            style = MaterialTheme.typography.header,
-        )
-        action()
-    }
+    OracleSectionHeader(
+        title = text,
+        modifier = modifier,
+        actionLabel = actionLabel,
+        onAction = onAction,
+    )
 }
 
 /**

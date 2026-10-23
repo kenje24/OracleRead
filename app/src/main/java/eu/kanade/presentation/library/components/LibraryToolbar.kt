@@ -36,6 +36,8 @@ fun LibraryToolbar(
     onClickRefresh: () -> Unit,
     onClickGlobalUpdate: () -> Unit,
     onClickOpenRandomManga: () -> Unit,
+    onClickNotifications: () -> Unit,
+    onClickChangeTheme: () -> Unit,
     searchQuery: String?,
     onSearchQueryChange: (String?) -> Unit,
     scrollBehavior: TopAppBarScrollBehavior?,
@@ -58,6 +60,7 @@ fun LibraryToolbar(
                 onClickRefresh = onClickRefresh,
                 onClickGlobalUpdate = onClickGlobalUpdate,
                 onClickOpenRandomManga = onClickOpenRandomManga,
+                onClickChangeTheme = onClickChangeTheme,
             )
         },
         scrollBehavior = scrollBehavior,
@@ -66,6 +69,8 @@ fun LibraryToolbar(
         title = title,
         hasFilters = hasActiveFilters,
         onClickSearch = { onSearchQueryChange("") },
+        onClickNotifications = onClickNotifications,
+        onClickChangeTheme = onClickChangeTheme,
         onClickFilter = onClickFilter,
         onClickRefresh = onClickRefresh,
         onClickGlobalUpdate = onClickGlobalUpdate,
@@ -78,6 +83,8 @@ private fun LibraryTitleBar(
     title: LibraryToolbarTitle,
     hasFilters: Boolean,
     onClickSearch: () -> Unit,
+    onClickNotifications: () -> Unit,
+    onClickChangeTheme: () -> Unit,
     onClickFilter: () -> Unit,
     onClickRefresh: () -> Unit,
     onClickGlobalUpdate: () -> Unit,
@@ -89,14 +96,19 @@ private fun LibraryTitleBar(
             pluralStringResource(MR.plurals.library_title_count, count = it, it)
         },
         actions = {
+            IncognitoToggle()
+            Spacer(Modifier.width(6.dp))
             ReadingStreak()
-            Spacer(Modifier.width(4.dp))
             AppBarActions(
                 listOf(
                     AppBar.Action(
                         title = stringResource(MR.strings.action_search),
                         icon = MaterialSymbols.Rounded.Search,
                         onClick = onClickSearch,
+                    ),
+                    AppBar.OverflowAction(
+                        title = stringResource(MR.strings.library_notifications),
+                        onClick = onClickNotifications,
                     ),
                 ),
             )
@@ -106,6 +118,7 @@ private fun LibraryTitleBar(
                 onClickRefresh = onClickRefresh,
                 onClickGlobalUpdate = onClickGlobalUpdate,
                 onClickOpenRandomManga = onClickOpenRandomManga,
+                onClickChangeTheme = onClickChangeTheme,
             )
         },
     )
@@ -118,6 +131,7 @@ private fun LibraryActions(
     onClickRefresh: () -> Unit,
     onClickGlobalUpdate: () -> Unit,
     onClickOpenRandomManga: () -> Unit,
+    onClickChangeTheme: () -> Unit,
 ) {
     val filterTint = if (hasFilters) MaterialTheme.colorScheme.active else LocalContentColor.current
     AppBarActions(
@@ -139,6 +153,10 @@ private fun LibraryActions(
             AppBar.OverflowAction(
                 title = stringResource(MR.strings.action_open_random_manga),
                 onClick = onClickOpenRandomManga,
+            ),
+            AppBar.OverflowAction(
+                title = stringResource(MR.strings.library_change_theme),
+                onClick = onClickChangeTheme,
             ),
         ),
     )

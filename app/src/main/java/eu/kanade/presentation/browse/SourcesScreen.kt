@@ -3,38 +3,46 @@ package eu.kanade.presentation.browse
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.browse.components.BaseSourceItem
+import eu.kanade.presentation.oracle.OracleGlass
+import eu.kanade.presentation.oracle.OracleSectionHeader
 import eu.kanade.tachiyomi.ui.browse.source.SourcesViewModel
 import eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceViewModel.Listing
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Keep
+import mihon.icons.materialsymbols.rounded.Public
+import mihon.icons.materialsymbols.rounded.TravelExplore
 import mihon.icons.materialsymbols.roundedfilled.Keep
 import tachiyomi.domain.source.model.Pin
 import tachiyomi.domain.source.model.Source
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.ScrollbarLazyColumn
 import tachiyomi.presentation.core.components.material.SECONDARY_ALPHA
-import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.components.material.topSmallPaddingValues
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
+import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
-import tachiyomi.presentation.core.theme.header
 import tachiyomi.presentation.core.util.plus
 import tachiyomi.source.local.isLocal
 
@@ -45,17 +53,34 @@ fun SourcesScreen(
     onClickItem: (Source, Listing) -> Unit,
     onClickPin: (Source) -> Unit,
     onLongClickItem: (Source) -> Unit,
+    onClickExtensions: () -> Unit,
+    onClickGlobalSearch: (() -> Unit)? = null,
 ) {
     when {
         state.isLoading -> LoadingScreen(Modifier.padding(contentPadding))
         state.isEmpty -> EmptyScreen(
-            stringRes = MR.strings.source_empty_screen,
+            stringRes = MR.strings.sources_empty_go_extensions,
             modifier = Modifier.padding(contentPadding),
+            actions = listOf(
+                EmptyScreenAction(
+                    stringRes = MR.strings.action_go_to_extensions,
+                    icon = MaterialSymbols.Rounded.Public,
+                    onClick = onClickExtensions,
+                ),
+            ),
         )
         else -> {
             ScrollbarLazyColumn(
                 contentPadding = contentPadding + topSmallPaddingValues,
             ) {
+                if (onClickGlobalSearch != null) {
+                    item(key = "sources-global-search", contentType = "search") {
+                        SourcesSearchField(
+                            onClick = onClickGlobalSearch,
+                            modifier = Modifier.animateItem(),
+                        )
+                    }
+                }
                 items(
                     items = state.items,
                     contentType = {
@@ -92,17 +117,49 @@ fun SourcesScreen(
     }
 }
 
+/** Prominent glass search pill that opens global search across every source. */
+@Composable
+private fun SourcesSearchField(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OracleGlass(
+        onClick = onClick,
+        shape = CircleShape,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = MaterialSymbols.Rounded.TravelExplore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = stringResource(MR.strings.oracle_browse_search_all_sources),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
 @Composable
 private fun SourceHeader(
     language: String,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    Text(
-        text = LocaleHelper.getSourceDisplayName(language, context),
-        modifier = modifier
-            .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
-        style = MaterialTheme.typography.header,
+    OracleSectionHeader(
+        title = LocaleHelper.getSourceDisplayName(language, context),
+        modifier = modifier,
     )
 }
 
@@ -121,12 +178,14 @@ private fun SourceItem(
         onLongClickItem = { onLongClickItem(source) },
         action = {
             if (source.supportsLatest) {
-                TextButton(onClick = { onClickItem(source, Listing.Latest) }) {
+                TextButton(
+                    onClick = { onClickItem(source, Listing.Latest) },
+                    shape = CircleShape,
+                ) {
                     Text(
                         text = stringResource(MR.strings.latest),
-                        style = LocalTextStyle.current.copy(
-                            color = MaterialTheme.colorScheme.primary,
-                        ),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -147,7 +206,7 @@ private fun SourcePinButton(
     val tint = if (isPinned) {
         MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.onBackground.copy(
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(
             alpha = SECONDARY_ALPHA,
         )
     }

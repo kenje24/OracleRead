@@ -1,11 +1,11 @@
 package eu.kanade.presentation.history.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -15,12 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.manga.components.MangaCover
+import eu.kanade.presentation.oracle.OracleGlass
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import eu.kanade.presentation.util.formatChapterNumber
 import eu.kanade.tachiyomi.util.lang.toTimestampString
@@ -31,11 +31,17 @@ import tachiyomi.domain.history.model.HistoryWithRelations
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.theme.OracleCoverShape
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-private val HistoryItemHeight = 96.dp
+/** Cover width in history rows; the book ratio makes it roughly 56x84dp. */
+private val HistoryCoverWidth = 56.dp
 
+/**
+ * One history entry as a cinematic row: a glass card holding a book-ratio cover, the title, the last
+ * chapter read with its time, and the favorite/delete actions. Tapping the card resumes reading.
+ */
 @Composable
 fun HistoryItem(
     history: HistoryWithRelations,
@@ -46,65 +52,75 @@ fun HistoryItem(
     onClickFavorite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    OracleGlass(
         modifier = modifier
-            .clickable(onClick = onClickResume)
-            .height(HistoryItemHeight)
-            .padding(horizontal = MaterialTheme.padding.medium, vertical = MaterialTheme.padding.small),
-        verticalAlignment = Alignment.CenterVertically,
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium,
+        onClick = onClickResume,
     ) {
-        MangaCover.Book(
-            modifier = Modifier.fillMaxHeight(),
-            data = history.coverData,
-            onClick = onClickCover,
-        )
-        Column(
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .padding(start = MaterialTheme.padding.medium, end = MaterialTheme.padding.small),
+                .fillMaxWidth()
+                .padding(start = 10.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            val textStyle = MaterialTheme.typography.bodyMedium
-            Text(
-                text = history.title,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = textStyle,
+            MangaCover.Book(
+                modifier = Modifier.width(HistoryCoverWidth),
+                data = history.coverData,
+                shape = OracleCoverShape,
+                onClick = onClickCover,
             )
-            val readAt = remember(timeFormatter, history.readAt) {
-                history.readAt?.toTimestampString(timeFormatter) ?: ""
-            }
-            Text(
-                text = if (history.chapterNumber > -1) {
-                    stringResource(
-                        MR.strings.recent_manga_time,
-                        formatChapterNumber(history.chapterNumber),
-                        readAt,
-                    )
-                } else {
-                    readAt
-                },
-                modifier = Modifier.padding(top = 4.dp),
-                style = textStyle,
-            )
-        }
-
-        if (!history.coverData.isMangaFavorite) {
-            IconButton(onClick = onClickFavorite) {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.Favorite,
-                    contentDescription = stringResource(MR.strings.add_to_library),
-                    tint = MaterialTheme.colorScheme.onSurface,
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 14.dp, end = MaterialTheme.padding.small),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = history.title,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                val readAt = remember(timeFormatter, history.readAt) {
+                    history.readAt?.toTimestampString(timeFormatter) ?: ""
+                }
+                Text(
+                    text = if (history.chapterNumber > -1) {
+                        stringResource(
+                            MR.strings.recent_manga_time,
+                            formatChapterNumber(history.chapterNumber),
+                            readAt,
+                        )
+                    } else {
+                        readAt
+                    },
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
 
-        IconButton(onClick = onClickDelete) {
-            Icon(
-                imageVector = MaterialSymbols.Rounded.Delete,
-                contentDescription = stringResource(MR.strings.action_delete),
-                tint = MaterialTheme.colorScheme.onSurface,
-            )
+            if (!history.coverData.isMangaFavorite) {
+                IconButton(onClick = onClickFavorite) {
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.Favorite,
+                        contentDescription = stringResource(MR.strings.add_to_library),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+
+            IconButton(onClick = onClickDelete) {
+                Icon(
+                    imageVector = MaterialSymbols.Rounded.Delete,
+                    contentDescription = stringResource(MR.strings.action_delete),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

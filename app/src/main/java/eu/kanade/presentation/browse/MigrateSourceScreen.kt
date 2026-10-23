@@ -4,9 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,11 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.domain.source.interactor.SetMigrateSorting
 import eu.kanade.presentation.browse.components.BaseSourceItem
-import eu.kanade.presentation.browse.components.SourceIcon
+import eu.kanade.presentation.browse.components.SourceIconTile
+import eu.kanade.presentation.oracle.OraclePill
 import eu.kanade.tachiyomi.ui.browse.migration.sources.MigrateSourceViewModel
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import mihon.icons.materialsymbols.MaterialSymbols
@@ -30,8 +33,6 @@ import mihon.icons.materialsymbols.rounded.Numbers
 import mihon.icons.materialsymbols.rounded.SortByAlpha
 import tachiyomi.domain.source.model.Source
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.Badge
-import tachiyomi.presentation.core.components.BadgeGroup
 import tachiyomi.presentation.core.components.ScrollbarLazyColumn
 import tachiyomi.presentation.core.components.Scroller.STICKY_HEADER_KEY_PREFIX
 import tachiyomi.presentation.core.components.material.padding
@@ -39,9 +40,8 @@ import tachiyomi.presentation.core.components.material.topSmallPaddingValues
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.LoadingScreen
-import tachiyomi.presentation.core.theme.header
+import tachiyomi.presentation.core.theme.OracleSpacing
 import tachiyomi.presentation.core.util.plus
-import tachiyomi.presentation.core.util.secondaryItemAlpha
 
 @Composable
 fun MigrateSourceScreen(
@@ -92,14 +92,20 @@ private fun MigrateSourceList(
         stickyHeader(key = STICKY_HEADER_KEY_PREFIX) {
             Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(start = MaterialTheme.padding.medium),
+                    .padding(start = OracleSpacing.gutter, end = 8.dp, top = 12.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(MR.strings.migration_selection_prompt),
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.header,
+                    modifier = Modifier
+                        .weight(1f)
+                        .semantics { heading() },
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 IconButton(onClick = onToggleSortingMode) {
@@ -158,11 +164,14 @@ private fun MigrateSourceItem(
         showLanguageInContent = source.lang != "",
         onClickItem = onClickItem,
         onLongClickItem = onLongClickItem,
-        icon = { SourceIcon(source = source, modifier = Modifier.size(48.dp)) },
+        icon = { SourceIconTile(source = source) },
         action = {
-            BadgeGroup {
-                Badge(text = "$count")
-            }
+            OraclePill(
+                text = "$count",
+                container = MaterialTheme.colorScheme.primaryContainer,
+                content = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(end = 8.dp),
+            )
         },
         content = { _, sourceLangString ->
             Column(
@@ -174,7 +183,8 @@ private fun MigrateSourceItem(
                     text = source.name.ifBlank { source.id.toString() },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
@@ -182,20 +192,19 @@ private fun MigrateSourceItem(
                 ) {
                     if (sourceLangString != null) {
                         Text(
-                            modifier = Modifier.secondaryItemAlpha(),
                             text = sourceLangString,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     if (source.isStub) {
                         Text(
-                            modifier = Modifier.secondaryItemAlpha(),
                             text = stringResource(MR.strings.not_installed),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.error,
                         )
                     }

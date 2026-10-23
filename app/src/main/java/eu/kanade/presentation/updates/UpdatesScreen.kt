@@ -1,7 +1,7 @@
 package eu.kanade.presentation.updates
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,6 +23,8 @@ import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.manga.components.ChapterDownloadAction
 import eu.kanade.presentation.manga.components.MangaBottomActionMenu
+import eu.kanade.presentation.oracle.OracleLargeTopBar
+import eu.kanade.presentation.util.relativeTimeSpanString
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.ui.updates.UpdatesItem
 import eu.kanade.tachiyomi.ui.updates.UpdatesViewModel
@@ -73,6 +75,7 @@ fun UpdateScreen(
     Scaffold(
         topBar = { scrollBehavior ->
             UpdatesAppBar(
+                lastUpdated = lastUpdated,
                 onCalendarClicked = { onCalendarClicked() },
                 onUpdateLibrary = { scope.launch { onUpdateLibrary() } },
                 onFilterClicked = { onFilterClicked() },
@@ -115,27 +118,20 @@ fun UpdateScreen(
                     indicatorPadding = contentPadding,
                 ) {
                     if (state.items.isEmpty()) {
-                        Column(
+                        EmptyScreen(
+                            stringRes = if (hasActiveFilters) {
+                                MR.strings.error_no_match
+                            } else {
+                                MR.strings.information_no_recent
+                            },
                             modifier = Modifier
                                 .padding(contentPadding)
                                 .fillMaxSize(),
-                        ) {
-                            UpdatesLastUpdatedHeader(lastUpdated = lastUpdated)
-                            EmptyScreen(
-                                stringRes = if (hasActiveFilters) {
-                                    MR.strings.error_no_match
-                                } else {
-                                    MR.strings.information_no_recent
-                                },
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
+                        )
                     } else {
                         FastScrollLazyColumn(
                             contentPadding = contentPadding,
                         ) {
-                            updatesLastUpdatedItem(lastUpdated)
-
                             updatesUiItems(
                                 uiModels = state.getUiModel(),
                                 selectionMode = state.selectionMode,
@@ -152,8 +148,13 @@ fun UpdateScreen(
     }
 }
 
+/**
+ * Large serif "Updates" title with the last library update as its subtitle; selection keeps the
+ * familiar action-mode bar.
+ */
 @Composable
 private fun UpdatesAppBar(
+    lastUpdated: Long,
     onCalendarClicked: () -> Unit,
     onUpdateLibrary: () -> Unit,
     onFilterClicked: () -> Unit,
@@ -166,51 +167,60 @@ private fun UpdatesAppBar(
     scrollBehavior: TopAppBarScrollBehavior,
     modifier: Modifier = Modifier,
 ) {
-    AppBar(
-        modifier = modifier,
-        title = stringResource(MR.strings.label_recent_updates),
-        actions = {
-            AppBarActions(
-                listOf(
-                    AppBar.Action(
-                        title = stringResource(MR.strings.action_filter),
-                        icon = MaterialSymbols.Rounded.FilterList,
-                        iconTint = if (hasFilters) MaterialTheme.colorScheme.active else LocalContentColor.current,
-                        onClick = onFilterClicked,
+    if (actionModeCounter > 0) {
+        AppBar(
+            modifier = modifier,
+            title = stringResource(MR.strings.label_recent_updates),
+            actionModeCounter = actionModeCounter,
+            onCancelActionMode = onCancelActionMode,
+            actionModeActions = {
+                AppBarActions(
+                    listOf(
+                        AppBar.Action(
+                            title = stringResource(MR.strings.action_select_all),
+                            icon = MaterialSymbols.Rounded.SelectAll,
+                            onClick = onSelectAll,
+                        ),
+                        AppBar.Action(
+                            title = stringResource(MR.strings.action_select_inverse),
+                            icon = MaterialSymbols.Rounded.FlipToBack,
+                            onClick = onInvertSelection,
+                        ),
                     ),
-                    AppBar.Action(
-                        title = stringResource(MR.strings.action_view_upcoming),
-                        icon = MaterialSymbols.Rounded.CalendarMonth,
-                        onClick = onCalendarClicked,
+                )
+            },
+            scrollBehavior = scrollBehavior,
+        )
+    } else {
+        OracleLargeTopBar(
+            // Opaque so list content scrolling underneath never shows through the title
+            modifier = modifier.background(MaterialTheme.colorScheme.background),
+            title = stringResource(MR.strings.label_recent_updates),
+            subtitle = stringResource(MR.strings.updates_last_update_info, relativeTimeSpanString(lastUpdated)),
+            actions = {
+                AppBarActions(
+                    listOf(
+                        AppBar.Action(
+                            title = stringResource(MR.strings.action_filter),
+                            icon = MaterialSymbols.Rounded.FilterList,
+                            iconTint = if (hasFilters) MaterialTheme.colorScheme.active else LocalContentColor.current,
+                            onClick = onFilterClicked,
+                        ),
+                        AppBar.Action(
+                            title = stringResource(MR.strings.action_view_upcoming),
+                            icon = MaterialSymbols.Rounded.CalendarMonth,
+                            onClick = onCalendarClicked,
+                        ),
+                        AppBar.Action(
+                            title = stringResource(MR.strings.action_update_library),
+                            icon = MaterialSymbols.Rounded.Refresh,
+                            onClick = onUpdateLibrary,
+                        ),
                     ),
-                    AppBar.Action(
-                        title = stringResource(MR.strings.action_update_library),
-                        icon = MaterialSymbols.Rounded.Refresh,
-                        onClick = onUpdateLibrary,
-                    ),
-                ),
-            )
-        },
-        actionModeCounter = actionModeCounter,
-        onCancelActionMode = onCancelActionMode,
-        actionModeActions = {
-            AppBarActions(
-                listOf(
-                    AppBar.Action(
-                        title = stringResource(MR.strings.action_select_all),
-                        icon = MaterialSymbols.Rounded.SelectAll,
-                        onClick = onSelectAll,
-                    ),
-                    AppBar.Action(
-                        title = stringResource(MR.strings.action_select_inverse),
-                        icon = MaterialSymbols.Rounded.FlipToBack,
-                        onClick = onInvertSelection,
-                    ),
-                ),
-            )
-        },
-        scrollBehavior = scrollBehavior,
-    )
+                )
+            },
+        )
+    }
 }
 
 @Composable

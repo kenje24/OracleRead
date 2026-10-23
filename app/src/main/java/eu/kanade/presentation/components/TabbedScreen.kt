@@ -5,15 +5,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Tab
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,11 +20,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.zIndex
 import dev.icerock.moko.resources.StringResource
+import eu.kanade.presentation.oracle.OracleLargeTopBar
+import eu.kanade.presentation.oracle.OraclePillTab
+import eu.kanade.presentation.oracle.OraclePillTabs
 import kotlinx.coroutines.launch
+import mihon.icons.materialsymbols.MaterialSymbols
+import mihon.icons.materialsymbols.rounded.Search
+import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.Scaffold
-import tachiyomi.presentation.core.components.material.TabText
 import tachiyomi.presentation.core.i18n.stringResource
 
+/**
+ * Cinematic tab shell: a large serif title with the current tab's actions, pill tabs under it and a
+ * pager for the tab contents. A tab in search mode swaps the title for the familiar search toolbar.
+ */
 @Composable
 fun TabbedScreen(
     titleRes: StringResource,
@@ -42,14 +49,33 @@ fun TabbedScreen(
         topBar = {
             val tab = tabs[state.currentPage]
             val searchEnabled = tab.searchEnabled
+            val activeSearchQuery = if (searchEnabled) searchQuery else null
 
-            SearchToolbar(
-                titleContent = { AppBarTitle(stringResource(titleRes)) },
-                searchEnabled = searchEnabled,
-                searchQuery = if (searchEnabled) searchQuery else null,
-                onChangeSearchQuery = onChangeSearchQuery,
-                actions = { AppBarActions(tab.actions) },
-            )
+            if (activeSearchQuery != null) {
+                SearchToolbar(
+                    titleContent = { AppBarTitle(stringResource(titleRes)) },
+                    searchEnabled = true,
+                    searchQuery = activeSearchQuery,
+                    onChangeSearchQuery = onChangeSearchQuery,
+                    actions = { AppBarActions(tab.actions) },
+                )
+            } else {
+                val searchActions: List<AppBar.AppBarAction> = if (searchEnabled) {
+                    listOf(
+                        AppBar.Action(
+                            title = stringResource(MR.strings.action_search),
+                            icon = MaterialSymbols.Rounded.Search,
+                            onClick = { onChangeSearchQuery("") },
+                        ),
+                    )
+                } else {
+                    emptyList()
+                }
+                OracleLargeTopBar(
+                    title = stringResource(titleRes),
+                    actions = { AppBarActions(searchActions + tab.actions) },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { contentPadding ->
@@ -60,19 +86,19 @@ fun TabbedScreen(
                 end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
             ),
         ) {
-            PrimaryTabRow(
-                selectedTabIndex = state.currentPage,
-                modifier = Modifier.zIndex(1f),
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    Tab(
-                        selected = state.currentPage == index,
-                        onClick = { scope.launch { state.animateScrollToPage(index) } },
-                        text = { TabText(text = stringResource(tab.titleRes), badgeCount = tab.badgeNumber) },
-                        unselectedContentColor = MaterialTheme.colorScheme.onSurface,
+            OraclePillTabs(
+                tabs = tabs.map { tab ->
+                    OraclePillTab(
+                        label = stringResource(tab.titleRes),
+                        count = tab.badgeNumber,
                     )
-                }
-            }
+                },
+                selectedIndex = state.currentPage,
+                onClick = { index -> scope.launch { state.animateScrollToPage(index) } },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .zIndex(1f),
+            )
 
             HorizontalPager(
                 modifier = Modifier.fillMaxSize(),
