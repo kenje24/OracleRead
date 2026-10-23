@@ -13,7 +13,7 @@ class BackupExtensionStore(
     @ProtoNumber(4) var contactWebsite: String,
     @ProtoNumber(6) var contactDiscord: String?,
     @ProtoNumber(7) var isLegacy: Boolean?,
-    @ProtoNumber(8) var extensionListUrl: String? = null,
+    @ProtoNumber(8) var extensionListUrl: String?,
 )
 
 val backupExtensionStoreMapper = { store: ExtensionStore ->

@@ -1,5 +1,1 @@
 ALTER TABLE extension_store ADD COLUMN extension_list_url TEXT;
-
-UPDATE mangas
-SET initialized = 0
-WHERE source != 0;

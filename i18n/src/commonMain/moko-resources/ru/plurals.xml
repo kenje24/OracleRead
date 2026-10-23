@@ -97,16 +97,16 @@
         <item quantity="other">%d дней</item>
     </plurals>
     <plurals name="num_repos">
-        <item quantity="one">%d репозиторий</item>
-        <item quantity="few">%d репозитория</item>
-        <item quantity="many">%d репозиториев</item>
-        <item quantity="other">%d репозиториев</item>
+        <item quantity="one">%d хранилище</item>
+        <item quantity="few">%d хранилища</item>
+        <item quantity="many">%d хранилищ</item>
+        <item quantity="other">%d хранилищ</item>
     </plurals>
     <plurals name="upcoming_relative_time">
         <item quantity="one">Завтра</item>
-        <item quantity="few">В течении %1$d дней</item>
-        <item quantity="many">В течении %1$d дней</item>
-        <item quantity="other">В течении %1$d дней</item>
+        <item quantity="few">В течение %1$d дней</item>
+        <item quantity="many">В течение %1$d дней</item>
+        <item quantity="other">В течение %1$d дней</item>
     </plurals>
     <plurals name="pref_pages">
         <item quantity="one">1 страница</item>

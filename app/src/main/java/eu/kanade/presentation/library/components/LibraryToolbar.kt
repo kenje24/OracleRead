@@ -1,47 +1,28 @@
 package eu.kanade.presentation.library.components
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FilterList
-import androidx.compose.material.icons.outlined.FlipToBack
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.SelectAll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.unit.dp
-import eu.kanade.domain.base.BasePreferences
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.components.SearchToolbar
-import eu.kanade.tachiyomi.R
-import tachiyomi.domain.library.service.LibraryPreferences
+import mihon.icons.materialsymbols.MaterialSymbols
+import mihon.icons.materialsymbols.rounded.FilterList
+import mihon.icons.materialsymbols.rounded.FlipToBack
+import mihon.icons.materialsymbols.rounded.SelectAll
 import tachiyomi.i18n.MR
+import tachiyomi.presentation.core.components.Pill
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.theme.active
-import tachiyomi.presentation.core.util.collectAsState
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
-import java.time.LocalDate
 
 @Composable
 fun LibraryToolbar(
@@ -52,11 +33,9 @@ fun LibraryToolbar(
     onClickSelectAll: () -> Unit,
     onClickInvertSelection: () -> Unit,
     onClickFilter: () -> Unit,
-    onClickNotifications: () -> Unit,
     onClickRefresh: () -> Unit,
     onClickGlobalUpdate: () -> Unit,
     onClickOpenRandomManga: () -> Unit,
-    onClickChangeTheme: () -> Unit,
     searchQuery: String?,
     onSearchQueryChange: (String?) -> Unit,
     scrollBehavior: TopAppBarScrollBehavior?,
@@ -73,11 +52,9 @@ fun LibraryToolbar(
         searchQuery = searchQuery,
         onSearchQueryChange = onSearchQueryChange,
         onClickFilter = onClickFilter,
-        onClickNotifications = onClickNotifications,
         onClickRefresh = onClickRefresh,
         onClickGlobalUpdate = onClickGlobalUpdate,
         onClickOpenRandomManga = onClickOpenRandomManga,
-        onClickChangeTheme = onClickChangeTheme,
         scrollBehavior = scrollBehavior,
     )
 }
@@ -89,29 +66,28 @@ private fun LibraryRegularToolbar(
     searchQuery: String?,
     onSearchQueryChange: (String?) -> Unit,
     onClickFilter: () -> Unit,
-    onClickNotifications: () -> Unit,
     onClickRefresh: () -> Unit,
     onClickGlobalUpdate: () -> Unit,
     onClickOpenRandomManga: () -> Unit,
-    onClickChangeTheme: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior?,
 ) {
-    val incognitoPref = remember { Injekt.get<BasePreferences>().incognitoMode }
-    val incognitoMode by incognitoPref.collectAsState()
+    val pillAlpha = if (isSystemInDarkTheme()) 0.12f else 0.08f
     SearchToolbar(
         titleContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(
-                    checked = incognitoMode,
-                    onCheckedChange = incognitoPref::set,
-                    thumbContent = {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_glasses_24dp),
-                            contentDescription = null,
-                        )
-                    },
+                Text(
+                    text = title.text,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f, false),
+                    overflow = TextOverflow.Ellipsis,
                 )
-                ReadingStreakPill()
+                if (title.numberOfManga != null) {
+                    Pill(
+                        text = "${title.numberOfManga}",
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = pillAlpha),
+                        fontSize = 14.sp,
+                    )
+                }
             }
         },
         searchQuery = searchQuery,
@@ -121,13 +97,8 @@ private fun LibraryRegularToolbar(
             AppBarActions(
                 listOf(
                     AppBar.Action(
-                        title = "Notifications",
-                        icon = Icons.Outlined.Notifications,
-                        onClick = onClickNotifications,
-                    ),
-                    AppBar.Action(
                         title = stringResource(MR.strings.action_filter),
-                        icon = Icons.Outlined.FilterList,
+                        icon = MaterialSymbols.Rounded.FilterList,
                         iconTint = filterTint,
                         onClick = onClickFilter,
                     ),
@@ -143,55 +114,11 @@ private fun LibraryRegularToolbar(
                         title = stringResource(MR.strings.action_open_random_manga),
                         onClick = onClickOpenRandomManga,
                     ),
-                    AppBar.OverflowAction(
-                        title = "Change Theme",
-                        onClick = onClickChangeTheme,
-                    ),
                 ),
             )
         },
         scrollBehavior = scrollBehavior,
     )
-}
-
-@Composable
-private fun ReadingStreakPill() {
-    val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
-    val streakDays by libraryPreferences.readingStreakDays.collectAsState()
-    val streakDatePref = libraryPreferences.readingStreakDate
-    val today = remember { LocalDate.now() }
-    val transition = rememberInfiniteTransition(label = "readingStreak")
-    val fireAlpha by transition.animateFloat(
-        initialValue = 0.55f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 900),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "readingStreakFire",
-    )
-    androidx.compose.runtime.LaunchedEffect(today) {
-        val lastReadDate = runCatching { LocalDate.parse(streakDatePref.get()) }.getOrNull()
-        if (lastReadDate != null && lastReadDate.isBefore(today.minusDays(1))) {
-            libraryPreferences.readingStreakDays.set(0)
-        }
-    }
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = Icons.Outlined.LocalFireDepartment,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .size(18.dp)
-                .alpha(fireAlpha),
-        )
-        Text(
-            text = "$streakDays days",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
-    }
 }
 
 @Composable
@@ -208,12 +135,12 @@ private fun LibrarySelectionToolbar(
                 listOf(
                     AppBar.Action(
                         title = stringResource(MR.strings.action_select_all),
-                        icon = Icons.Outlined.SelectAll,
+                        icon = MaterialSymbols.Rounded.SelectAll,
                         onClick = onClickSelectAll,
                     ),
                     AppBar.Action(
                         title = stringResource(MR.strings.action_select_inverse),
-                        icon = Icons.Outlined.FlipToBack,
+                        icon = MaterialSymbols.Rounded.FlipToBack,
                         onClick = onClickInvertSelection,
                     ),
                 ),
@@ -227,4 +154,5 @@ private fun LibrarySelectionToolbar(
 @Immutable
 data class LibraryToolbarTitle(
     val text: String,
+    val numberOfManga: Int? = null,
 )

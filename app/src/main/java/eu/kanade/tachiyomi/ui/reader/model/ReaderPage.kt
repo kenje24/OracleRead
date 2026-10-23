@@ -12,5 +12,7 @@ open class ReaderPage(
 
     open lateinit var chapter: ReaderChapter
 
-    internal val retryState = ReaderPageRetryState()
+    /** Set by a viewer before the download; filled during [Page.State.DownloadImage]. */
+    @Volatile
+    var downloadStream: DownloadStream? = null
 }

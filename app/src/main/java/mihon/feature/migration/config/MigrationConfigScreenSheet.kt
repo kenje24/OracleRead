@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,6 +32,9 @@ import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.components.AdaptiveSheet
 import mihon.domain.migration.models.MigrationFlag
 import mihon.feature.common.utils.getLabel
+import mihon.icons.materialsymbols.MaterialSymbols
+import mihon.icons.materialsymbols.rounded.Check
+import mihon.icons.materialsymbols.roundedfilled.Warning
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.preference.toggle
@@ -98,7 +98,7 @@ fun MigrationConfigScreenSheet(
                                 leadingIcon = {
                                     if (selected) {
                                         Icon(
-                                            imageVector = Icons.Outlined.Check,
+                                            imageVector = MaterialSymbols.Rounded.Check,
                                             contentDescription = null,
                                         )
                                     }
@@ -201,16 +201,16 @@ private fun MigrationSheetSwitchItem(
     onClick: () -> Unit,
 ) {
     ListItem(
-        headlineContent = { Text(text = title) },
-        supportingContent = subtitle?.let { { Text(text = subtitle) } },
+        modifier = Modifier.clickable(onClick = onClick),
         trailingContent = {
             Switch(
                 checked = checked,
                 onCheckedChange = null,
             )
         },
+        supportingContent = subtitle?.let { { Text(text = subtitle) } },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier.clickable(onClick = onClick),
+        content = { Text(text = title) },
     )
 }
 
@@ -226,18 +226,17 @@ private fun MigrationSheetWarningItem(
     ListItem(
         leadingContent = {
             Icon(
-                imageVector = Icons.Outlined.Warning,
+                imageVector = MaterialSymbols.RoundedFilled.Warning,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.active,
             )
         },
-        headlineContent = {
-            Text(
-                text = text,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier,
-            )
-        },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    )
+    ) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier,
+        )
+    }
 }

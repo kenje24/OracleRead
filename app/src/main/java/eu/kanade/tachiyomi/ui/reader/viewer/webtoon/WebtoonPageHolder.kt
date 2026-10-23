@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.ui.reader.viewer.webtoon
 
-import android.content.res.Resources
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -18,18 +17,17 @@ import eu.kanade.tachiyomi.ui.reader.viewer.ReaderPageImageView
 import eu.kanade.tachiyomi.ui.reader.viewer.ReaderProgressIndicator
 import eu.kanade.tachiyomi.ui.webview.WebViewActivity
 import eu.kanade.tachiyomi.util.system.dpToPx
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import okio.Buffer
 import okio.BufferedSource
 import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.core.common.util.lang.launchIO
-import tachiyomi.core.common.util.lang.withIOContext
-import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.ImageUtil
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.i18n.MR
@@ -84,7 +82,7 @@ class WebtoonPageHolder(
         refreshLayoutParams()
 
         frame.onImageLoaded = { onImageDecoded() }
-        frame.onImageLoadError = { error -> handleImageLoadError(error) }
+        frame.onImageLoadError = { error -> setError(error) }
         frame.onScaleChanged = { viewer.activity.hideMenu() }
     }
 
@@ -104,9 +102,8 @@ class WebtoonPageHolder(
                 bottomMargin = 15.dpToPx
             }
 
-            val margin = Resources.getSystem().displayMetrics.widthPixels * (viewer.config.sidePadding / 100f)
-            marginEnd = margin.toInt()
-            marginStart = margin.toInt()
+            marginEnd = viewer.recycler.sidePaddingPixels
+            marginStart = viewer.recycler.sidePaddingPixels
         }
     }
 
@@ -134,13 +131,8 @@ class WebtoonPageHolder(
         val page = page ?: return
         val loader = page.chapter.pageLoader ?: return
         supervisorScope {
-            launchIO {
+            launch(Dispatchers.IO) {
                 loader.loadPage(page)
-            }
-            launch {
-                page.retryState.retryCount.collectLatest { retryCount ->
-                    progressIndicator.setRetryProgress(retryCount, page.retryState.maxRetries)
-                }
             }
             page.statusFlow.collectLatest { state ->
                 when (state) {
@@ -164,7 +156,6 @@ class WebtoonPageHolder(
      */
     private fun setQueued() {
         progressContainer.isVisible = true
-        page?.let { progressIndicator.setRetryProgress(it.retryState.retryCount.value, it.retryState.maxRetries) }
         progressIndicator.show()
         removeErrorLayout()
     }
@@ -174,7 +165,6 @@ class WebtoonPageHolder(
      */
     private fun setLoading() {
         progressContainer.isVisible = true
-        page?.let { progressIndicator.setRetryProgress(it.retryState.retryCount.value, it.retryState.maxRetries) }
         progressIndicator.show()
         removeErrorLayout()
     }
@@ -184,7 +174,6 @@ class WebtoonPageHolder(
      */
     private fun setDownloading() {
         progressContainer.isVisible = true
-        page?.let { progressIndicator.setRetryProgress(it.retryState.retryCount.value, it.retryState.maxRetries) }
         progressIndicator.show()
         removeErrorLayout()
     }
@@ -198,12 +187,14 @@ class WebtoonPageHolder(
         val streamFn = page?.stream ?: return
 
         try {
-            val (source, isAnimated) = withIOContext {
-                val source = streamFn().use { process(Buffer().readFrom(it)) }
+            val buffer = withContext(Dispatchers.IO) { streamFn().use { Buffer().readFrom(it) } }
+            // Splitting and merging decode the image, which is CPU work
+            val (source, isAnimated) = withContext(Dispatchers.Default) {
+                val source = process(buffer)
                 val isAnimated = ImageUtil.isAnimatedAndSupported(source)
                 Pair(source, isAnimated)
             }
-            withUIContext {
+            withContext(Dispatchers.Main) {
                 frame.setImage(
                     source,
                     isAnimated,
@@ -217,8 +208,8 @@ class WebtoonPageHolder(
             }
         } catch (e: Throwable) {
             logcat(LogPriority.ERROR, e)
-            withUIContext {
-                handleImageLoadError(e)
+            withContext(Dispatchers.Main) {
+                setError(e)
             }
         }
     }
@@ -257,21 +248,10 @@ class WebtoonPageHolder(
         initErrorLayout(error)
     }
 
-    private fun handleImageLoadError(error: Throwable?) {
-        val currentPage = page ?: return
-        if (currentPage.chapter.pageLoader?.retryPageAutomatically(currentPage) != true) {
-            setError(error)
-        }
-    }
-
     /**
      * Called when the image is decoded and going to be displayed.
      */
     private fun onImageDecoded() {
-        page?.let {
-            it.retryState.reset()
-            progressIndicator.setRetryProgress(0, it.retryState.maxRetries)
-        }
         progressContainer.isVisible = false
         removeErrorLayout()
     }
@@ -317,20 +297,8 @@ class WebtoonPageHolder(
             }
         }
 
-        val errorMessage = with(context) { error?.formattedMessage }
+        errorLayout?.errorMessage?.text = with(context) { error?.formattedMessage }
             ?: context.stringResource(MR.strings.decode_image_error)
-        val currentPage = page
-        val retryCount = currentPage?.retryState?.retryCount?.value ?: 0
-        errorLayout?.errorMessage?.text = if (currentPage != null && retryCount > 0) {
-            context.stringResource(
-                MR.strings.reader_retry_failed,
-                retryCount,
-                currentPage.retryState.maxRetries,
-                errorMessage,
-            )
-        } else {
-            errorMessage
-        }
 
         return errorLayout!!
     }

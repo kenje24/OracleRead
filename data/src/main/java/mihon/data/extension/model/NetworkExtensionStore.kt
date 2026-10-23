@@ -1,13 +1,14 @@
 package mihon.data.extension.model
 
 import android.annotation.SuppressLint
-import eu.kanade.tachiyomi.extension.model.Extension as TachiyomiExtension
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.protobuf.ProtoNumber
 import mihon.data.extension.model.NetworkExtensionStore.ContentWarning
 import mihon.data.extension.model.NetworkExtensionStore.ExtensionList
 import mihon.domain.extension.model.ExtensionStore
+import eu.kanade.tachiyomi.extension.model.Extension as TachiyomiExtension
+import mihon.domain.extension.model.ContentWarning as DomainContentWarning
 
 @SuppressLint("UnsafeOptInUsageError")
 @Serializable
@@ -16,8 +17,8 @@ data class NetworkExtensionStore(
     @ProtoNumber(2) val badgeLabel: String,
     @ProtoNumber(3) val signingKey: String,
     @ProtoNumber(4) val contact: Contact,
-    @ProtoNumber(101) val extensionList: ExtensionList? = null,
-    @ProtoNumber(102) val extensionListUrl: String? = null,
+    @ProtoNumber(101) val extensionList: ExtensionList?,
+    @ProtoNumber(102) val extensionListUrl: String?,
 ) : BaseNetworkExtensionStore {
     @Serializable
     data class Contact(
@@ -26,9 +27,7 @@ data class NetworkExtensionStore(
     )
 
     @Serializable
-    data class ExtensionList(
-        @ProtoNumber(1) val extensions: List<Extension>,
-    )
+    data class ExtensionList(@ProtoNumber(1) val extensions: List<Extension>)
 
     @Serializable
     data class Extension(
@@ -55,6 +54,7 @@ data class NetworkExtensionStore(
         @ProtoNumber(3) val language: String,
         @ProtoNumber(4) val homeUrl: String = "",
         @ProtoNumber(5) val mirrorUrls: List<String> = emptyList(),
+        // @ProtoNumber(6) val contentWarning: ContentWarning = ContentWarning.SAFE,
         @ProtoNumber(7) val message: String? = null,
     )
 
@@ -105,7 +105,12 @@ fun ExtensionList.toAvailableExtensions(store: ExtensionStore): List<TachiyomiEx
             versionCode = extension.versionCode,
             versionName = extension.versionName,
             lang = if (lang.size == 1) lang.first() else "all",
-            isNsfw = extension.contentWarning >= ContentWarning.MIXED,
+            contentWarning = when (extension.contentWarning) {
+                ContentWarning.SAFE -> DomainContentWarning.SAFE
+                ContentWarning.MIXED -> DomainContentWarning.MIXED
+                ContentWarning.NSFW -> DomainContentWarning.NSFW
+                else -> DomainContentWarning.SAFE
+            },
             sources = extension.sources.map { source ->
                 TachiyomiExtension.Available.Source(
                     id = source.id,

@@ -1,63 +1,55 @@
 package eu.kanade.tachiyomi.source
 
-import android.content.Context
-import android.os.Looper
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import tachiyomi.core.common.util.lang.launchIO
+import mihon.core.metro.AppCoroutineScope
 import tachiyomi.domain.source.model.StubSource
 import tachiyomi.domain.source.repository.StubSourceRepository
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.source.local.LocalSource
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.ConcurrentHashMap
 
+@Inject
+@SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
 class AndroidSourceManager(
-    private val context: Context,
-    private val scope: CoroutineScope,
+    @AppCoroutineScope private val scope: CoroutineScope,
     private val extensionManager: ExtensionManager,
     private val sourceRepository: StubSourceRepository,
+    private val localSource: LocalSource,
+    private val downloadManager: Lazy<DownloadManager>,
 ) : SourceManager {
 
-    private val _isInitialized = MutableStateFlow(false)
-    override val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
-
-    private val downloadManager: DownloadManager by injectLazy()
-
-    private val sourcesMapFlow = MutableStateFlow(ConcurrentHashMap<Long, Source>())
+    /**
+     * Null until the extensions have loaded, so that nothing observes the empty seed value.
+     */
+    private val sourcesMapFlow = MutableStateFlow<Map<Long, Source>?>(null)
 
     private val stubSourcesMap = ConcurrentHashMap<Long, StubSource>()
 
-    override val catalogueSources: Flow<List<CatalogueSource>> = sourcesMapFlow.map {
-        it.values.filterIsInstance<CatalogueSource>()
-    }
+    override val sources: Flow<List<Source>> = sourcesMapFlow
+        .filterNotNull()
+        .map { it.values.toList() }
 
     init {
-        scope.launchIO {
-            extensionManager.installedExtensionsFlow
+        scope.launch {
+            extensionManager.loadedExtensionsFlow
                 .collectLatest { extensions ->
                     val mutableMap = ConcurrentHashMap<Long, Source>(
-                        mapOf(
-                            LocalSource.ID to LocalSource(
-                                context,
-                                Injekt.get(),
-                                Injekt.get(),
-                            ),
-                        ),
+                        mapOf(LocalSource.ID to localSource),
                     )
                     extensions.forEach { extension ->
                         extension.sources.forEach {
@@ -66,64 +58,54 @@ class AndroidSourceManager(
                         }
                     }
                     sourcesMapFlow.value = mutableMap
-                    _isInitialized.value = true
                 }
         }
 
-        scope.launchIO {
+        scope.launch {
             sourceRepository.subscribeAll()
                 .collectLatest { sources ->
-                    sources.forEach { stubSourcesMap[it.id] = it }
+                    sources.forEach {
+                        stubSourcesMap[it.id] = it
+                    }
                 }
         }
     }
 
-    override fun get(sourceKey: Long): Source? {
-        return sourcesMapFlow.value[sourceKey]
+    /**
+     * Awaits the extensions to have loaded before returning the sources.
+     */
+    private suspend fun sourcesMap(): Map<Long, Source> = sourcesMapFlow.filterNotNull().first()
+
+    override suspend fun get(sourceKey: Long): Source? {
+        return sourcesMap()[sourceKey]
     }
 
-    override fun getOrStub(sourceKey: Long): Source {
-        sourcesMapFlow.value[sourceKey]?.let { return it }
-        stubSourcesMap[sourceKey]?.let { return it }
-
-        // Reached whenever the source belongs to an extension that is no longer loaded. Resolving
-        // the stub hits the database, so never block the main thread on it: hand back a bare stub
-        // and let the cache fill in the background instead.
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            extensionManager.getSourceData(sourceKey)?.let { sourceData ->
-                stubSourcesMap[sourceKey] = sourceData
-                registerStubSource(sourceData)
-                return sourceData
-            }
-            scope.launchIO {
-                runCatching { createStubSource(sourceKey) }
-                    .onSuccess { stubSourcesMap.putIfAbsent(sourceKey, it) }
-            }
-            return StubSource(id = sourceKey, lang = "", name = "")
-        }
-
-        return stubSourcesMap.getOrPut(sourceKey) {
-            runCatching { runBlocking { createStubSource(sourceKey) } }
-                .getOrElse { StubSource(id = sourceKey, lang = "", name = "") }
+    override suspend fun getOrStub(sourceKey: Long): Source {
+        return sourcesMap()[sourceKey] ?: stubSourcesMap.getOrPut(sourceKey) {
+            createStubSource(sourceKey)
         }
     }
 
-    override fun getOnlineSources() = sourcesMapFlow.value.values.filterIsInstance<HttpSource>()
+    override suspend fun getAll(): List<Source> {
+        return sourcesMap().values.toList()
+    }
 
-    override fun getCatalogueSources() = sourcesMapFlow.value.values.filterIsInstance<CatalogueSource>()
+    override suspend fun getOnlineSources(): List<HttpSource> {
+        return sourcesMap().values.filterIsInstance<HttpSource>()
+    }
 
-    override fun getStubSources(): List<StubSource> {
+    override suspend fun getStubSources(): List<StubSource> {
         val onlineSourceIds = getOnlineSources().map { it.id }
         return stubSourcesMap.values.filterNot { it.id in onlineSourceIds }
     }
 
     private fun registerStubSource(source: StubSource) {
-        scope.launchIO {
+        scope.launch {
             val dbSource = sourceRepository.getStubSource(source.id)
-            if (dbSource == source) return@launchIO
+            if (dbSource == source) return@launch
             sourceRepository.upsertStubSource(source.id, source.lang, source.name)
             if (dbSource != null) {
-                downloadManager.renameSource(dbSource, source)
+                downloadManager.value.renameSource(dbSource, source)
             }
         }
     }

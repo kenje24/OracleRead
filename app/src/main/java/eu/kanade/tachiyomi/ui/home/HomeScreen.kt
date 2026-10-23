@@ -2,45 +2,35 @@ package eu.kanade.tachiyomi.ui.home
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
+import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
-import eu.kanade.domain.source.service.SourcePreferences
-import eu.kanade.domain.ui.UiPreferences
-import eu.kanade.domain.ui.model.NavigationBarMode
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.ui.browse.BrowseTab
@@ -55,18 +45,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import mihon.app.di.appGraph
 import soup.compose.material.motion.animation.materialFadeThroughIn
 import soup.compose.material.motion.animation.materialFadeThroughOut
-import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.material.NavigationBar
-import tachiyomi.presentation.core.components.material.NavigationRail
-import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.pluralStringResource
-import tachiyomi.presentation.core.util.collectAsState
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
-import androidx.compose.material3.NavigationBarItem as MaterialNavigationBarItem
 
 object HomeScreen : Screen() {
 
@@ -83,14 +66,8 @@ object HomeScreen : Screen() {
     private val TABS = listOf(
         LibraryTab,
         UpdatesTab,
-        BrowseTab,
-    )
-
-    private val BROWSE_TABS = listOf(
-        LibraryTab,
-        UpdatesTab,
-        BrowseTab,
         HistoryTab,
+        BrowseTab,
         MoreTab,
     )
 
@@ -101,110 +78,58 @@ object HomeScreen : Screen() {
             tab = LibraryTab,
             key = TabNavigatorKey,
         ) { tabNavigator ->
-            var expandedNav by rememberSaveable { mutableStateOf(false) }
-            val uiPreferences = remember { Injekt.get<UiPreferences>() }
-            val navigationBarMode by uiPreferences.navigationBarMode.collectAsState()
             // Provide usable navigator to content screen
             CompositionLocalProvider(LocalNavigator provides navigator) {
-                Scaffold(
-                    startBar = {
-                        if (isTabletUi()) {
-                            NavigationRail {
-                                val tabs = if (navigationBarMode == NavigationBarMode.FULL) BROWSE_TABS else TABS
-                                tabs.fastForEach {
-                                    NavigationRailItem(it)
-                                }
-                            }
+                val tabletUi = isTabletUi()
+                val navigationSuiteType = if (tabletUi) {
+                    NavigationSuiteType.NavigationRail
+                } else {
+                    NavigationSuiteType.NavigationBar
+                }
+                val navigationSuiteState = rememberNavigationSuiteScaffoldState()
+                LaunchedEffect(navigationSuiteState, tabletUi) {
+                    if (tabletUi) navigationSuiteState.show()
+                    showBottomNavEvent.receiveAsFlow().collectLatest { show ->
+                        if (tabletUi || show) {
+                            navigationSuiteState.show()
+                        } else {
+                            navigationSuiteState.hide()
                         }
+                    }
+                }
+
+                NavigationSuiteScaffold(
+                    navigationSuiteType = navigationSuiteType,
+                    state = navigationSuiteState,
+                    navigationSuiteColors = NavigationSuiteDefaults.colors(
+                        navigationRailContainerColor = MaterialTheme.colorScheme
+                            .surfaceColorAtElevation(3.dp),
+                    ),
+                    navigationItemVerticalArrangement = Arrangement.Center,
+                    navigationItems = {
+                        TABS.fastForEach { NavigationSuiteItem(it, navigationSuiteType) }
                     },
-                    bottomBar = {
-                        if (!isTabletUi()) {
-                            val bottomNavVisible by produceState(initialValue = true) {
-                                showBottomNavEvent.receiveAsFlow().collectLatest { value = it }
-                            }
-                            AnimatedVisibility(
-                                visible = bottomNavVisible,
-                                enter = expandVertically(),
-                                exit = shrinkVertically(),
-                            ) {
-                                AnimatedContent(
-                                    targetState = expandedNav,
-                                    transitionSpec = {
-                                        val direction = if (targetState) 1 else -1
-                                        slideInHorizontally { direction * it / 4 } togetherWith
-                                            slideOutHorizontally { -direction * it / 4 }
-                                    },
-                                    label = "browseNavExpansion",
-                                ) { showBrowseTabs ->
-                                    NavigationBar {
-                                        val tabs = if (
-                                            navigationBarMode == NavigationBarMode.FULL ||
-                                            showBrowseTabs
-                                        ) {
-                                            BROWSE_TABS
-                                        } else {
-                                            TABS
-                                        }
-                                        tabs.fastForEach {
-                                            NavigationBarItem(
-                                                tab = it,
-                                                onSelected = { selectedTab ->
-                                                    if (navigationBarMode == NavigationBarMode.COMPACT) {
-                                                        when (selectedTab) {
-                                                            LibraryTab -> expandedNav = false
-                                                            BrowseTab -> expandedNav = true
-                                                            else -> Unit
-                                                        }
-                                                    }
-                                                },
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    contentWindowInsets = WindowInsets(0),
-                ) { contentPadding ->
-                    Box(
-                        modifier = Modifier
-                            .padding(contentPadding)
-                            .consumeWindowInsets(contentPadding),
+                ) {
+                    AnimatedContent(
+                        targetState = tabNavigator.current,
+                        transitionSpec = {
+                            materialFadeThroughIn(
+                                initialScale = 1f,
+                                durationMillis = TabFadeDuration,
+                            ) togetherWith materialFadeThroughOut(durationMillis = TabFadeDuration)
+                        },
+                        label = "tabContent",
                     ) {
-                        AnimatedContent(
-                            targetState = tabNavigator.current,
-                            transitionSpec = {
-                                materialFadeThroughIn(initialScale = 1f, durationMillis = TabFadeDuration) togetherWith
-                                    materialFadeThroughOut(durationMillis = TabFadeDuration)
-                            },
-                            label = "tabContent",
-                        ) {
-                            tabNavigator.saveableState(key = "currentTab", it) {
-                                it.Content()
-                            }
+                        tabNavigator.saveableState(key = "currentTab", it) {
+                            it.Content()
                         }
                     }
                 }
             }
 
-            val goToLibraryTab = {
-                tabNavigator.current = LibraryTab
-            }
+            val goToLibraryTab = { tabNavigator.current = LibraryTab }
 
             BackHandler(enabled = tabNavigator.current != LibraryTab, onBack = goToLibraryTab)
-
-            // Keep the bottom nav's expanded/collapsed state in sync even when the current tab
-            // is changed programmatically (app shortcuts, deep links, search) instead of via a
-            // NavigationBarItem tap.
-            LaunchedEffect(tabNavigator.current, navigationBarMode) {
-                if (navigationBarMode == NavigationBarMode.COMPACT) {
-                    when (tabNavigator.current) {
-                        LibraryTab -> expandedNav = false
-                        HistoryTab, MoreTab -> expandedNav = true
-                        else -> Unit
-                    }
-                }
-            }
 
             LaunchedEffect(Unit) {
                 launch {
@@ -241,44 +166,16 @@ object HomeScreen : Screen() {
     }
 
     @Composable
-    private fun RowScope.NavigationBarItem(
+    private fun NavigationSuiteItem(
         tab: eu.kanade.presentation.util.Tab,
-        onSelected: (eu.kanade.presentation.util.Tab) -> Unit,
+        navigationSuiteType: NavigationSuiteType,
     ) {
         val tabNavigator = LocalTabNavigator.current
         val navigator = LocalNavigator.currentOrThrow
         val scope = rememberCoroutineScope()
         val selected = tabNavigator.current::class == tab::class
-        MaterialNavigationBarItem(
-            selected = selected,
-            onClick = {
-                onSelected(tab)
-                if (!selected) {
-                    tabNavigator.current = tab
-                } else {
-                    scope.launch { tab.onReselect(navigator) }
-                }
-            },
-            icon = { NavigationIconItem(tab) },
-            label = {
-                Text(
-                    text = tab.options.title,
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            alwaysShowLabel = true,
-        )
-    }
-
-    @Composable
-    fun NavigationRailItem(tab: eu.kanade.presentation.util.Tab) {
-        val tabNavigator = LocalTabNavigator.current
-        val navigator = LocalNavigator.currentOrThrow
-        val scope = rememberCoroutineScope()
-        val selected = tabNavigator.current::class == tab::class
-        NavigationRailItem(
+        NavigationSuiteItem(
+            navigationSuiteType = navigationSuiteType,
             selected = selected,
             onClick = {
                 if (!selected) {
@@ -287,7 +184,12 @@ object HomeScreen : Screen() {
                     scope.launch { tab.onReselect(navigator) }
                 }
             },
-            icon = { NavigationIconItem(tab) },
+            icon = {
+                Icon(
+                    painter = tab.options.icon!!,
+                    contentDescription = tab.options.title,
+                )
+            },
             label = {
                 Text(
                     text = tab.options.title,
@@ -296,64 +198,59 @@ object HomeScreen : Screen() {
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            alwaysShowLabel = true,
+            badge = tabBadge(tab),
         )
     }
 
     @Composable
-    private fun NavigationIconItem(tab: eu.kanade.presentation.util.Tab) {
-        BadgedBox(
-            badge = {
-                when {
-                    tab is UpdatesTab -> {
-                        val count by produceState(initialValue = 0) {
-                            val pref = Injekt.get<LibraryPreferences>()
-                            combine(
-                                pref.newShowUpdatesCount.changes(),
-                                pref.newUpdatesCount.changes(),
-                            ) { show, count -> if (show) count else 0 }
-                                .collectLatest { value = it }
-                        }
-                        if (count > 0) {
-                            Badge {
-                                val desc = pluralStringResource(
-                                    MR.plurals.notification_chapters_generic,
-                                    count = count,
-                                    count,
-                                )
-                                Text(
-                                    text = count.toString(),
-                                    modifier = Modifier.semantics { contentDescription = desc },
-                                )
-                            }
-                        }
+    private fun tabBadge(tab: eu.kanade.presentation.util.Tab): (@Composable () -> Unit)? {
+        val context = LocalContext.current
+        val count by produceState(initialValue = 0, tab) {
+            val graph = context.appGraph
+            when (tab) {
+                is UpdatesTab -> {
+                    combine(
+                        graph.libraryPreferences.newShowUpdatesCount.changes(),
+                        graph.libraryPreferences.newUpdatesCount.changes(),
+                    ) { show, count ->
+                        if (show) count else 0
                     }
-                    BrowseTab::class.isInstance(tab) -> {
-                        val count by produceState(initialValue = 0) {
-                            Injekt.get<SourcePreferences>().extensionUpdatesCount.changes()
-                                .collectLatest { value = it }
-                        }
-                        if (count > 0) {
-                            Badge {
-                                val desc = pluralStringResource(
-                                    MR.plurals.update_check_notification_ext_updates,
-                                    count = count,
-                                    count,
-                                )
-                                Text(
-                                    text = count.toString(),
-                                    modifier = Modifier.semantics { contentDescription = desc },
-                                )
-                            }
-                        }
-                    }
+                        .collectLatest { value = it }
                 }
-            },
-        ) {
-            Icon(
-                painter = tab.options.icon!!,
-                contentDescription = tab.options.title,
-            )
+
+                is BrowseTab -> {
+                    graph.sourcePreferences.extensionUpdatesCount.changes()
+                        .collectLatest { value = it }
+                }
+
+                else -> value = 0
+            }
+        }
+        if (count <= 0) return null
+        return {
+            Badge {
+                val desc = when (tab) {
+                    is UpdatesTab -> pluralStringResource(
+                        MR.plurals.notification_chapters_generic,
+                        count = count,
+                        count,
+                    )
+
+                    is BrowseTab -> pluralStringResource(
+                        MR.plurals.update_check_notification_ext_updates,
+                        count = count,
+                        count,
+                    )
+
+                    else -> null
+                }
+                Text(
+                    text = count.toString(),
+                    modifier = Modifier.semantics {
+                        if (desc != null) contentDescription = desc
+                    },
+                )
+            }
         }
     }
 

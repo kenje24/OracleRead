@@ -22,7 +22,7 @@ data class NetworkLegacyExtensionRepo(
 
     override fun toExtensionStore(indexUrl: String): ExtensionStore {
         return ExtensionStore(
-            indexUrl = indexV2 ?: indexUrl,
+            indexUrl = indexUrl,
             name = meta.name,
             badgeLabel = meta.shortName ?: meta.name,
             signingKey = meta.signingKeyFingerprint,
@@ -30,7 +30,8 @@ data class NetworkLegacyExtensionRepo(
                 website = meta.website,
                 discord = null,
             ),
-            isLegacy = indexV2 == null,
+            isLegacy = true,
+            extensionListUrl = null,
         )
     }
 }
