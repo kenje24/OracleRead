@@ -26,7 +26,8 @@ import tachiyomi.presentation.core.theme.OracleSpacing
 /**
  * Large, transparent title block for top-level tabs: the screen name set in the display serif with an
  * optional mood line under it, and actions on the right. It scrolls away with content, like a film
- * title card, instead of sitting in a solid bar.
+ * title card, instead of sitting in a solid bar. [eyebrowContent] sits at the end of the mood line's row, where the
+ * mood line gives way to it on narrow screens or with large fonts.
  */
 @Composable
 fun OracleLargeTopBar(
@@ -36,6 +37,7 @@ fun OracleLargeTopBar(
     subtitle: String? = null,
     applyStatusBarInsets: Boolean = true,
     supportingContent: (@Composable RowScope.() -> Unit)? = null,
+    eyebrowContent: (@Composable RowScope.() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     Column(
@@ -50,13 +52,24 @@ fun OracleLargeTopBar(
             )
             .padding(start = OracleSpacing.gutter, end = 8.dp, top = 18.dp, bottom = 10.dp),
     ) {
-        eyebrow?.let {
-            Text(
-                text = it.uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-            )
+        if (eyebrowContent == null) {
+            eyebrow?.let { Eyebrow(text = it) }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Eyebrow(
+                    text = eyebrow.orEmpty(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
+                )
+                Row(
+                    // Lines the pills up with the visible edge of the action icons below
+                    modifier = Modifier.padding(end = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = eyebrowContent,
+                )
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             // Lit by a slow sweep of lantern light
@@ -91,6 +104,18 @@ fun OracleLargeTopBar(
             )
         }
     }
+}
+
+@Composable
+private fun Eyebrow(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.primary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
 }
 
 /** Section title in the headline serif, with an optional trailing text action. */

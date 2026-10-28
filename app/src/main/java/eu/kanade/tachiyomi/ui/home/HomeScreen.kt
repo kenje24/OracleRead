@@ -48,7 +48,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import eu.kanade.domain.ui.model.NavigationBarMode
+import eu.kanade.presentation.oracle.LocalOracleBackdrop
 import eu.kanade.presentation.oracle.OracleAuroraBackdrop
+import eu.kanade.presentation.oracle.OracleBackdropState
 import eu.kanade.presentation.oracle.OracleDock
 import eu.kanade.presentation.oracle.OracleDockItem
 import eu.kanade.presentation.oracle.OracleDockSpace
@@ -126,8 +128,9 @@ object HomeScreen : Screen() {
                 }
             }
 
-            // Provide usable navigator to content screen
-            CompositionLocalProvider(LocalNavigator provides navigator) {
+            // Provide usable navigator to content screen, and the backdrop tabs can ask to hold still
+            val backdrop = remember { OracleBackdropState() }
+            CompositionLocalProvider(LocalNavigator provides navigator, LocalOracleBackdrop provides backdrop) {
                 val tabletUi = isTabletUi()
                 val bottomNavVisible by produceState(initialValue = true) {
                     showBottomNavEvent.receiveAsFlow().collectLatest { value = it }
@@ -141,7 +144,7 @@ object HomeScreen : Screen() {
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     // Every tab sits on one textured, slowly moving backdrop; tab scaffolds stay transparent over it
-                    OracleAuroraBackdrop(modifier = Modifier.fillMaxSize())
+                    OracleAuroraBackdrop(modifier = Modifier.fillMaxSize(), state = backdrop)
                     Row(modifier = Modifier.fillMaxSize()) {
                         if (tabletUi) {
                             OracleRail(

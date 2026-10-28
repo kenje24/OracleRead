@@ -148,6 +148,7 @@ class MangaScreen(
                 }
             },
             onToggleHideDecimalChapters = viewModel::toggleHideDecimalChapters,
+            onToggleHideDuplicateChapters = viewModel::toggleHideDuplicateChapters,
             // Community is in progress; the tile only explains that for now
             onCommunityClicked = {
                 context.toast(
@@ -161,6 +162,7 @@ class MangaScreen(
             onFilterButtonClicked = viewModel::showSettingsDialog,
             onRefresh = viewModel::fetchAllFromSource,
             onContinueReading = { continueReading(context, viewModel.getNextUnreadChapter()) },
+            onLatestChapter = { viewModel.getLatestChapter()?.let { openChapter(context, it) } },
             onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
             onCoverClicked = viewModel::showCoverDialog,
             onShareClicked = { shareManga(context, viewModel.manga, viewModel.source) }.takeIf { isHttpSource },

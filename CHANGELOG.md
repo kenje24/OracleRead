@@ -10,6 +10,35 @@ The format is a modified version of [Keep a Changelog](https://keepachangelog.co
 - `Fixed` - for any bug fixes.
 - `Other` - for technical stuff.
 
+## OracleRead [1.4.1] - 2026-10-28
+OracleRead 1.4.1 updates in place over 1.4.0 (same signing key), so no backup and reinstall is needed.
+
+### Added
+- **Hide duplicate chapters**: lists one copy of each chapter number when a source has the same chapter from several
+  groups. It keeps the copy you're reading, have read, bookmarked or downloaded, never deletes anything, and leaves
+  chapters without a number (extras, specials) alone. Turn it on per manga from the chapter menu (⋮), or for every
+  manga in Settings → Library. Resume and the reader follow the same list.
+- **Latest** button above Resume on a manga's page: opens the newest chapter as the source lists it, whatever the
+  list's sorting, filters or read state.
+- **Folder backgrounds**: a **None** option, which draws nothing and also holds the home aurora still behind that
+  folder, and four new designs: **Ink Tide**, **Constellations**, **Eclipse Halo** and **Silk Ribbons**. Existing
+  folder styles are kept.
+
+### Changed
+- Incognito and the reading streak now sit on the greeting's row (Good morning / afternoon / evening), on the right,
+  instead of under the Library title.
+
+### Improved
+- Smoother, lighter home and library:
+  - all ambient motion (aurora, folder backgrounds, title shimmer, streak flame) shares one 30-per-second clock, so an
+    idle screen redraws at most 30 times a second instead of on every display frame
+  - ambient animation reads its time only while drawing, so it no longer rebuilds the library on every frame
+  - the aurora shader does less work per frame, and pauses whenever the screen is hidden
+  - poster and grid shading is built once instead of for every cover while scrolling
+
+### Fixed
+- The CI build uploaded the wrong APK path after OracleRead's APK renaming.
+
 ## OracleRead [1.4.0]
 OracleRead 1.4.0 brings the app up to date with Mihon and gives it a new, cinematic look. The Mihon entries
 below this section are the upstream changes included in this release.

@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import eu.kanade.domain.ui.model.AppTheme
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.Bedtime
 import mihon.icons.materialsymbols.rounded.Bolt
@@ -34,7 +33,7 @@ fun Category.visualName(context: Context): String =
 
 object FolderStyleDefaults {
     const val DEFAULT_ICON = "folder"
-    const val DEFAULT_THEME = "lantern"
+    val DEFAULT_THEME = FolderAmbience.DEFAULT.key
 
     val colorOptions = listOf(
         0xFFFF6B35,
@@ -58,16 +57,8 @@ object FolderStyleDefaults {
         "bookmark",
     )
 
-    val themeOptions = listOf(
-        "lantern" to AppTheme.ORACLE,
-        "fire_spirits" to AppTheme.FIRE_SPIRITS,
-        "moon_wisps" to AppTheme.MOON_WISPS,
-        "sea_lanterns" to AppTheme.SEA_LANTERNS,
-        "sakura_drift" to AppTheme.SAKURA_DRIFT,
-        "aurora_motes" to AppTheme.AURORA_MOTES,
-        "ink_rain" to AppTheme.INK_RAIN,
-        "star_dust" to AppTheme.STAR_DUST,
-    )
+    // OracleRead: every folder ambience in picker order, see FolderAmbience
+    val themeOptions = FolderAmbience.entries
 }
 
 data class FolderStyle(
@@ -76,6 +67,9 @@ data class FolderStyle(
     val icon: String,
     val theme: String,
 ) {
+    val ambience: FolderAmbience
+        get() = FolderAmbience.fromKey(theme) ?: FolderAmbience.DEFAULT
+
     fun serialize(): String = "$categoryId|$color|$icon|$theme"
 
     companion object {
@@ -88,7 +82,7 @@ data class FolderStyle(
                 icon = parts[2].takeIf { it in FolderStyleDefaults.iconOptions }
                     ?: FolderStyleDefaults.DEFAULT_ICON,
                 theme = parts.getOrNull(3)
-                    ?.takeIf { theme -> FolderStyleDefaults.themeOptions.any { it.first == theme } }
+                    ?.takeIf { FolderAmbience.fromKey(it) != null }
                     ?: FolderStyleDefaults.DEFAULT_THEME,
             )
         }
@@ -121,9 +115,7 @@ fun Category.folderIconKey(styles: Set<String>): String = folderStyle(styles).ic
 
 fun Category.folderThemeKey(styles: Set<String>): String = folderStyle(styles).theme
 
-fun Category.folderAmbientTheme(styles: Set<String>): AppTheme =
-    FolderStyleDefaults.themeOptions.firstOrNull { it.first == folderThemeKey(styles) }?.second
-        ?: AppTheme.ORACLE
+fun Category.folderAmbience(styles: Set<String>): FolderAmbience = folderStyle(styles).ambience
 
 fun folderIconForKey(key: String): ImageVector = when (key) {
     "book" -> MaterialSymbols.Rounded.Book

@@ -78,7 +78,6 @@ import mihon.domain.source.interactor.UpdateMangaFromRemote
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.TriState
-import tachiyomi.core.common.preference.getAndSet
 import tachiyomi.core.common.preference.mapAsCheckboxState
 import tachiyomi.core.common.util.lang.SubscriberGate
 import tachiyomi.core.common.util.lang.pausedWhileUnsubscribed
@@ -93,7 +92,9 @@ import tachiyomi.domain.chapter.model.ChapterUpdate
 import tachiyomi.domain.chapter.model.NoChaptersException
 import tachiyomi.domain.chapter.service.calculateChapterGap
 import tachiyomi.domain.chapter.service.getChapterSort
+import tachiyomi.domain.chapter.service.latestBySourceOrder
 import tachiyomi.domain.chapter.service.missingChaptersCount
+import tachiyomi.domain.chapter.service.withoutDuplicateChapters
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetDuplicateLibraryManga
 import tachiyomi.domain.manga.interactor.GetMangaWithChapters
@@ -174,6 +175,10 @@ class MangaViewModel(
     private val allChapters: List<ChapterList.Item>?
         get() = successState?.chapters
 
+    // OracleRead: every chapter, with duplicates left out when they're hidden
+    private val listedChapters: List<ChapterList.Item>?
+        get() = successState?.listedChapters
+
     private val filteredChapters: List<ChapterList.Item>?
         get() = successState?.processedChapters
 
@@ -208,15 +213,12 @@ class MangaViewModel(
 
     private val hideMissingChapters = libraryPreferences.hideMissingChapters.get()
 
-    // OracleRead: the global setting, overridden per entry in either direction
-    private val hideDecimalChapters = combine(
-        libraryPreferences.hideDecimalChapters.changes(),
-        libraryPreferences.hideDecimalChaptersMangaIds.changes(),
-        libraryPreferences.showDecimalChaptersMangaIds.changes(),
-    ) { globalEnabled, hiddenForIds, shownForIds ->
-        val key = mangaId.toString()
-        if (globalEnabled) key !in shownForIds else key in hiddenForIds
-    }
+    // OracleRead: the global settings, overridden per entry in either direction
+    private val hiddenChapterKinds = combine(
+        libraryPreferences.decimalChapters.changes(mangaId),
+        libraryPreferences.duplicateChapters.changes(mangaId),
+        ::Pair,
+    )
         .distinctUntilChanged()
 
     private var hasPromptedToAddBefore = false
@@ -272,14 +274,15 @@ class MangaViewModel(
         scanlators,
         trackers,
         combine(selectedChapterIds, queuedDownloadStates.pausedWhileUnsubscribed(), ::Pair),
-        combine(dialog, isRefreshingData, hideDecimalChapters, ::Triple),
+        combine(dialog, isRefreshingData, hiddenChapterKinds, ::Triple),
     ) {
             mangaAndChapters,
             (availableScanlators, excludedScanlators),
             (trackingCount, hasLoggedInTrackers),
             (selectedIds, downloads),
-            (dialog, isRefreshingData, hideDecimalChapters),
+            (dialog, isRefreshingData, hiddenChapterKinds),
         ->
+        val (hideDecimalChapters, hideDuplicateChapters) = hiddenChapterKinds
         State.Success(
             manga = mangaAndChapters.manga,
             source = mangaAndChapters.source,
@@ -301,11 +304,14 @@ class MangaViewModel(
             dialog = dialog,
             hideMissingChapters = hideMissingChapters,
             hideDecimalChapters = hideDecimalChapters,
+            hideDuplicateChapters = hideDuplicateChapters,
         )
     }
         // Composition would otherwise build these on first read, on the main thread, for every new state
         .onEach {
             it.processedChapters
+            it.nextUnreadChapter
+            it.latestChapter
             it.chapterListItems
             it.isAnySelected
             it.selectedChapters
@@ -671,12 +677,18 @@ class MangaViewModel(
      * Returns the next unread chapter or null if everything is read.
      */
     fun getNextUnreadChapter(): Chapter? {
-        val successState = successState ?: return null
-        return successState.chapters.getNextUnread(successState.manga)
+        return successState?.nextUnreadChapter
+    }
+
+    /**
+     * OracleRead: the newest chapter as the source lists it, whatever the sorting, filters or read state.
+     */
+    fun getLatestChapter(): Chapter? {
+        return successState?.latestChapter
     }
 
     private fun getUnreadChapters(): List<Chapter> {
-        val chapterItems = if (skipFiltered) filteredChapters.orEmpty() else allChapters.orEmpty()
+        val chapterItems = if (skipFiltered) filteredChapters.orEmpty() else listedChapters.orEmpty()
         return chapterItems
             .filter { (chapter, dlStatus) -> !chapter.read && dlStatus == Download.State.NOT_DOWNLOADED }
             .map { it.chapter }
@@ -689,7 +701,7 @@ class MangaViewModel(
     }
 
     private fun getBookmarkedChapters(): List<Chapter> {
-        val chapterItems = if (skipFiltered) filteredChapters.orEmpty() else allChapters.orEmpty()
+        val chapterItems = if (skipFiltered) filteredChapters.orEmpty() else listedChapters.orEmpty()
         return chapterItems
             .filter { (chapter, dlStatus) -> chapter.bookmark && dlStatus == Download.State.NOT_DOWNLOADED }
             .map { it.chapter }
@@ -1116,17 +1128,17 @@ class MangaViewModel(
      * on, this records an exception that shows them; otherwise it records one that hides them.
      */
     fun toggleHideDecimalChapters() {
-        val enabled = successState?.hideDecimalChapters ?: return
-        val key = mangaId.toString()
-        if (libraryPreferences.hideDecimalChapters.get()) {
-            libraryPreferences.showDecimalChaptersMangaIds.getAndSet { ids ->
-                if (enabled) ids + key else ids - key
-            }
-        } else {
-            libraryPreferences.hideDecimalChaptersMangaIds.getAndSet { ids ->
-                if (enabled) ids - key else ids + key
-            }
-        }
+        if (successState == null) return
+        libraryPreferences.decimalChapters.toggle(mangaId)
+    }
+
+    /**
+     * OracleRead: lists one copy of each chapter number for this entry only, or every copy again, the same way as
+     * [toggleHideDecimalChapters]. Nothing about the hidden copies changes.
+     */
+    fun toggleHideDuplicateChapters() {
+        if (successState == null) return
+        libraryPreferences.duplicateChapters.toggle(mangaId)
     }
 
     private data class MangaAndChapters(val manga: Manga, val source: Source, val chapters: List<ChapterList.Item>)
@@ -1150,9 +1162,43 @@ class MangaViewModel(
             val hideMissingChapters: Boolean = false,
             // OracleRead: whether decimal chapters (e.g. 12.5) are left out of [processedChapters]
             val hideDecimalChapters: Boolean = false,
+            // OracleRead: whether only one copy of each chapter number is listed, see [listedChapters]
+            val hideDuplicateChapters: Boolean = false,
         ) : State {
+            /**
+             * OracleRead: [chapters] with one copy of each known chapter number when duplicates are hidden, else
+             * [chapters] itself. Copies are collapsed before any filter so a chapter read in one copy doesn't come
+             * back as unread through another.
+             */
+            val listedChapters: List<ChapterList.Item> by lazy {
+                if (!hideDuplicateChapters) return@lazy chapters
+                chapters.withoutDuplicateChapters(
+                    chapterOf = { it.chapter },
+                    isDownloaded = { it.downloadState != Download.State.NOT_DOWNLOADED },
+                )
+            }
+
             val processedChapters by lazy {
-                chapters.applyFilters(manga).toList()
+                listedChapters.applyFilters(manga).toList()
+            }
+
+            // What Resume opens: as before unless duplicates are hidden, then chapters whose listed copy has been
+            // read are skipped too
+            val nextUnreadChapter: Chapter? by lazy {
+                listedChapters.getNextUnread(manga)
+            }
+
+            /**
+             * OracleRead: what Latest opens, the newest chapter in source order whatever the sorting, filters or
+             * read state. When duplicates are hidden, it's the listed copy of that chapter.
+             */
+            val latestChapter: Chapter? by lazy {
+                val latest = chapters.fastMap { it.chapter }.latestBySourceOrder() ?: return@lazy null
+                if (listedChapters === chapters || listedChapters.fastAny { it.id == latest.id }) {
+                    latest
+                } else {
+                    listedChapters.firstOrNull { it.chapter.chapterNumber == latest.chapterNumber }?.chapter ?: latest
+                }
             }
 
             val isAnySelected by lazy {

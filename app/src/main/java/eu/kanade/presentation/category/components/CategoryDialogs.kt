@@ -271,13 +271,11 @@ private fun FolderForm(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
         ) {
-            FolderStyleDefaults.themeOptions.forEach { (themeKey, theme) ->
+            FolderStyleDefaults.themeOptions.forEach { ambience ->
                 FilterChip(
-                    selected = selectedTheme == themeKey,
-                    onClick = { onThemeSelected(themeKey) },
-                    label = {
-                        Text(text = theme.titleRes?.let { stringResource(it) } ?: themeKey)
-                    },
+                    selected = selectedTheme == ambience.key,
+                    onClick = { onThemeSelected(ambience.key) },
+                    label = { Text(text = stringResource(ambience.label)) },
                 )
             }
         }

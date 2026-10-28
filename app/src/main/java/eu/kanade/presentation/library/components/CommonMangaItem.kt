@@ -127,13 +127,7 @@ private fun BoxScope.CoverTextOverlay(
     // Soft vignette: the art stays visible while the title stays readable
     Box(
         modifier = Modifier
-            .background(
-                Brush.verticalGradient(
-                    0f to Color.Transparent,
-                    0.45f to Color.Black.copy(alpha = 0.32f),
-                    1f to Color.Black.copy(alpha = 0.8f),
-                ),
-            )
+            .background(TitleVignette)
             .fillMaxHeight(0.5f)
             .fillMaxWidth()
             .align(Alignment.BottomCenter),
@@ -209,12 +203,7 @@ fun MangaComfortableGridItem(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    0.6f to Color.Transparent,
-                                    1f to Color.Black.copy(alpha = 0.3f),
-                                ),
-                            ),
+                            .background(BadgeFloorShade),
                     )
                     if (onClickContinueReading != null) {
                         ContinueReadingButton(
@@ -416,3 +405,14 @@ private fun ContinueReadingButton(
         }
     }
 }
+
+// OracleRead: shared by every grid item instead of built again each time one is composed while scrolling
+private val TitleVignette = Brush.verticalGradient(
+    0f to Color.Transparent,
+    0.45f to Color.Black.copy(alpha = 0.32f),
+    1f to Color.Black.copy(alpha = 0.8f),
+)
+private val BadgeFloorShade = Brush.verticalGradient(
+    0.6f to Color.Transparent,
+    1f to Color.Black.copy(alpha = 0.3f),
+)

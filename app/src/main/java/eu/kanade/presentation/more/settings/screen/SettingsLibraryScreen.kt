@@ -260,8 +260,13 @@ object SettingsLibraryScreen : SearchableSettings {
                 ),
                 Preference.PreferenceItem.SwitchPreference(
                     preference = libraryPreferences.hideDecimalChapters,
-                    title = "Hide decimal chapters globally",
-                    subtitle = "Manga can still override this from their chapter menu.",
+                    title = stringResource(MR.strings.oracle_pref_hide_decimal_chapters),
+                    subtitle = stringResource(MR.strings.oracle_pref_hide_chapters_override_summary),
+                ),
+                Preference.PreferenceItem.SwitchPreference(
+                    preference = libraryPreferences.hideDuplicateChapters,
+                    title = stringResource(MR.strings.oracle_pref_hide_duplicate_chapters),
+                    subtitle = stringResource(MR.strings.oracle_pref_hide_duplicate_chapters_summary),
                 ),
             ),
         )

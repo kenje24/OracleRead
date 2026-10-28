@@ -2,6 +2,7 @@ package eu.kanade.presentation.manga
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallExtendedFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAll
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastMap
@@ -63,6 +66,7 @@ import eu.kanade.tachiyomi.ui.manga.ChapterList
 import eu.kanade.tachiyomi.ui.manga.MangaViewModel
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import mihon.icons.materialsymbols.MaterialSymbols
+import mihon.icons.materialsymbols.rounded.SkipNext
 import mihon.icons.materialsymbols.roundedfilled.PlayArrow
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -95,6 +99,7 @@ fun MangaScreen(
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
     onToggleHideDecimalChapters: () -> Unit,
+    onToggleHideDuplicateChapters: () -> Unit,
     onCommunityClicked: (() -> Unit)?,
 
     // For tags menu
@@ -103,6 +108,7 @@ fun MangaScreen(
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
+    onLatestChapter: () -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -155,12 +161,14 @@ fun MangaScreen(
                 onWebViewLongClicked = onWebViewLongClicked,
                 onTrackingClicked = onTrackingClicked,
                 onToggleHideDecimalChapters = onToggleHideDecimalChapters,
+                onToggleHideDuplicateChapters = onToggleHideDuplicateChapters,
                 onCommunityClicked = onCommunityClicked,
                 onTagSearch = onTagSearch,
                 onCopyTagToClipboard = onCopyTagToClipboard,
                 onFilterClicked = onFilterButtonClicked,
                 onRefresh = onRefresh,
                 onContinueReading = onContinueReading,
+                onLatestChapter = onLatestChapter,
                 onSearch = onSearch,
                 onCoverClicked = onCoverClicked,
                 onShareClicked = onShareClicked,
@@ -194,12 +202,14 @@ fun MangaScreen(
                 onWebViewLongClicked = onWebViewLongClicked,
                 onTrackingClicked = onTrackingClicked,
                 onToggleHideDecimalChapters = onToggleHideDecimalChapters,
+                onToggleHideDuplicateChapters = onToggleHideDuplicateChapters,
                 onCommunityClicked = onCommunityClicked,
                 onTagSearch = onTagSearch,
                 onCopyTagToClipboard = onCopyTagToClipboard,
                 onFilterButtonClicked = onFilterButtonClicked,
                 onRefresh = onRefresh,
                 onContinueReading = onContinueReading,
+                onLatestChapter = onLatestChapter,
                 onSearch = onSearch,
                 onCoverClicked = onCoverClicked,
                 onShareClicked = onShareClicked,
@@ -237,6 +247,7 @@ private fun MangaScreenSmallImpl(
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
     onToggleHideDecimalChapters: () -> Unit,
+    onToggleHideDuplicateChapters: () -> Unit,
     onCommunityClicked: (() -> Unit)?,
 
     // For tags menu
@@ -246,6 +257,7 @@ private fun MangaScreenSmallImpl(
     onFilterClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
+    onLatestChapter: () -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -316,6 +328,8 @@ private fun MangaScreenSmallImpl(
                 onClickEditNotes = onEditNotesClicked,
                 hideDecimalChapters = state.hideDecimalChapters,
                 onClickHideDecimalChapters = onToggleHideDecimalChapters,
+                hideDuplicateChapters = state.hideDuplicateChapters,
+                onClickHideDuplicateChapters = onToggleHideDuplicateChapters,
                 actionModeCounter = state.selectedChapters.size,
                 onCancelActionMode = { onAllChapterSelected(false) },
                 onSelectAll = { onAllChapterSelected(true) },
@@ -337,23 +351,35 @@ private fun MangaScreenSmallImpl(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            val isFABVisible = state.hasUnreadChapters && !isAnySelected
-            SmallExtendedFloatingActionButton(
-                text = {
-                    Text(
-                        text = stringResource(
-                            if (state.hasReadChapters) MR.strings.action_resume else MR.strings.action_start,
-                        ),
-                    )
-                },
-                icon = { Icon(imageVector = MaterialSymbols.RoundedFilled.PlayArrow, contentDescription = null) },
-                onClick = onContinueReading,
-                expanded = chapterListState.shouldExpandFAB(),
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = isFABVisible,
-                    alignment = Alignment.BottomEnd,
-                ),
-            )
+            val expandFAB = chapterListState.shouldExpandFAB()
+            // OracleRead: Latest sits above Resume, which keeps its place at the bottom
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                LatestChapterButton(
+                    visible = state.latestChapter != null && !isAnySelected,
+                    expanded = expandFAB,
+                    onClick = onLatestChapter,
+                )
+                val isFABVisible = state.hasUnreadChapters && !isAnySelected
+                SmallExtendedFloatingActionButton(
+                    text = {
+                        Text(
+                            text = stringResource(
+                                if (state.hasReadChapters) MR.strings.action_resume else MR.strings.action_start,
+                            ),
+                        )
+                    },
+                    icon = { Icon(imageVector = MaterialSymbols.RoundedFilled.PlayArrow, contentDescription = null) },
+                    onClick = onContinueReading,
+                    expanded = expandFAB,
+                    modifier = Modifier.animateFloatingActionButton(
+                        visible = isFABVisible,
+                        alignment = Alignment.BottomEnd,
+                    ),
+                )
+            }
         },
     ) { contentPadding ->
         val topPadding = contentPadding.calculateTopPadding()
@@ -475,6 +501,7 @@ fun MangaScreenLargeImpl(
     onWebViewLongClicked: (() -> Unit)?,
     onTrackingClicked: () -> Unit,
     onToggleHideDecimalChapters: () -> Unit,
+    onToggleHideDuplicateChapters: () -> Unit,
     onCommunityClicked: (() -> Unit)?,
 
     // For tags menu
@@ -484,6 +511,7 @@ fun MangaScreenLargeImpl(
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
+    onLatestChapter: () -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -547,6 +575,8 @@ fun MangaScreenLargeImpl(
                 onClickEditNotes = onEditNotesClicked,
                 hideDecimalChapters = state.hideDecimalChapters,
                 onClickHideDecimalChapters = onToggleHideDecimalChapters,
+                hideDuplicateChapters = state.hideDuplicateChapters,
+                onClickHideDuplicateChapters = onToggleHideDuplicateChapters,
                 onCancelActionMode = { onAllChapterSelected(false) },
                 actionModeCounter = state.selectedChapters.size,
                 onSelectAll = { onAllChapterSelected(true) },
@@ -573,23 +603,35 @@ fun MangaScreenLargeImpl(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            val isFABVisible = state.hasUnreadChapters && !isAnySelected
-            SmallExtendedFloatingActionButton(
-                text = {
-                    Text(
-                        text = stringResource(
-                            if (state.hasReadChapters) MR.strings.action_resume else MR.strings.action_start,
-                        ),
-                    )
-                },
-                icon = { Icon(imageVector = MaterialSymbols.RoundedFilled.PlayArrow, contentDescription = null) },
-                onClick = onContinueReading,
-                expanded = chapterListState.shouldExpandFAB(),
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = isFABVisible,
-                    alignment = Alignment.BottomEnd,
-                ),
-            )
+            val expandFAB = chapterListState.shouldExpandFAB()
+            // OracleRead: Latest sits above Resume, which keeps its place at the bottom
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                LatestChapterButton(
+                    visible = state.latestChapter != null && !isAnySelected,
+                    expanded = expandFAB,
+                    onClick = onLatestChapter,
+                )
+                val isFABVisible = state.hasUnreadChapters && !isAnySelected
+                SmallExtendedFloatingActionButton(
+                    text = {
+                        Text(
+                            text = stringResource(
+                                if (state.hasReadChapters) MR.strings.action_resume else MR.strings.action_start,
+                            ),
+                        )
+                    },
+                    icon = { Icon(imageVector = MaterialSymbols.RoundedFilled.PlayArrow, contentDescription = null) },
+                    onClick = onContinueReading,
+                    expanded = expandFAB,
+                    modifier = Modifier.animateFloatingActionButton(
+                        visible = isFABVisible,
+                        alignment = Alignment.BottomEnd,
+                    ),
+                )
+            }
         },
     ) { contentPadding ->
         PullRefresh(
@@ -827,4 +869,35 @@ private fun onChapterItemClick(
         isAnyChapterSelected -> onToggleSelection(true)
         else -> onChapterClicked(chapterItem.chapter)
     }
+}
+
+/**
+ * OracleRead: opens the newest chapter as the source lists it, whatever the chapter list's sorting, filters or read
+ * state. Its icon carries the description once the label collapses while scrolling.
+ */
+@Composable
+private fun LatestChapterButton(
+    visible: Boolean,
+    expanded: Boolean,
+    onClick: () -> Unit,
+) {
+    val description = stringResource(MR.strings.oracle_action_latest_chapter_description)
+    SmallExtendedFloatingActionButton(
+        text = { Text(text = stringResource(MR.strings.oracle_action_latest_chapter)) },
+        icon = {
+            Icon(
+                imageVector = MaterialSymbols.Rounded.SkipNext,
+                contentDescription = if (expanded) null else description,
+            )
+        },
+        onClick = onClick,
+        expanded = expanded,
+        // Quieter than Resume, which stays the main action
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = Modifier.animateFloatingActionButton(
+            visible = visible,
+            alignment = Alignment.BottomEnd,
+        ),
+    )
 }

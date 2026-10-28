@@ -93,8 +93,8 @@ private fun LibraryTitleBar(
         subtitle = title.numberOfManga?.let {
             pluralStringResource(MR.plurals.library_title_count, count = it, it)
         },
-        // Incognito and the streak sit under the title so the title never has to make room for them
-        supportingContent = {
+        // Incognito and the streak share the greeting's row, so the title never has to make room for them
+        eyebrowContent = {
             IncognitoToggle()
             ReadingStreak()
         },

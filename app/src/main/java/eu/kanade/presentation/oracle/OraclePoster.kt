@@ -76,12 +76,7 @@ fun OraclePoster(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            0.55f to Color.Transparent,
-                            1f to Color.Black.copy(alpha = if (titleInside) 0.85f else 0.35f),
-                        ),
-                    ),
+                    .background(if (titleInside) PosterVignetteDeep else PosterVignetteLight),
             )
             badges(Modifier.align(Alignment.TopStart).padding(6.dp))
             if (titleInside) {
@@ -152,3 +147,13 @@ fun OraclePillRow(
         verticalAlignment = Alignment.CenterVertically,
     ) { content() }
 }
+
+// OracleRead: shared by every poster instead of built again each time one is composed while scrolling
+private val PosterVignetteDeep = Brush.verticalGradient(
+    0.55f to Color.Transparent,
+    1f to Color.Black.copy(alpha = 0.85f),
+)
+private val PosterVignetteLight = Brush.verticalGradient(
+    0.55f to Color.Transparent,
+    1f to Color.Black.copy(alpha = 0.35f),
+)

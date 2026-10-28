@@ -19,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import eu.kanade.core.preference.PreferenceMutableState
-import eu.kanade.presentation.category.folderAmbientTheme
+import eu.kanade.presentation.category.FolderAmbience
+import eu.kanade.presentation.category.folderAmbience
+import eu.kanade.presentation.oracle.CalmBackdropRequest
 import eu.kanade.tachiyomi.ui.library.LibraryItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -66,10 +68,12 @@ fun LibraryContent(
 
     val pagerState = rememberPagerState(currentPage) { categories.size }
     // Each folder carries its own ambience; the library falls back to the app theme's
-    val ambientTheme = categories
+    val ambience = categories
         .getOrNull(pagerState.currentPage.coerceIn(0, categories.lastIndex.coerceAtLeast(0)))
-        ?.folderAmbientTheme(folderStyles)
-        ?: appTheme
+        ?.folderAmbience(folderStyles)
+        ?: FolderAmbience.forAppTheme(appTheme)
+    // None also stills the home aurora behind the library, leaving a calm, static backdrop
+    CalmBackdropRequest(enabled = ambience == FolderAmbience.NONE)
 
     Box(
         modifier = Modifier
@@ -81,7 +85,7 @@ fun LibraryContent(
             ),
     ) {
         LibraryAmbientBackground(
-            appTheme = ambientTheme,
+            ambience = ambience,
             modifier = Modifier.fillMaxSize(),
         )
         Column {

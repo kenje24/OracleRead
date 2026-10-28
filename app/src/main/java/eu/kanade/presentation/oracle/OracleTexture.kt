@@ -4,36 +4,39 @@ import android.graphics.Bitmap
 import android.graphics.RuntimeShader
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import kotlin.random.Random
 
 /*
@@ -68,20 +71,42 @@ fun Modifier.oracleGrain(alpha: Float = 0.05f, behindContent: Boolean = false): 
     }
 }
 
-/** Seconds since first composition, frozen at a pleasant frame when [frozen]. */
-@Composable
-private fun rememberShaderTime(frozen: Boolean): () -> Float {
-    var seconds by remember { mutableFloatStateOf(14f) }
-    if (!frozen) {
-        LaunchedEffect(Unit) {
-            val start = withFrameNanos { it }
-            while (true) {
-                withFrameNanos { now -> seconds = 14f + (now - start) / 1_000_000_000f }
+/**
+ * OracleRead: lets the screen over the home backdrop ask it for a calm, static frame, as the library does for a
+ * folder whose ambience is None. Each request lasts until it is released.
+ */
+@Stable
+class OracleBackdropState {
+    private var calmRequests by mutableIntStateOf(0)
+
+    val isCalm: Boolean
+        get() = calmRequests > 0
+
+    fun requestCalm(): () -> Unit {
+        calmRequests++
+        var released = false
+        return {
+            if (!released) {
+                released = true
+                calmRequests--
             }
         }
     }
-    return { seconds }
 }
+
+val LocalOracleBackdrop = staticCompositionLocalOf { OracleBackdropState() }
+
+/** OracleRead: keeps the home backdrop calm and static for as long as this is composed with [enabled]. */
+@Composable
+fun CalmBackdropRequest(enabled: Boolean) {
+    val backdrop = LocalOracleBackdrop.current
+    DisposableEffect(backdrop, enabled) {
+        val release = if (enabled) backdrop.requestCalm() else null
+        onDispose { release?.invoke() }
+    }
+}
+
+private const val AURORA_STILL_SECONDS = 14f
 
 private const val AURORA_SHADER = """
 uniform float2 iResolution;
@@ -100,11 +125,12 @@ float noise(float2 p) {
     return mix(mix(hash(i), hash(i + float2(1.0, 0.0)), u.x),
                mix(hash(i + float2(0.0, 1.0)), hash(i + float2(1.0, 1.0)), u.x), u.y);
 }
+// Three octaves, scaled to the range four had: the fourth only added detail too fine to see in the soft folds
 float fbm(float2 p) {
     float v = 0.0;
     float a = 0.5;
-    for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.03; a *= 0.5; }
-    return v;
+    for (int i = 0; i < 3; i++) { v += a * noise(p); p *= 2.03; a *= 0.5; }
+    return v * 1.0714;
 }
 
 half4 main(float2 fragCoord) {
@@ -131,70 +157,122 @@ half4 main(float2 fragCoord) {
 }
 """
 
+/**
+ * OracleRead: draws the content at half the width and height into its own layer, scaled up to fill the space. The
+ * layer is kept between the content's own updates, so the rest of the screen redrawing doesn't draw it again.
+ */
+private fun Modifier.halfResolutionLayer(): Modifier = layout { measurable, constraints ->
+    val width = constraints.maxWidth
+    val height = constraints.maxHeight
+    val placeable = measurable.measure(Constraints.fixed((width + 1) / 2, (height + 1) / 2))
+    layout(width, height) {
+        placeable.placeWithLayer(0, 0) {
+            scaleX = 2f
+            scaleY = 2f
+            transformOrigin = TransformOrigin(0f, 0f)
+            compositingStrategy = CompositingStrategy.Offscreen
+        }
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun AuroraShaderLayer(base: Color, c1: Color, c2: Color, c3: Color, frozen: Boolean) {
     val shader = remember { RuntimeShader(AURORA_SHADER) }
-    val time = rememberShaderTime(frozen)
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        shader.setFloatUniform("iResolution", size.width, size.height)
-        shader.setFloatUniform("iTime", time())
-        shader.setColorUniform("base", base.toArgb())
-        shader.setColorUniform("c1", c1.toArgb())
-        shader.setColorUniform("c2", c2.toArgb())
-        shader.setColorUniform("c3", c3.toArgb())
-        drawRect(brush = ShaderBrush(shader))
-    }
+    val brush = remember(shader) { ShaderBrush(shader) }
+    val time = rememberAmbientSeconds(active = !frozen, initialSeconds = AURORA_STILL_SECONDS)
+    // The curtains are soft gradients, so a quarter of the pixels draws the same picture; the grain over it stays
+    // at full resolution
+    Spacer(
+        modifier = Modifier
+            .fillMaxSize()
+            .halfResolutionLayer()
+            .drawBehind {
+                shader.setFloatUniform("iResolution", size.width, size.height)
+                shader.setFloatUniform("iTime", time.floatValue)
+                shader.setColorUniform("base", base.toArgb())
+                shader.setColorUniform("c1", c1.toArgb())
+                shader.setColorUniform("c2", c2.toArgb())
+                shader.setColorUniform("c3", c3.toArgb())
+                drawRect(brush = brush)
+            },
+    )
+}
+
+/** The aurora's still counterpart: soft lantern and slate glows over the ember floor, without a shader. */
+@Composable
+private fun StaticAurora(base: Color, c1: Color, c2: Color, c3: Color) {
+    Spacer(
+        modifier = Modifier
+            .fillMaxSize()
+            .drawWithCache {
+                val glowA = Brush.radialGradient(
+                    listOf(c1.copy(alpha = 0.16f), Color.Transparent),
+                    center = Offset(size.width * 0.2f, size.height * 0.08f),
+                    radius = size.width * 0.9f,
+                )
+                val glowB = Brush.radialGradient(
+                    listOf(c2.copy(alpha = 0.14f), Color.Transparent),
+                    center = Offset(size.width * 0.9f, size.height * 0.22f),
+                    radius = size.width * 0.8f,
+                )
+                val ember = Brush.verticalGradient(
+                    0.75f to Color.Transparent,
+                    1f to c3.copy(alpha = 0.10f),
+                )
+                onDrawBehind {
+                    drawRect(base)
+                    drawRect(glowA)
+                    drawRect(glowB)
+                    drawRect(ember)
+                }
+            },
+    )
 }
 
 /**
  * The home backdrop: the night canvas with slow aurora curtains in lantern gold and logo slate, an ember glow
- * at the bottom and film grain on top. A GPU shader on Android 13+, soft static gradients before that.
+ * at the bottom and film grain on top. A GPU shader on Android 13+, soft static gradients before that and while
+ * [state] asks for calm.
  */
 @Composable
-fun OracleAuroraBackdrop(modifier: Modifier = Modifier) {
+fun OracleAuroraBackdrop(
+    modifier: Modifier = Modifier,
+    state: OracleBackdropState = LocalOracleBackdrop.current,
+) {
     val colors = MaterialTheme.colorScheme
-    val reducedMotion = rememberReducedMotion()
+    val motion = rememberAmbientMotion()
     Box(modifier = modifier.oracleGrain(alpha = 0.055f)) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !state.isCalm) {
             AuroraShaderLayer(
                 base = colors.background,
                 c1 = colors.primary,
                 c2 = colors.secondary,
                 c3 = colors.tertiary,
-                frozen = reducedMotion,
+                frozen = !motion,
             )
         } else {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRect(colors.background)
-                drawRect(
-                    Brush.radialGradient(
-                        listOf(colors.primary.copy(alpha = 0.16f), Color.Transparent),
-                        center = Offset(size.width * 0.2f, size.height * 0.08f),
-                        radius = size.width * 0.9f,
-                    ),
-                )
-                drawRect(
-                    Brush.radialGradient(
-                        listOf(colors.secondary.copy(alpha = 0.14f), Color.Transparent),
-                        center = Offset(size.width * 0.9f, size.height * 0.22f),
-                        radius = size.width * 0.8f,
-                    ),
-                )
-                drawRect(
-                    Brush.verticalGradient(
-                        0.75f to Color.Transparent,
-                        1f to colors.tertiary.copy(alpha = 0.10f),
-                    ),
-                )
-            }
+            StaticAurora(
+                base = colors.background,
+                c1 = colors.primary,
+                c2 = colors.secondary,
+                c3 = colors.tertiary,
+            )
         }
     }
 }
 
+// The sweep crosses from -0.6 to 1.6 of the width every 5.2 s; with motion off it holds at 0.35
+private const val SHINY_SWEEP_SECONDS = 5.2f
+private const val SHINY_STILL_SECONDS = (0.35f + 0.6f) / 2.2f * SHINY_SWEEP_SECONDS
+private val ShinyHighlight = Color(0xFFFFF4DA)
+
 /**
  * Text lit by a slow sweep of lantern light, like React Bits' ShinyText / GradientText. The sweep stops,
  * leaving a still gradient, when animations are off.
+ *
+ * OracleRead: the text is laid out once in the plain color and the light is painted over its glyphs in the draw
+ * phase, so the sweep neither recomposes the text nor builds a new shader every frame.
  */
 @Composable
 fun OracleShinyText(
@@ -204,43 +282,41 @@ fun OracleShinyText(
     maxLines: Int = 1,
 ) {
     val colors = MaterialTheme.colorScheme
-    val reducedMotion = rememberReducedMotion()
-    val sweep = if (reducedMotion) {
-        0.35f
-    } else {
-        val transition = rememberInfiniteTransition(label = "shinyText")
-        val value by transition.animateFloat(
-            initialValue = -0.6f,
-            targetValue = 1.6f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 5200, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart,
-            ),
-            label = "shinyTextSweep",
-        )
-        value
-    }
-    val base = colors.onBackground
+    val seconds = rememberAmbientSeconds(active = rememberAmbientMotion(), initialSeconds = SHINY_STILL_SECONDS)
     val light = colors.primary
     Text(
         text = text,
+        color = colors.onBackground,
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
-        modifier = modifier,
-        style = style.copy(
-            brush = object : androidx.compose.ui.graphics.ShaderBrush() {
-                override fun createShader(size: androidx.compose.ui.geometry.Size): android.graphics.Shader {
+        style = style,
+        modifier = modifier
+            // Its own layer, so the light only lands on the glyphs
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .drawWithCache {
+                val half = size.width * 0.35f
+                val sweepLight = Brush.linearGradient(
+                    0f to light.copy(alpha = 0f),
+                    0.35f to light,
+                    0.5f to ShinyHighlight,
+                    0.65f to light,
+                    1f to light.copy(alpha = 0f),
+                    start = Offset(-half, 0f),
+                    end = Offset(half, size.height),
+                )
+                onDrawWithContent {
+                    drawContent()
+                    val sweep = -0.6f + 2.2f * ((seconds.floatValue % SHINY_SWEEP_SECONDS) / SHINY_SWEEP_SECONDS)
                     val center = size.width * sweep
-                    val half = size.width * 0.35f
-                    return androidx.compose.ui.graphics.LinearGradientShader(
-                        from = Offset(center - half, 0f),
-                        to = Offset(center + half, size.height),
-                        colors = listOf(base, light, Color(0xFFFFF4DA), light, base),
-                        colorStops = listOf(0f, 0.35f, 0.5f, 0.65f, 1f),
-                        tileMode = TileMode.Clamp,
-                    )
+                    translate(left = center) {
+                        drawRect(
+                            brush = sweepLight,
+                            topLeft = Offset(-center, 0f),
+                            size = size,
+                            blendMode = BlendMode.SrcAtop,
+                        )
+                    }
                 }
             },
-        ),
     )
 }

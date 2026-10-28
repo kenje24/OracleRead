@@ -39,6 +39,8 @@ fun MangaToolbar(
     onClickEditNotes: () -> Unit,
     hideDecimalChapters: Boolean,
     onClickHideDecimalChapters: () -> Unit,
+    hideDuplicateChapters: Boolean,
+    onClickHideDuplicateChapters: () -> Unit,
 
     // For action mode
     actionModeCounter: Int,
@@ -120,8 +122,20 @@ fun MangaToolbar(
                     )
                     add(
                         AppBar.OverflowAction(
-                            title = "${if (hideDecimalChapters) "☑" else "☐"} Hide decimal chapters",
+                            title = checkedTitle(
+                                hideDecimalChapters,
+                                stringResource(MR.strings.oracle_chapters_hide_decimal),
+                            ),
                             onClick = onClickHideDecimalChapters,
+                        ),
+                    )
+                    add(
+                        AppBar.OverflowAction(
+                            title = checkedTitle(
+                                hideDuplicateChapters,
+                                stringResource(MR.strings.oracle_chapters_hide_duplicates),
+                            ),
+                            onClick = onClickHideDuplicateChapters,
                         ),
                     )
                     if (onClickEditCategory != null) {
@@ -161,3 +175,6 @@ fun MangaToolbar(
         onCancelActionMode = onCancelActionMode,
     )
 }
+
+// OracleRead: overflow items can't hold a checkbox, so a toggle's state leads its title
+private fun checkedTitle(checked: Boolean, title: String) = "${if (checked) "☑" else "☐"} $title"

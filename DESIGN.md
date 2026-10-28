@@ -73,7 +73,7 @@ cannot run in the app.
 
 | Effect | React Bits counterpart | Implementation |
 |---|---|---|
-| `OracleAuroraBackdrop` | Aurora / Silk | AGSL `RuntimeShader` on Android 13+: two aurora curtains in primary and secondary, bent by fbm "silk" noise, with an ember glow from tertiary at the bottom. Before Android 13: soft static radial gradients. Sits behind every home tab. |
+| `OracleAuroraBackdrop` | Aurora / Silk | AGSL `RuntimeShader` on Android 13+: two aurora curtains in primary and secondary, bent by 3-octave fbm "silk" noise, with an ember glow from tertiary at the bottom. It renders at half resolution into its own layer and advances 24 times a second, which looks the same on these soft gradients for a quarter of the pixel work. Before Android 13, and behind a folder whose ambience is None: soft static radial gradients. Sits behind every home tab. |
 | `Modifier.oracleGrain` | Noise | A seamless 192px monochrome grain tile drawn as a repeating `ImageShader`: over backdrops at about 5.5% and behind glass content at 4%, so text stays clean. |
 | `OracleShinyText` | ShinyText / GradientText | A lantern-light sweep across serif titles (`OracleLargeTopBar`), every 5.2 s. |
 | `oracleHairline()` | gradient borders | Glass edges lit from the top-left in primary, fading into `outlineVariant`. |
@@ -92,10 +92,15 @@ explains that it is coming in a future update.
 
 - **Navigation.** `HomeScreen` shows the floating dock, or the rail on tablets. Compact mode (3 tabs, Browse
   expands) and full mode (5 tabs) are kept.
-- **Library.** A serif title with the reading streak, folder pills, the ambient folder background, the
-  continue-reading hero, source shortcuts and a poster grid. Pin, featured and folder styles all work.
+- **Library.** A serif title, with incognito and the reading streak on the greeting's row, folder pills, the ambient
+  folder background, the continue-reading hero, source shortcuts and a poster grid. Pin, featured and folder styles
+  all work.
+- **Folder ambiences** (`FolderAmbience`, picked per folder): None, Lantern, Fire Spirits, Moon Wisps, Sea Lanterns,
+  Sakura Drift, Aurora Motes, Ink Rain, Star Dust, Ink Tide, Constellations, Eclipse Halo and Silk Ribbons. None draws
+  nothing and stills the home aurora too. Time is read only while drawing, so ambiences redraw without recomposing.
 - **Manga detail.** Cover backdrop, cover-derived accent, large poster, serif title, glass action tiles (library,
-  interval, tracking, WebView, and Community marked "In progress") and the chapter list.
+  interval, tracking, WebView, and Community marked "In progress") and the chapter list. Latest (the newest chapter in
+  source order) sits above Resume.
 - **Updates, history, browse, more, settings, about, onboarding and reader chrome** use the same headers, glass cards
   and pills. The reader page itself is never restyled.
 

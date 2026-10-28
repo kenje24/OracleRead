@@ -227,6 +227,34 @@ class LibraryPreferences(
         "pref_show_decimal_chapters_manga_ids",
         emptySet(),
     )
+
+    val decimalChapters = PerEntryChapterOption(
+        global = hideDecimalChapters,
+        enabledIds = hideDecimalChaptersMangaIds,
+        disabledIds = showDecimalChaptersMangaIds,
+    )
+
+    // OracleRead: lists one copy of each known chapter number, see withoutDuplicateChapters
+    val hideDuplicateChapters: Preference<Boolean> = preferenceStore.getBoolean(
+        "pref_hide_duplicate_chapters",
+        false,
+    )
+
+    val hideDuplicateChaptersMangaIds: Preference<Set<String>> = preferenceStore.getStringSet(
+        "pref_hide_duplicate_chapters_manga_ids",
+        emptySet(),
+    )
+
+    val showDuplicateChaptersMangaIds: Preference<Set<String>> = preferenceStore.getStringSet(
+        "pref_show_duplicate_chapters_manga_ids",
+        emptySet(),
+    )
+
+    val duplicateChapters = PerEntryChapterOption(
+        global = hideDuplicateChapters,
+        enabledIds = hideDuplicateChaptersMangaIds,
+        disabledIds = showDuplicateChaptersMangaIds,
+    )
     // endregion
 
     // region Swipe Actions

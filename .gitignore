@@ -21,5 +21,10 @@ supabase/.temp
 supabase/.env
 supabase/config.toml
 
+# Agent-local worktrees and verification state
+.claude/
+.unlazy/
+__pycache__/
+
 # macOS specific files
 .DS_Store

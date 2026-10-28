@@ -1218,4 +1218,22 @@
     <string name="oracle_onboarding_navigation_layout">Navigation layout</string>
     <string name="oracle_onboarding_navigation_compact">Compact: 3 tabs, Browse expands</string>
     <string name="oracle_onboarding_navigation_full">Always show 5 tabs</string>
+
+    <!-- OracleRead: chapter list options, in the manga overflow menu and the Library settings -->
+    <string name="oracle_chapters_hide_decimal">Hide decimal chapters</string>
+    <string name="oracle_chapters_hide_duplicates">Hide duplicate chapters</string>
+    <string name="oracle_pref_hide_decimal_chapters">Hide decimal chapters globally</string>
+    <string name="oracle_pref_hide_duplicate_chapters">Hide duplicate chapters globally</string>
+    <string name="oracle_pref_hide_chapters_override_summary">Manga can still override this from their chapter menu.</string>
+    <string name="oracle_pref_hide_duplicate_chapters_summary">Lists one copy of each chapter number, keeping the one you\'re reading, have read, bookmarked or downloaded. Nothing is deleted. Manga can still override this from their chapter menu.</string>
+    <!-- OracleRead: button above Resume on a manga's page that opens its newest chapter -->
+    <string name="oracle_action_latest_chapter">Latest</string>
+    <string name="oracle_action_latest_chapter_description">Open the latest chapter</string>
+
+    <!-- OracleRead: folder ambient backgrounds -->
+    <string name="folder_ambience_none">None</string>
+    <string name="folder_ambience_ink_tide">Ink Tide</string>
+    <string name="folder_ambience_constellations">Constellations</string>
+    <string name="folder_ambience_eclipse">Eclipse Halo</string>
+    <string name="folder_ambience_silk_ribbons">Silk Ribbons</string>
 </resources>

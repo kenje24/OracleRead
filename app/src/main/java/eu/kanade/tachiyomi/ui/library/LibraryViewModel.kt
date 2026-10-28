@@ -27,6 +27,7 @@ import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.chapter.getNextUnread
+import eu.kanade.tachiyomi.util.chapter.withoutDuplicateChapters
 import eu.kanade.tachiyomi.util.removeCovers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -542,7 +543,15 @@ class LibraryViewModel(
 
     suspend fun getNextUnreadChapter(manga: Manga): Chapter? {
         val chapters = getChaptersByMangaId.await(manga.id, applyScanlatorFilter = true)
-        return withContext(Dispatchers.Default) { chapters.getNextUnread(manga, downloadManager) }
+        return withContext(Dispatchers.Default) {
+            // OracleRead: the same copies as the entry's chapter list, so a chapter read in one copy is skipped
+            val listed = if (libraryPreferences.duplicateChapters.isEnabled(manga.id)) {
+                chapters.withoutDuplicateChapters(manga, downloadManager)
+            } else {
+                chapters
+            }
+            listed.getNextUnread(manga, downloadManager)
+        }
     }
 
     /**

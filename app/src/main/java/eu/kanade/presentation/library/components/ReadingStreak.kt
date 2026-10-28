@@ -1,10 +1,5 @@
 package eu.kanade.presentation.library.components
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -20,13 +15,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.oracle.OracleGlass
-import eu.kanade.presentation.oracle.rememberReducedMotion
+import eu.kanade.presentation.oracle.rememberAmbientMotion
+import eu.kanade.presentation.oracle.rememberAmbientSeconds
 import mihon.app.di.appGraph
 import mihon.icons.materialsymbols.MaterialSymbols
 import mihon.icons.materialsymbols.rounded.LocalFireDepartment
@@ -34,6 +30,10 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.pluralStringResource
 import tachiyomi.presentation.core.util.collectAsState
 import java.time.LocalDate
+import kotlin.math.PI
+import kotlin.math.sin
+
+private const val FLAME_BREATH_RADIANS_PER_SECOND = (2 * PI / 2.2).toFloat()
 
 /**
  * Days in a row the user has read something. The flame breathes gently while the streak is alive and the
@@ -53,19 +53,9 @@ fun ReadingStreak(modifier: Modifier = Modifier) {
         }
     }
 
-    val reducedMotion = rememberReducedMotion()
-    val flameScale = if (streakDays > 0 && !reducedMotion) {
-        val transition = rememberInfiniteTransition(label = "readingStreak")
-        val scale by transition.animateFloat(
-            initialValue = 0.92f,
-            targetValue = 1.08f,
-            animationSpec = infiniteRepeatable(tween(1100), RepeatMode.Reverse),
-            label = "readingStreakFlame",
-        )
-        scale
-    } else {
-        1f
-    }
+    // On the shared ambient clock and read in the layer, so the breathing flame neither recomposes the streak nor
+    // redraws the screen more often than the rest of the ambience. A 2.2 s breath between 92% and 108%.
+    val breath = rememberAmbientSeconds(active = streakDays > 0 && rememberAmbientMotion(), initialSeconds = 0f)
     val description = pluralStringResource(MR.plurals.reading_streak_days, streakDays, streakDays)
 
     OracleGlass(
@@ -83,7 +73,11 @@ fun ReadingStreak(modifier: Modifier = Modifier) {
                 tint = if (streakDays > 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline,
                 modifier = Modifier
                     .size(18.dp)
-                    .scale(flameScale),
+                    .graphicsLayer {
+                        val scale = 1f + 0.08f * sin(breath.floatValue * FLAME_BREATH_RADIANS_PER_SECOND)
+                        scaleX = scale
+                        scaleY = scale
+                    },
             )
             Spacer(Modifier.width(4.dp))
             Text(

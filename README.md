@@ -28,12 +28,35 @@ OracleRead also adds:
 - reader auto-retry
 - a reading streak
 - pinned manga
-- folder styles with ambient themes
+- folder styles with ambient backgrounds (or none)
 - source shortcuts
-- hiding decimal chapters
+- hiding decimal and duplicate chapters
+- a Latest button above Resume
 - a compact navigation mode
 
 It stays in sync with Mihon; the latest sync is described in [docs/sync-notes.md](docs/sync-notes.md).
+
+## What's new in 1.4.1
+
+Full notes: [docs/releases/2026-10-28-v1.4.1.md](docs/releases/2026-10-28-v1.4.1.md).
+
+- **Hide duplicate chapters**, per manga or globally. Nothing is deleted; the copy you're reading or have read is kept.
+- **Latest** opens the newest chapter, right above Resume.
+- **Incognito and the reading streak** moved to the right of the greeting.
+- **Folder backgrounds**: None, plus Ink Tide, Constellations, Eclipse Halo and Silk Ribbons.
+- **Smoother home**: ambient motion shares one 30-per-second clock and stops when hidden.
+
+| Library | Latest + Resume | Duplicates hidden |
+|---|---|---|
+| ![Library](docs/screenshots/v1.4.1/library.png) | ![Latest and Resume](docs/screenshots/v1.4.1/latest-resume.png) | ![Duplicates hidden](docs/screenshots/v1.4.1/duplicates-hidden.png) |
+
+| None | Ink Tide | Constellations | Eclipse Halo | Silk Ribbons |
+|---|---|---|---|---|
+| ![None](docs/screenshots/v1.4.1/ambience-none.png) | ![Ink Tide](docs/screenshots/v1.4.1/ambience-ink_tide.png) | ![Constellations](docs/screenshots/v1.4.1/ambience-constellations.png) | ![Eclipse Halo](docs/screenshots/v1.4.1/ambience-eclipse.png) | ![Silk Ribbons](docs/screenshots/v1.4.1/ambience-silk_ribbons.png) |
+
+### Previous release
+
+1.4.0 synced with Mihon and introduced the cinematic redesign. See the 1.4.0 entry in [CHANGELOG.md](CHANGELOG.md).
 
 ## Extension Repository
 
