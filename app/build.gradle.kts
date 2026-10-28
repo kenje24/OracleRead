@@ -57,7 +57,7 @@ android {
     defaultConfig {
         applicationId = "io.github.kenje24.oracleread"
 
-        versionCode = 1401
+        versionCode = 1410
         versionName = oracleReadVersionName
 
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")

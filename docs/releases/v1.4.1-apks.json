@@ -4,29 +4,29 @@
   "assets": [
     {
       "name": "OracleRead-release-1.4.1-arm64-v8a.apk",
-      "size": 39447341,
-      "sha256": "71a6338da2a23213f59dc1bdf6226a1a9e5ad4e39bb0761e2d566e419066827f"
+      "size": 39447345,
+      "sha256": "68f65c67c7408543e134fb19f916b7a29ec19237c90e94e3feb61e23a88c5575"
     },
     {
       "name": "OracleRead-release-1.4.1-armeabi-v7a.apk",
-      "size": 32466741,
-      "sha256": "be733bed2fb6b1efa9f4721d3a92026dd109fda2b6d94c7f0555e0e3e4a0f812"
+      "size": 32466745,
+      "sha256": "40bee78e63c7e1dfa41a6eef80088e430780672a8ddb162f8a68e51e1a040b6c"
     },
     {
       "name": "OracleRead-release-1.4.1-x86.apk",
-      "size": 42129093,
-      "sha256": "c19234fff09a6d05c8affffae78c403c8a1a3d2f6079aee576b3a753156921d5"
+      "size": 42129097,
+      "sha256": "a2543cac5402967d52e49a3791703039ae5ca42e666361d01ebe1cb1d6bf5d84"
     },
     {
       "name": "OracleRead-release-1.4.1-x86_64.apk",
-      "size": 41973223,
-      "sha256": "0de4e598086887e8bbd77cebea3a648b897bec209fa8fe9b182786f87f3db0e8"
+      "size": 41973227,
+      "sha256": "af0a318c29d6bcb6b6d75db58cd78e2012547cac07a987f5670d2f0150a4e3b9"
     },
     {
       "name": "OracleRead-release-1.4.1.apk",
-      "size": 112246478,
-      "sha256": "3b15ad4271e3dd39c1ea0dcb3a869730d1732397ddb51ceeb6b5f4222b62c1d8"
+      "size": 112246482,
+      "sha256": "f7e58b993dbb1d4b94a5f2cbf580d3901f791224d69c8f12a1415eb26010a3a9"
     }
   ],
-  "versionCode": 1401
+  "versionCode": 1410
 }

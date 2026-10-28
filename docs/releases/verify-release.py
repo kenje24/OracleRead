@@ -46,7 +46,7 @@ def verify(version, root, remote=False):
         result['assets'].append({'name':p.name,'size':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
     result['versionCode'] = int(version_code)
     if version == '1.4.1':
-        assert result['versionCode'] == 1401, f'Wrong update versionCode: {version_code}'
+        assert result['versionCode'] == 1410, f'Wrong update versionCode: {version_code}'
     if remote:
         release = json.loads(run(['gh','release','view','v'+version,'-R',REPO,'--json','assets,url,isDraft,isPrerelease,tagName']))
         assert not release['isDraft'] and not release['isPrerelease'], 'Release is draft or prerelease'
