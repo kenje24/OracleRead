@@ -31,7 +31,7 @@ if (Config.includeTelemetry) {
 
 val keystorePropertiesFile = layout.settingsDirectory.file("keystore.properties").asFile
 
-val oracleReadVersionName = "1.4.1"
+val oracleReadVersionName = "1.4.2"
 val localProperties = Properties().apply {
     val file = layout.settingsDirectory.file("local.properties").asFile
     if (file.exists()) {
@@ -57,7 +57,7 @@ android {
     defaultConfig {
         applicationId = "io.github.kenje24.oracleread"
 
-        versionCode = 1410
+        versionCode = 1420
         versionName = oracleReadVersionName
 
         buildConfigField("boolean", "TELEMETRY_INCLUDED", "${Config.includeTelemetry}")

@@ -92,9 +92,9 @@ import tachiyomi.domain.chapter.model.ChapterUpdate
 import tachiyomi.domain.chapter.model.NoChaptersException
 import tachiyomi.domain.chapter.service.calculateChapterGap
 import tachiyomi.domain.chapter.service.getChapterSort
-import tachiyomi.domain.chapter.service.latestBySourceOrder
 import tachiyomi.domain.chapter.service.missingChaptersCount
 import tachiyomi.domain.chapter.service.withoutDuplicateChapters
+import tachiyomi.domain.history.interactor.GetHistory
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.manga.interactor.GetDuplicateLibraryManga
 import tachiyomi.domain.manga.interactor.GetMangaWithChapters
@@ -147,6 +147,7 @@ class MangaViewModel(
     private val sourceManager: SourceManager,
     private val refreshTracks: RefreshTracks,
     private val coverCache: CoverCache,
+    private val getHistory: GetHistory,
 ) : ViewModel() {
 
     private val subscriberGate = SubscriberGate()
@@ -221,6 +222,12 @@ class MangaViewModel(
     )
         .distinctUntilChanged()
 
+    // OracleRead: what the button above Resume opens
+    private val lastReadChapterId = getHistory.subscribeLastReadChapterId(mangaId)
+        .catch { logcat(LogPriority.ERROR, it) }
+        .onStart { emit(null) }
+        .distinctUntilChanged()
+
     private var hasPromptedToAddBefore = false
 
     private val defaultChapterFlagsJob = viewModelScope.launch {
@@ -273,13 +280,13 @@ class MangaViewModel(
         mangaAndChapters,
         scanlators,
         trackers,
-        combine(selectedChapterIds, queuedDownloadStates.pausedWhileUnsubscribed(), ::Pair),
+        combine(selectedChapterIds, queuedDownloadStates.pausedWhileUnsubscribed(), lastReadChapterId, ::Triple),
         combine(dialog, isRefreshingData, hiddenChapterKinds, ::Triple),
     ) {
             mangaAndChapters,
             (availableScanlators, excludedScanlators),
             (trackingCount, hasLoggedInTrackers),
-            (selectedIds, downloads),
+            (selectedIds, downloads, lastReadChapterId),
             (dialog, isRefreshingData, hiddenChapterKinds),
         ->
         val (hideDecimalChapters, hideDuplicateChapters) = hiddenChapterKinds
@@ -304,6 +311,7 @@ class MangaViewModel(
             dialog = dialog,
             hideMissingChapters = hideMissingChapters,
             hideDecimalChapters = hideDecimalChapters,
+            lastReadChapterId = lastReadChapterId,
             hideDuplicateChapters = hideDuplicateChapters,
         )
     }
@@ -311,7 +319,7 @@ class MangaViewModel(
         .onEach {
             it.processedChapters
             it.nextUnreadChapter
-            it.latestChapter
+            it.recentChapter
             it.chapterListItems
             it.isAnySelected
             it.selectedChapters
@@ -683,8 +691,8 @@ class MangaViewModel(
     /**
      * OracleRead: the newest chapter as the source lists it, whatever the sorting, filters or read state.
      */
-    fun getLatestChapter(): Chapter? {
-        return successState?.latestChapter
+    fun getRecentChapter(): Chapter? {
+        return successState?.recentChapter
     }
 
     private fun getUnreadChapters(): List<Chapter> {
@@ -1164,6 +1172,8 @@ class MangaViewModel(
             val hideDecimalChapters: Boolean = false,
             // OracleRead: whether only one copy of each chapter number is listed, see [listedChapters]
             val hideDuplicateChapters: Boolean = false,
+            // OracleRead: the chapter of this entry read most recently, from reading history
+            val lastReadChapterId: Long? = null,
         ) : State {
             /**
              * OracleRead: [chapters] with one copy of each known chapter number when duplicates are hidden, else
@@ -1189,16 +1199,12 @@ class MangaViewModel(
             }
 
             /**
-             * OracleRead: what Latest opens, the newest chapter in source order whatever the sorting, filters or
-             * read state. When duplicates are hidden, it's the listed copy of that chapter.
+             * OracleRead: what the button above Resume opens, the chapter read most recently, whatever the sorting,
+             * filters or read state. It's the exact copy that was read, so its progress is picked up again.
              */
-            val latestChapter: Chapter? by lazy {
-                val latest = chapters.fastMap { it.chapter }.latestBySourceOrder() ?: return@lazy null
-                if (listedChapters === chapters || listedChapters.fastAny { it.id == latest.id }) {
-                    latest
-                } else {
-                    listedChapters.firstOrNull { it.chapter.chapterNumber == latest.chapterNumber }?.chapter ?: latest
-                }
+            val recentChapter: Chapter? by lazy {
+                val id = lastReadChapterId ?: return@lazy null
+                chapters.firstOrNull { it.id == id }?.chapter
             }
 
             val isAnySelected by lazy {

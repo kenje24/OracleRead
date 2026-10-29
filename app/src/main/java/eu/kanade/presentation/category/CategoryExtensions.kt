@@ -89,7 +89,14 @@ data class FolderStyle(
     }
 }
 
-fun Category.folderStyle(styles: Set<String>): FolderStyle {
+/**
+ * OracleRead: this folder's saved style, or a default one using [defaultAmbience] (the app theme's own effect) for
+ * folders whose style was never changed.
+ */
+fun Category.folderStyle(
+    styles: Set<String>,
+    defaultAmbience: FolderAmbience = FolderAmbience.DEFAULT,
+): FolderStyle {
     val saved = styles
         .asSequence()
         .mapNotNull(FolderStyle::parse)
@@ -105,7 +112,7 @@ fun Category.folderStyle(styles: Set<String>): FolderStyle {
         categoryId = id,
         color = color,
         icon = FolderStyleDefaults.DEFAULT_ICON,
-        theme = FolderStyleDefaults.DEFAULT_THEME,
+        theme = defaultAmbience.key,
     )
 }
 
@@ -115,7 +122,10 @@ fun Category.folderIconKey(styles: Set<String>): String = folderStyle(styles).ic
 
 fun Category.folderThemeKey(styles: Set<String>): String = folderStyle(styles).theme
 
-fun Category.folderAmbience(styles: Set<String>): FolderAmbience = folderStyle(styles).ambience
+fun Category.folderAmbience(
+    styles: Set<String>,
+    defaultAmbience: FolderAmbience = FolderAmbience.DEFAULT,
+): FolderAmbience = folderStyle(styles, defaultAmbience).ambience
 
 fun folderIconForKey(key: String): ImageVector = when (key) {
     "book" -> MaterialSymbols.Rounded.Book

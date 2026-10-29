@@ -32,12 +32,40 @@ enum class FolderAmbience(val key: String, val label: StringResource) {
 
     // Long ribbons of gold and slate silk flowing across the screen
     SILK_RIBBONS("silk_ribbons", MR.strings.folder_ambience_silk_ribbons),
+
+    // Koi circling a moonlit pond under drifting lily pads, ripples spreading where they surface
+    KOI_POND("koi_pond", MR.strings.folder_ambience_koi_pond),
+
+    // Bioluminescent jellyfish pulsing upward through falling marine snow
+    JELLYFISH("jellyfish", MR.strings.folder_ambience_jellyfish),
+
+    // Folded paper cranes gliding across on slow wingbeats, casting soft shadows
+    PAPER_CRANES("paper_cranes", MR.strings.folder_ambience_paper_cranes),
+
+    // Slanting rain under rolling cloud banks, with a soft, rare fork of lightning
+    THUNDERSTORM("thunderstorm", MR.strings.folder_ambience_thunderstorm),
+
+    // Streams of neon katakana raining down, magenta heads fading to cyan
+    GLYPH_RAIN("glyph_rain", MR.strings.folder_ambience_glyph_rain),
+
+    // A manga halftone of ink dots swelling in slow waves, framed by faint speed lines
+    SCREENTONE("screentone", MR.strings.folder_ambience_screentone),
+
+    // Meteors streaking across a quiet star field, each tail burning out behind it
+    METEOR_SHOWER("meteor_shower", MR.strings.folder_ambience_meteor_shower),
+
+    // Fireflies blinking over a dark meadow of swaying grass
+    FIREFLIES("fireflies", MR.strings.folder_ambience_fireflies),
     ;
 
     companion object {
         val DEFAULT = LANTERN
 
         fun fromKey(key: String?): FolderAmbience? = entries.firstOrNull { it.key == key }
+
+        /** The key a folder gets when [tappedKey] is tapped in the picker: tapping the selected one turns it off. */
+        fun toggledKey(currentKey: String, tappedKey: String): String =
+            if (tappedKey == currentKey) NONE.key else tappedKey
 
         /** The ambience shown when there's no folder to take one from. */
         fun forAppTheme(appTheme: AppTheme): FolderAmbience = when (appTheme) {
@@ -48,6 +76,12 @@ enum class FolderAmbience(val key: String, val label: StringResource) {
             AppTheme.AURORA_MOTES -> AURORA_MOTES
             AppTheme.INK_RAIN -> INK_RAIN
             AppTheme.STAR_DUST -> STAR_DUST
+            AppTheme.KOI_GARDEN -> KOI_POND
+            AppTheme.ABYSSAL_BLOOM -> JELLYFISH
+            AppTheme.PAPER_CRANES -> PAPER_CRANES
+            AppTheme.TEMPEST -> THUNDERSTORM
+            AppTheme.NEON_ALLEY -> GLYPH_RAIN
+            AppTheme.SCREENTONE -> SCREENTONE
             else -> LANTERN
         }
     }

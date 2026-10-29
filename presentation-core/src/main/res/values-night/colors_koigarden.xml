@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OracleRead Koi Garden (dark). Mirrors KoiGardenColorScheme.kt -->
+<resources>
+    <color name="koigarden_primary">#FF8C82</color>
+    <color name="koigarden_onPrimary">#381F1D</color>
+    <color name="koigarden_primaryContainer">#422F2B</color>
+    <color name="koigarden_onPrimaryContainer">#FFD3D0</color>
+    <color name="koigarden_inversePrimary">#8C4D48</color>
+    <color name="koigarden_secondary">#7FCFB4</color>
+    <color name="koigarden_onSecondary">#1C2E28</color>
+    <color name="koigarden_secondaryContainer">#233F37</color>
+    <color name="koigarden_onSecondaryContainer">#CEEDE2</color>
+    <color name="koigarden_tertiary">#E9DFF5</color>
+    <color name="koigarden_onTertiary">#333136</color>
+    <color name="koigarden_tertiaryContainer">#3C4246</color>
+    <color name="koigarden_onTertiaryContainer">#F7F3FB</color>
+    <color name="koigarden_error">#FFB4AB</color>
+    <color name="koigarden_onError">#690005</color>
+    <color name="koigarden_errorContainer">#93000A</color>
+    <color name="koigarden_onErrorContainer">#FFDAD6</color>
+    <color name="koigarden_background">#06110F</color>
+    <color name="koigarden_onBackground">#F3E8E2</color>
+    <color name="koigarden_surface">#06110F</color>
+    <color name="koigarden_onSurface">#F3E8E2</color>
+    <color name="koigarden_surfaceVariant">#1F1D1A</color>
+    <color name="koigarden_onSurfaceVariant">#ACA8A3</color>
+    <color name="koigarden_inverseSurface">#F3E8E2</color>
+    <color name="koigarden_inverseOnSurface">#1A2422</color>
+    <color name="koigarden_outline">#6A6B68</color>
+    <color name="koigarden_outlineVariant">#2C3331</color>
+    <color name="koigarden_scrim">#000000</color>
+    <color name="koigarden_surfaceDim">#06110F</color>
+    <color name="koigarden_surfaceBright">#2A312F</color>
+    <color name="koigarden_surfaceContainerLowest">#040A09</color>
+    <color name="koigarden_surfaceContainerLow">#0E1916</color>
+    <color name="koigarden_surfaceContainer">#131D1B</color>
+    <color name="koigarden_surfaceContainerHigh">#1A2321</color>
+    <color name="koigarden_surfaceContainerHighest">#222B28</color>
+</resources>

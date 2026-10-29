@@ -45,8 +45,11 @@ def verify(version, root, remote=False):
         assert pkg[2] == version_code, 'Variant version codes differ'
         result['assets'].append({'name':p.name,'size':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
     result['versionCode'] = int(version_code)
-    if version == '1.4.1':
-        assert result['versionCode'] == 1410, f'Wrong update versionCode: {version_code}'
+    # OracleRead version codes follow the version: 1.3.9 is 1390, 1.4.0 is 1400, 1.4.2 is 1420
+    parts = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)', version)
+    if parts:
+        expected = int(parts[1]) * 1000 + int(parts[2]) * 100 + int(parts[3]) * 10
+        assert result['versionCode'] == expected, f'Wrong update versionCode: {version_code}, expected {expected}'
     if remote:
         release = json.loads(run(['gh','release','view','v'+version,'-R',REPO,'--json','assets,url,isDraft,isPrerelease,tagName']))
         assert not release['isDraft'] and not release['isPrerelease'], 'Release is draft or prerelease'

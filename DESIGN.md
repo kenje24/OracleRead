@@ -96,11 +96,17 @@ explains that it is coming in a future update.
   folder background, the continue-reading hero, source shortcuts and a poster grid. Pin, featured and folder styles
   all work.
 - **Folder ambiences** (`FolderAmbience`, picked per folder): None, Lantern, Fire Spirits, Moon Wisps, Sea Lanterns,
-  Sakura Drift, Aurora Motes, Ink Rain, Star Dust, Ink Tide, Constellations, Eclipse Halo and Silk Ribbons. None draws
-  nothing and stills the home aurora too. Time is read only while drawing, so ambiences redraw without recomposing.
+  Sakura Drift, Aurora Motes, Ink Rain, Star Dust, Ink Tide, Constellations, Eclipse Halo, Silk Ribbons, Koi Pond,
+  Jellyfish, Paper Cranes, Thunderstorm, Glyph Rain, Screentone, Meteor Shower and Fireflies. None draws nothing and
+  stills the home aurora too; tapping the selected ambience again picks None. Folders never restyled show the app
+  theme's own ambience. Time is read only while drawing, so ambiences redraw without recomposing.
+- **Themes with an effect of their own** (1.4.2): Koi Garden (Koi Pond), Abyssal Bloom (Jellyfish), Paper Cranes,
+  Tempest (Thunderstorm), Neon Alley (Glyph Rain) and Screentone. Each has its own dark and light palette in Compose
+  (`*ColorScheme.kt`) and for the View screens (`colors_*.xml`, `Theme.Tachiyomi.*`); text on every key color meets
+  4.5:1 contrast.
 - **Manga detail.** Cover backdrop, cover-derived accent, large poster, serif title, glass action tiles (library,
-  interval, tracking, WebView, and Community marked "In progress") and the chapter list. Latest (the newest chapter in
-  source order) sits above Resume.
+  interval, tracking, WebView, and Community marked "In progress") and the chapter list. Last read (the chapter read most
+  recently, from reading history) sits above Resume.
 - **Updates, history, browse, more, settings, about, onboarding and reader chrome** use the same headers, glass cards
   and pills. The reader page itself is never restyled.
 

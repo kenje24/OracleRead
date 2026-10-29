@@ -50,7 +50,7 @@ import eu.kanade.tachiyomi.ui.reader.setting.ReadingMode
 import eu.kanade.tachiyomi.ui.reader.viewer.Viewer
 import eu.kanade.tachiyomi.util.chapter.filterDownloaded
 import eu.kanade.tachiyomi.util.chapter.removeDuplicates
-import eu.kanade.tachiyomi.util.chapter.withoutDuplicateChapters
+import eu.kanade.tachiyomi.util.chapter.withoutHiddenChapters
 import eu.kanade.tachiyomi.util.editCover
 import eu.kanade.tachiyomi.util.lang.byteSize
 import eu.kanade.tachiyomi.util.storage.DiskUtil
@@ -238,10 +238,15 @@ class ReaderViewModel(
                 }
             }
             .let { chapters ->
-                // OracleRead: the same copies as the entry's chapter list, collapsed before any filter like there,
-                // with the opened chapter always kept
-                if (!libraryPreferences.duplicateChapters.isEnabled(manga.id)) return@let chapters
-                chapters.withoutDuplicateChapters(manga, downloadManager, keepChapterId = chapterId)
+                // OracleRead: the same chapters as the entry's chapter list (decimal and duplicate copies hidden
+                // there are skipped here), with the opened chapter always kept
+                chapters.withoutHiddenChapters(
+                    manga = manga,
+                    downloadManager = downloadManager,
+                    hideDecimals = libraryPreferences.decimalChapters.isEnabled(manga.id),
+                    hideDuplicates = libraryPreferences.duplicateChapters.isEnabled(manga.id),
+                    keepChapterId = chapterId,
+                )
             }
 
         val selectedChapter = chapters.find { it.id == chapterId }

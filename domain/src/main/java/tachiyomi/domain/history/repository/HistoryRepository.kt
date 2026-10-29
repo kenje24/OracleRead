@@ -17,6 +17,9 @@ interface HistoryRepository {
 
     suspend fun getHistoryByMangaIds(mangaIds: List<Long>): Map<Long, List<History>>
 
+    /** OracleRead: the chapter of this entry that was read most recently, updated as reading history changes. */
+    fun getLastReadChapterId(mangaId: Long): Flow<Long?>
+
     suspend fun resetHistory(historyId: Long)
 
     suspend fun resetHistoryByMangaId(mangaId: Long)

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OracleRead Paper Cranes (light). Mirrors PaperCranesColorScheme.kt -->
+<resources>
+    <color name="papercranes_primary">#36437A</color>
+    <color name="papercranes_onPrimary">#FFFFFF</color>
+    <color name="papercranes_primaryContainer">#DBDDE7</color>
+    <color name="papercranes_onPrimaryContainer">#15192E</color>
+    <color name="papercranes_inversePrimary">#A5AAC3</color>
+    <color name="papercranes_secondary">#6B5F55</color>
+    <color name="papercranes_onSecondary">#FFFFFF</color>
+    <color name="papercranes_secondaryContainer">#E4E2E0</color>
+    <color name="papercranes_onSecondaryContainer">#292420</color>
+    <color name="papercranes_tertiary">#A42F3D</color>
+    <color name="papercranes_onTertiary">#FFFFFF</color>
+    <color name="papercranes_tertiaryContainer">#EFDADC</color>
+    <color name="papercranes_onTertiaryContainer">#3E1217</color>
+    <color name="papercranes_error">#BA1A1A</color>
+    <color name="papercranes_onError">#FFFFFF</color>
+    <color name="papercranes_errorContainer">#FFDAD6</color>
+    <color name="papercranes_onErrorContainer">#410002</color>
+    <color name="papercranes_background">#F7F3EC</color>
+    <color name="papercranes_onBackground">#1C1E26</color>
+    <color name="papercranes_surface">#F7F3EC</color>
+    <color name="papercranes_onSurface">#1C1E26</color>
+    <color name="papercranes_surfaceVariant">#E8E5E3</color>
+    <color name="papercranes_onSurfaceVariant">#595A5D</color>
+    <color name="papercranes_inverseSurface">#32333A</color>
+    <color name="papercranes_inverseOnSurface">#ECE8E2</color>
+    <color name="papercranes_outline">#8E8D8D</color>
+    <color name="papercranes_outlineVariant">#CBC8C4</color>
+    <color name="papercranes_scrim">#000000</color>
+    <color name="papercranes_surfaceDim">#E1DED8</color>
+    <color name="papercranes_surfaceBright">#FBF9F6</color>
+    <color name="papercranes_surfaceContainerLowest">#FFFFFF</color>
+    <color name="papercranes_surfaceContainerLow">#F0EDE6</color>
+    <color name="papercranes_surfaceContainer">#ECE8E2</color>
+    <color name="papercranes_surfaceContainerHigh">#E7E3DD</color>
+    <color name="papercranes_surfaceContainerHighest">#E1DED8</color>
+</resources>

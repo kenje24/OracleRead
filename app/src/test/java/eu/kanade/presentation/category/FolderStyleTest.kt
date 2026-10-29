@@ -1,5 +1,6 @@
 package eu.kanade.presentation.category
 
+import eu.kanade.domain.ui.model.AppTheme
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -61,10 +62,35 @@ class FolderStyleTest {
     }
 
     @Test
+    fun `tapping the selected background again turns it off`() {
+        assertEquals("none", FolderAmbience.toggledKey(currentKey = "ink_tide", tappedKey = "ink_tide"))
+        assertEquals("koi_pond", FolderAmbience.toggledKey(currentKey = "ink_tide", tappedKey = "koi_pond"))
+        assertEquals("ink_tide", FolderAmbience.toggledKey(currentKey = "none", tappedKey = "ink_tide"))
+        assertEquals("none", FolderAmbience.toggledKey(currentKey = "none", tappedKey = "none"))
+    }
+
+    @Test
+    fun `every app theme with its own effect opens on that effect`() {
+        assertEquals(FolderAmbience.KOI_POND, FolderAmbience.forAppTheme(AppTheme.KOI_GARDEN))
+        assertEquals(FolderAmbience.JELLYFISH, FolderAmbience.forAppTheme(AppTheme.ABYSSAL_BLOOM))
+        assertEquals(FolderAmbience.PAPER_CRANES, FolderAmbience.forAppTheme(AppTheme.PAPER_CRANES))
+        assertEquals(FolderAmbience.THUNDERSTORM, FolderAmbience.forAppTheme(AppTheme.TEMPEST))
+        assertEquals(FolderAmbience.GLYPH_RAIN, FolderAmbience.forAppTheme(AppTheme.NEON_ALLEY))
+        assertEquals(FolderAmbience.SCREENTONE, FolderAmbience.forAppTheme(AppTheme.SCREENTONE))
+        assertEquals(FolderAmbience.LANTERN, FolderAmbience.forAppTheme(AppTheme.ORACLE))
+    }
+
+    @Test
     fun `folders without a saved style use the lantern ambience`() {
         val category = Category(id = 3, name = "Weekend", order = 0, flags = 0)
 
         assertEquals(FolderAmbience.LANTERN, category.folderAmbience(emptySet()))
+        assertEquals(FolderAmbience.KOI_POND, category.folderAmbience(emptySet(), FolderAmbience.KOI_POND))
+        assertEquals("koi_pond", category.folderStyle(emptySet(), FolderAmbience.KOI_POND).theme)
+        assertEquals(
+            FolderAmbience.NONE,
+            category.folderAmbience(setOf("3|1|book|none", "4|1|book|ink_tide"), FolderAmbience.KOI_POND),
+        )
         assertEquals(
             FolderAmbience.NONE,
             category.folderAmbience(setOf("3|1|book|none", "4|1|book|ink_tide")),

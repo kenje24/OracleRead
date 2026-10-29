@@ -59,13 +59,31 @@ fun List<Chapter>.withoutDuplicateChapters(
 }
 
 /**
- * OracleRead: the newest chapter as the source lists it (sources list newest first, so the lowest
- * [Chapter.sourceOrder]), regardless of how the chapters are sorted, filtered or read. Ties go to the highest number.
+ * OracleRead: whether a chapter number is a decimal chapter (e.g. 12.5) that "hide decimal chapters" leaves out.
+ * Unknown (negative) and non-finite numbers never are.
  */
-fun List<Chapter>.latestBySourceOrder(): Chapter? {
-    return minWithOrNull(
-        compareBy<Chapter> { it.sourceOrder }
-            .thenByDescending { it.chapterNumber }
-            .thenByDescending { it.id },
-    )
+fun isHideableDecimalChapterNumber(chapterNumber: Double): Boolean {
+    return chapterNumber >= 0.0 && chapterNumber.isFinite() && chapterNumber % 1.0 != 0.0
+}
+
+/**
+ * OracleRead: the chapters left after the per-entry "hide decimal chapters" and "hide duplicate chapters" options,
+ * in the original order. The reader walks this list, so moving to the next or previous chapter skips whatever the
+ * chapter list hides. [keepChapterId] (the chapter being opened) always stays, so opening a hidden chapter directly
+ * still works and its neighbours are the visible ones around it.
+ */
+fun List<Chapter>.withoutHiddenChapters(
+    hideDecimals: Boolean,
+    hideDuplicates: Boolean,
+    isDownloaded: (Chapter) -> Boolean = { false },
+    keepChapterId: Long? = null,
+): List<Chapter> {
+    var result = this
+    if (hideDecimals) {
+        result = result.filter { it.id == keepChapterId || !isHideableDecimalChapterNumber(it.chapterNumber) }
+    }
+    if (hideDuplicates) {
+        result = result.withoutDuplicateChapters(isDownloaded = isDownloaded, keepChapterId = keepChapterId)
+    }
+    return result
 }

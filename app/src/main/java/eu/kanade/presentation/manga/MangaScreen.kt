@@ -66,7 +66,7 @@ import eu.kanade.tachiyomi.ui.manga.ChapterList
 import eu.kanade.tachiyomi.ui.manga.MangaViewModel
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import mihon.icons.materialsymbols.MaterialSymbols
-import mihon.icons.materialsymbols.rounded.SkipNext
+import mihon.icons.materialsymbols.rounded.History
 import mihon.icons.materialsymbols.roundedfilled.PlayArrow
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -108,7 +108,7 @@ fun MangaScreen(
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
-    onLatestChapter: () -> Unit,
+    onRecentChapter: () -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -168,7 +168,7 @@ fun MangaScreen(
                 onFilterClicked = onFilterButtonClicked,
                 onRefresh = onRefresh,
                 onContinueReading = onContinueReading,
-                onLatestChapter = onLatestChapter,
+                onRecentChapter = onRecentChapter,
                 onSearch = onSearch,
                 onCoverClicked = onCoverClicked,
                 onShareClicked = onShareClicked,
@@ -209,7 +209,7 @@ fun MangaScreen(
                 onFilterButtonClicked = onFilterButtonClicked,
                 onRefresh = onRefresh,
                 onContinueReading = onContinueReading,
-                onLatestChapter = onLatestChapter,
+                onRecentChapter = onRecentChapter,
                 onSearch = onSearch,
                 onCoverClicked = onCoverClicked,
                 onShareClicked = onShareClicked,
@@ -257,7 +257,7 @@ private fun MangaScreenSmallImpl(
     onFilterClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
-    onLatestChapter: () -> Unit,
+    onRecentChapter: () -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -352,15 +352,15 @@ private fun MangaScreenSmallImpl(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             val expandFAB = chapterListState.shouldExpandFAB()
-            // OracleRead: Latest sits above Resume, which keeps its place at the bottom
+            // OracleRead: Last read sits above Resume, which keeps its place at the bottom
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                LatestChapterButton(
-                    visible = state.latestChapter != null && !isAnySelected,
+                RecentChapterButton(
+                    visible = state.recentChapter != null && !isAnySelected,
                     expanded = expandFAB,
-                    onClick = onLatestChapter,
+                    onClick = onRecentChapter,
                 )
                 val isFABVisible = state.hasUnreadChapters && !isAnySelected
                 SmallExtendedFloatingActionButton(
@@ -511,7 +511,7 @@ fun MangaScreenLargeImpl(
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
     onContinueReading: () -> Unit,
-    onLatestChapter: () -> Unit,
+    onRecentChapter: () -> Unit,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -604,15 +604,15 @@ fun MangaScreenLargeImpl(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             val expandFAB = chapterListState.shouldExpandFAB()
-            // OracleRead: Latest sits above Resume, which keeps its place at the bottom
+            // OracleRead: Last read sits above Resume, which keeps its place at the bottom
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                LatestChapterButton(
-                    visible = state.latestChapter != null && !isAnySelected,
+                RecentChapterButton(
+                    visible = state.recentChapter != null && !isAnySelected,
                     expanded = expandFAB,
-                    onClick = onLatestChapter,
+                    onClick = onRecentChapter,
                 )
                 val isFABVisible = state.hasUnreadChapters && !isAnySelected
                 SmallExtendedFloatingActionButton(
@@ -872,21 +872,21 @@ private fun onChapterItemClick(
 }
 
 /**
- * OracleRead: opens the newest chapter as the source lists it, whatever the chapter list's sorting, filters or read
- * state. Its icon carries the description once the label collapses while scrolling.
+ * OracleRead: opens the chapter read most recently, whatever the chapter list's sorting, filters or read state. Its
+ * icon carries the description once the label collapses while scrolling.
  */
 @Composable
-private fun LatestChapterButton(
+private fun RecentChapterButton(
     visible: Boolean,
     expanded: Boolean,
     onClick: () -> Unit,
 ) {
-    val description = stringResource(MR.strings.oracle_action_latest_chapter_description)
+    val description = stringResource(MR.strings.oracle_action_recent_chapter_description)
     SmallExtendedFloatingActionButton(
-        text = { Text(text = stringResource(MR.strings.oracle_action_latest_chapter)) },
+        text = { Text(text = stringResource(MR.strings.oracle_action_recent_chapter)) },
         icon = {
             Icon(
-                imageVector = MaterialSymbols.Rounded.SkipNext,
+                imageVector = MaterialSymbols.Rounded.History,
                 contentDescription = if (expanded) null else description,
             )
         },

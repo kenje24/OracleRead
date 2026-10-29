@@ -126,27 +126,45 @@ class ChapterDuplicatesTest {
     }
 
     @Test
-    fun `latest chapter is the first one in source order, whatever is read or listed first`() {
+    fun `hiding decimals keeps whole, unknown and the opened chapter`() {
         val chapters = listOf(
-            chapter(id = 1, number = 1.0, sourceOrder = 2, read = true),
-            chapter(id = 2, number = 3.0, sourceOrder = 0, read = true),
-            chapter(id = 3, number = 2.0, sourceOrder = 1),
+            chapter(id = 1, number = 3.0),
+            chapter(id = 2, number = 2.5),
+            chapter(id = 3, number = 2.0),
+            chapter(id = 4, number = 1.5),
+            chapter(id = 5, number = -1.0),
         )
 
-        chapters.latestBySourceOrder()?.id shouldBe 2L
-        chapters.asReversed().latestBySourceOrder()?.id shouldBe 2L
-        emptyList<Chapter>().latestBySourceOrder() shouldBe null
+        chapters.withoutHiddenChapters(hideDecimals = true, hideDuplicates = false).map { it.id } shouldContainExactly
+            listOf(1L, 3L, 5L)
+        chapters.withoutHiddenChapters(hideDecimals = true, hideDuplicates = false, keepChapterId = 4L)
+            .map { it.id } shouldContainExactly listOf(1L, 3L, 4L, 5L)
     }
 
     @Test
-    fun `latest chapter ties on source order resolve to the highest number`() {
+    fun `hiding both leaves one whole copy per number and nothing when neither is on`() {
         val chapters = listOf(
-            chapter(id = 1, number = 4.0, sourceOrder = 0),
-            chapter(id = 2, number = 5.0, sourceOrder = 0),
-            chapter(id = 3, number = -1.0, sourceOrder = 0),
+            chapter(id = 1, number = 3.0, sourceOrder = 0),
+            chapter(id = 2, number = 2.5, sourceOrder = 1),
+            chapter(id = 3, number = 2.0, sourceOrder = 2),
+            chapter(id = 4, number = 2.0, sourceOrder = 3, read = true),
         )
 
-        chapters.latestBySourceOrder()?.id shouldBe 2L
+        chapters.withoutHiddenChapters(hideDecimals = true, hideDuplicates = true).map { it.id } shouldContainExactly
+            listOf(1L, 4L)
+        chapters.withoutHiddenChapters(hideDecimals = false, hideDuplicates = false) shouldBe chapters
+    }
+
+    @Test
+    fun `the opened copy is kept even when it is a hidden duplicate`() {
+        val chapters = listOf(
+            chapter(id = 1, number = 2.0, sourceOrder = 0, read = true),
+            chapter(id = 2, number = 2.0, sourceOrder = 1),
+            chapter(id = 3, number = 1.0, sourceOrder = 2),
+        )
+
+        chapters.withoutHiddenChapters(hideDecimals = false, hideDuplicates = true, keepChapterId = 2L)
+            .map { it.id } shouldContainExactly listOf(2L, 3L)
     }
 
     private fun chapter(

@@ -13,6 +13,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import eu.kanade.presentation.category.CategoryScreen
+import eu.kanade.presentation.category.FolderAmbience
 import eu.kanade.presentation.category.components.CategoryCreateDialog
 import eu.kanade.presentation.category.components.CategoryDeleteDialog
 import eu.kanade.presentation.category.components.CategoryRenameDialog
@@ -20,7 +21,9 @@ import eu.kanade.presentation.category.folderStyle
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.flow.collectLatest
+import mihon.app.di.appGraph
 import tachiyomi.presentation.core.screens.LoadingScreen
+import tachiyomi.presentation.core.util.collectAsState
 
 class CategoryScreen(
     private val openCreateDialog: Boolean = false,
@@ -33,6 +36,9 @@ class CategoryScreen(
         val viewModel = metroViewModel<CategoryViewModel>()
 
         val state by viewModel.state.collectAsStateWithLifecycle()
+        // OracleRead: folders never restyled show the app theme's own effect, so their dialogs start on it
+        val appTheme by context.appGraph.uiPreferences.appTheme.collectAsState()
+        val themeAmbience = FolderAmbience.forAppTheme(appTheme)
 
         if (state is CategoryScreenState.Loading) {
             LoadingScreen()
@@ -65,11 +71,12 @@ class CategoryScreen(
                 CategoryCreateDialog(
                     onDismissRequest = viewModel::dismissDialog,
                     onCreate = viewModel::createCategory,
+                    defaultTheme = themeAmbience.key,
                     categories = successState.categories.fastMap { it.name },
                 )
             }
             is CategoryDialog.Rename -> {
-                val folderStyle = dialog.category.folderStyle(successState.folderStyles)
+                val folderStyle = dialog.category.folderStyle(successState.folderStyles, themeAmbience)
                 CategoryRenameDialog(
                     onDismissRequest = viewModel::dismissDialog,
                     onRename = { name, color, icon, theme ->

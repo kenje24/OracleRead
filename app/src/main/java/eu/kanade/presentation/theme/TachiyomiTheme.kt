@@ -8,19 +8,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import eu.kanade.domain.ui.model.AppTheme
+import eu.kanade.presentation.theme.colorscheme.AbyssalBloomColorScheme
 import eu.kanade.presentation.theme.colorscheme.BaseColorScheme
 import eu.kanade.presentation.theme.colorscheme.CatppuccinColorScheme
 import eu.kanade.presentation.theme.colorscheme.GreenAppleColorScheme
+import eu.kanade.presentation.theme.colorscheme.KoiGardenColorScheme
 import eu.kanade.presentation.theme.colorscheme.LavenderColorScheme
 import eu.kanade.presentation.theme.colorscheme.MidnightDuskColorScheme
 import eu.kanade.presentation.theme.colorscheme.MonetColorScheme
 import eu.kanade.presentation.theme.colorscheme.MonochromeColorScheme
+import eu.kanade.presentation.theme.colorscheme.NeonAlleyColorScheme
 import eu.kanade.presentation.theme.colorscheme.NordColorScheme
 import eu.kanade.presentation.theme.colorscheme.OracleColorScheme
+import eu.kanade.presentation.theme.colorscheme.PaperCranesColorScheme
+import eu.kanade.presentation.theme.colorscheme.ScreentoneColorScheme
 import eu.kanade.presentation.theme.colorscheme.StrawberryColorScheme
 import eu.kanade.presentation.theme.colorscheme.TachiyomiColorScheme
 import eu.kanade.presentation.theme.colorscheme.TakoColorScheme
 import eu.kanade.presentation.theme.colorscheme.TealTurqoiseColorScheme
+import eu.kanade.presentation.theme.colorscheme.TempestColorScheme
 import eu.kanade.presentation.theme.colorscheme.TidalWaveColorScheme
 import eu.kanade.presentation.theme.colorscheme.TokyoNightColorScheme
 import eu.kanade.presentation.theme.colorscheme.YinYangColorScheme
@@ -93,7 +99,8 @@ private fun getThemeColorScheme(
     )
 }
 
-private val colorSchemes: Map<AppTheme, BaseColorScheme> = mapOf(
+// Internal so tests can check every theme has its own colors
+internal val colorSchemes: Map<AppTheme, BaseColorScheme> = mapOf(
     AppTheme.ORACLE to OracleColorScheme,
     AppTheme.DEFAULT to TachiyomiColorScheme,
     AppTheme.CATPPUCCIN to CatppuccinColorScheme,
@@ -111,6 +118,12 @@ private val colorSchemes: Map<AppTheme, BaseColorScheme> = mapOf(
     AppTheme.AURORA_MOTES to NordColorScheme,
     AppTheme.INK_RAIN to MonochromeColorScheme,
     AppTheme.STAR_DUST to MidnightDuskColorScheme,
+    AppTheme.KOI_GARDEN to KoiGardenColorScheme,
+    AppTheme.ABYSSAL_BLOOM to AbyssalBloomColorScheme,
+    AppTheme.PAPER_CRANES to PaperCranesColorScheme,
+    AppTheme.TEMPEST to TempestColorScheme,
+    AppTheme.NEON_ALLEY to NeonAlleyColorScheme,
+    AppTheme.SCREENTONE to ScreentoneColorScheme,
     AppTheme.TAKO to TakoColorScheme,
     AppTheme.TEALTURQUOISE to TealTurqoiseColorScheme,
     AppTheme.TIDAL_WAVE to TidalWaveColorScheme,

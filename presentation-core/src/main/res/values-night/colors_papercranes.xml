@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OracleRead Paper Cranes (dark). Mirrors PaperCranesColorScheme.kt -->
+<resources>
+    <color name="papercranes_primary">#E8DFD0</color>
+    <color name="papercranes_onPrimary">#33312E</color>
+    <color name="papercranes_primaryContainer">#45423F</color>
+    <color name="papercranes_onPrimaryContainer">#F6F3ED</color>
+    <color name="papercranes_inversePrimary">#807B72</color>
+    <color name="papercranes_secondary">#93A3DC</color>
+    <color name="papercranes_onSecondary">#202430</color>
+    <color name="papercranes_secondaryContainer">#313342</color>
+    <color name="papercranes_onSecondaryContainer">#D6DCF2</color>
+    <color name="papercranes_tertiary">#EC7480</color>
+    <color name="papercranes_onTertiary">#341A1C</color>
+    <color name="papercranes_tertiaryContainer">#46282C</color>
+    <color name="papercranes_onTertiaryContainer">#F8CACF</color>
+    <color name="papercranes_error">#FFB4AB</color>
+    <color name="papercranes_onError">#690005</color>
+    <color name="papercranes_errorContainer">#93000A</color>
+    <color name="papercranes_onErrorContainer">#FFDAD6</color>
+    <color name="papercranes_background">#121011</color>
+    <color name="papercranes_onBackground">#F1EDE7</color>
+    <color name="papercranes_surface">#121011</color>
+    <color name="papercranes_onSurface">#F1EDE7</color>
+    <color name="papercranes_surfaceVariant">#272524</color>
+    <color name="papercranes_onSurfaceVariant">#AEABA7</color>
+    <color name="papercranes_inverseSurface">#F1EDE7</color>
+    <color name="papercranes_inverseOnSurface">#252324</color>
+    <color name="papercranes_outline">#706D6B</color>
+    <color name="papercranes_outlineVariant">#363333</color>
+    <color name="papercranes_scrim">#000000</color>
+    <color name="papercranes_surfaceDim">#121011</color>
+    <color name="papercranes_surfaceBright">#333131</color>
+    <color name="papercranes_surfaceContainerLowest">#0B0A0A</color>
+    <color name="papercranes_surfaceContainerLow">#1A1818</color>
+    <color name="papercranes_surfaceContainer">#1E1C1D</color>
+    <color name="papercranes_surfaceContainerHigh">#252323</color>
+    <color name="papercranes_surfaceContainerHighest">#2D2B2B</color>
+</resources>

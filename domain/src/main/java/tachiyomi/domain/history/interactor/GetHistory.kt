@@ -18,4 +18,9 @@ class GetHistory(
     fun subscribe(query: String): Flow<List<HistoryWithRelations>> {
         return repository.getHistory(query)
     }
+
+    /** OracleRead: the chapter of [mangaId] read most recently, or null before anything is read. */
+    fun subscribeLastReadChapterId(mangaId: Long): Flow<Long?> {
+        return repository.getLastReadChapterId(mangaId)
+    }
 }

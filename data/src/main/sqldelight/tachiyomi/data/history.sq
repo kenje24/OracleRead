@@ -26,6 +26,13 @@ FROM history
 WHERE manga_id IN :mangaIds
 ORDER BY manga_id, id;
 
+getLastReadChapterIdByMangaId:
+SELECT chapter_id
+FROM history
+WHERE manga_id = :mangaId AND read_at IS NOT NULL AND read_at > 0
+ORDER BY read_at DESC, id DESC
+LIMIT 1;
+
 resetHistoryById:
 UPDATE history
 SET read_at = NULL

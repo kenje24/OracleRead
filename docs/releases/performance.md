@@ -1,4 +1,4 @@
-# OracleRead 1.4.1 performance measurements
+# OracleRead performance measurements
 
 Measured on 2026-10-28 on one Android 15 (API 35) x86_64 emulator, 1080x2400 at 420 dpi, Skia (OpenGL) on emulated
 graphics. The library held 18 local test titles in two folders. Each run cold-starts the Library tab, waits 3 s, then
@@ -47,3 +47,23 @@ lightest setting.
 
 Raw numbers for each run are kept with the release's QA evidence. The empty-histogram value `4950ms` in raw
 `gfxinfo` output is Android's marker for "no frames drawn", not a slow frame.
+
+## 1.4.2: the new effects
+
+Same emulator and method. Every new effect redraws on the shared 30-per-second clock, so the idle screen costs the
+same as 1.4.1 whichever effect is on. Measured with the Screentone theme active:
+
+| Folder background | Idle frames in 10 s | Idle frame time p50 / p95 / p99 | Scroll frame time p50 / p95 / p99 |
+|---|---|---|---|
+| Lantern | 302 | 17 / 19 / 19 ms | 22 / 34 / 57 ms |
+| None | 302 | 17 / 19 / 19 ms | 22 / 32 / 53 ms |
+| Screentone | 303 | 17 / 19 / 19 ms | 26 / 36 / 57 ms |
+| Glyph Rain | 302 | 17 / 19 / 19 ms | 24 / 34 / 48 ms |
+| Koi Pond | 302 | 17 / 18 / 19 ms | 22 / 32 / 53 ms |
+| Jellyfish | 302 | 17 / 18 / 19 ms | 23 / 34 / 53 ms |
+
+Scroll p99 varies by about 10 ms between identical runs on this emulator, so differences that small are noise.
+
+Screentone was first measured at a scroll p99 of 77 ms, because it worked out two sines and a distance for every dot
+on every frame. Its dot positions, tones and wave phases are now computed once per size, and each frame only combines
+them with the sine and cosine of the time; with slightly wider dot spacing it scrolls like Lantern.

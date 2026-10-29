@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.core.preference.asToggleableState
+import eu.kanade.presentation.category.FolderAmbience
 import eu.kanade.presentation.category.FolderStyleDefaults
 import eu.kanade.presentation.category.folderIconForKey
 import eu.kanade.presentation.category.visualName
@@ -52,11 +53,12 @@ fun CategoryCreateDialog(
     onDismissRequest: () -> Unit,
     onCreate: (name: String, color: Long, icon: String, theme: String) -> Unit,
     categories: List<String>,
+    defaultTheme: String = FolderStyleDefaults.DEFAULT_THEME,
 ) {
     var name by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf(FolderStyleDefaults.colorOptions.first()) }
     var selectedIcon by remember { mutableStateOf(FolderStyleDefaults.DEFAULT_ICON) }
-    var selectedTheme by remember { mutableStateOf(FolderStyleDefaults.DEFAULT_THEME) }
+    var selectedTheme by remember { mutableStateOf(defaultTheme) }
 
     val focusRequester = remember { FocusRequester() }
     val nameAlreadyExists = remember(name) { categories.contains(name) }
@@ -274,7 +276,8 @@ private fun FolderForm(
             FolderStyleDefaults.themeOptions.forEach { ambience ->
                 FilterChip(
                     selected = selectedTheme == ambience.key,
-                    onClick = { onThemeSelected(ambience.key) },
+                    // Tapping the selected background again turns the background off
+                    onClick = { onThemeSelected(FolderAmbience.toggledKey(selectedTheme, ambience.key)) },
                     label = { Text(text = stringResource(ambience.label)) },
                 )
             }

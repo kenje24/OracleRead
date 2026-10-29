@@ -49,7 +49,7 @@ internal fun LibraryAmbientBackground(
     )
 }
 
-private interface AmbientScene {
+internal interface AmbientScene {
     fun DrawScope.draw(seconds: Float)
 }
 
@@ -58,7 +58,7 @@ private fun CacheDrawScope.ambientScene(ambience: FolderAmbience): AmbientScene 
     FolderAmbience.CONSTELLATIONS -> ConstellationScene(this)
     FolderAmbience.ECLIPSE -> EclipseScene(this)
     FolderAmbience.SILK_RIBBONS -> SilkRibbonScene(this)
-    else -> ParticleScene(ambience)
+    else -> themedAmbientScene(ambience) ?: ParticleScene(ambience)
 }
 
 private val Gold = Color(0xFFE9C987)

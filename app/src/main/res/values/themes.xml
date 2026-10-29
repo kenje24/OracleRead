@@ -324,6 +324,241 @@
         <item name="colorSurfaceContainerLowest">@color/midnightdusk_surfaceContainerLowest</item>
     </style>
 
+    <!--== OracleRead Koi Garden Theme ==-->
+    <style name="Theme.Tachiyomi.KoiGarden">
+        <!-- Theme Colors -->
+        <item name="colorPrimary">@color/koigarden_primary</item>
+        <item name="colorOnPrimary">@color/koigarden_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/koigarden_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/koigarden_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/koigarden_inversePrimary</item>
+        <item name="colorSecondary">@color/koigarden_secondary</item>
+        <item name="colorOnSecondary">@color/koigarden_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/koigarden_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/koigarden_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/koigarden_tertiary</item>
+        <item name="colorOnTertiary">@color/koigarden_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/koigarden_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/koigarden_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/koigarden_background</item>
+        <item name="colorOnBackground">@color/koigarden_onBackground</item>
+        <item name="colorSurface">@color/koigarden_surface</item>
+        <item name="colorOnSurface">@color/koigarden_onSurface</item>
+        <item name="colorSurfaceVariant">@color/koigarden_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/koigarden_onSurfaceVariant</item>
+        <item name="colorSurfaceInverse">@color/koigarden_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/koigarden_inverseOnSurface</item>
+        <item name="colorError">@color/koigarden_error</item>
+        <item name="colorOnError">@color/koigarden_onError</item>
+        <item name="colorErrorContainer">@color/koigarden_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/koigarden_onErrorContainer</item>
+        <item name="colorOutline">@color/koigarden_outline</item>
+        <item name="colorOutlineVariant">@color/koigarden_outlineVariant</item>
+        <item name="scrimBackground">@color/koigarden_scrim</item>
+        <item name="colorSurfaceBright">@color/koigarden_surfaceBright</item>
+        <item name="colorSurfaceDim">@color/koigarden_surfaceDim</item>
+        <item name="colorSurfaceContainer">@color/koigarden_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/koigarden_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/koigarden_surfaceContainerHighest</item>
+        <item name="colorSurfaceContainerLow">@color/koigarden_surfaceContainerLow</item>
+        <item name="colorSurfaceContainerLowest">@color/koigarden_surfaceContainerLowest</item>
+    </style>
+    <!--== OracleRead Abyssal Bloom Theme ==-->
+    <style name="Theme.Tachiyomi.AbyssalBloom">
+        <!-- Theme Colors -->
+        <item name="colorPrimary">@color/abyssalbloom_primary</item>
+        <item name="colorOnPrimary">@color/abyssalbloom_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/abyssalbloom_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/abyssalbloom_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/abyssalbloom_inversePrimary</item>
+        <item name="colorSecondary">@color/abyssalbloom_secondary</item>
+        <item name="colorOnSecondary">@color/abyssalbloom_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/abyssalbloom_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/abyssalbloom_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/abyssalbloom_tertiary</item>
+        <item name="colorOnTertiary">@color/abyssalbloom_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/abyssalbloom_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/abyssalbloom_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/abyssalbloom_background</item>
+        <item name="colorOnBackground">@color/abyssalbloom_onBackground</item>
+        <item name="colorSurface">@color/abyssalbloom_surface</item>
+        <item name="colorOnSurface">@color/abyssalbloom_onSurface</item>
+        <item name="colorSurfaceVariant">@color/abyssalbloom_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/abyssalbloom_onSurfaceVariant</item>
+        <item name="colorSurfaceInverse">@color/abyssalbloom_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/abyssalbloom_inverseOnSurface</item>
+        <item name="colorError">@color/abyssalbloom_error</item>
+        <item name="colorOnError">@color/abyssalbloom_onError</item>
+        <item name="colorErrorContainer">@color/abyssalbloom_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/abyssalbloom_onErrorContainer</item>
+        <item name="colorOutline">@color/abyssalbloom_outline</item>
+        <item name="colorOutlineVariant">@color/abyssalbloom_outlineVariant</item>
+        <item name="scrimBackground">@color/abyssalbloom_scrim</item>
+        <item name="colorSurfaceBright">@color/abyssalbloom_surfaceBright</item>
+        <item name="colorSurfaceDim">@color/abyssalbloom_surfaceDim</item>
+        <item name="colorSurfaceContainer">@color/abyssalbloom_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/abyssalbloom_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/abyssalbloom_surfaceContainerHighest</item>
+        <item name="colorSurfaceContainerLow">@color/abyssalbloom_surfaceContainerLow</item>
+        <item name="colorSurfaceContainerLowest">@color/abyssalbloom_surfaceContainerLowest</item>
+    </style>
+    <!--== OracleRead Paper Cranes Theme ==-->
+    <style name="Theme.Tachiyomi.PaperCranes">
+        <!-- Theme Colors -->
+        <item name="colorPrimary">@color/papercranes_primary</item>
+        <item name="colorOnPrimary">@color/papercranes_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/papercranes_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/papercranes_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/papercranes_inversePrimary</item>
+        <item name="colorSecondary">@color/papercranes_secondary</item>
+        <item name="colorOnSecondary">@color/papercranes_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/papercranes_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/papercranes_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/papercranes_tertiary</item>
+        <item name="colorOnTertiary">@color/papercranes_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/papercranes_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/papercranes_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/papercranes_background</item>
+        <item name="colorOnBackground">@color/papercranes_onBackground</item>
+        <item name="colorSurface">@color/papercranes_surface</item>
+        <item name="colorOnSurface">@color/papercranes_onSurface</item>
+        <item name="colorSurfaceVariant">@color/papercranes_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/papercranes_onSurfaceVariant</item>
+        <item name="colorSurfaceInverse">@color/papercranes_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/papercranes_inverseOnSurface</item>
+        <item name="colorError">@color/papercranes_error</item>
+        <item name="colorOnError">@color/papercranes_onError</item>
+        <item name="colorErrorContainer">@color/papercranes_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/papercranes_onErrorContainer</item>
+        <item name="colorOutline">@color/papercranes_outline</item>
+        <item name="colorOutlineVariant">@color/papercranes_outlineVariant</item>
+        <item name="scrimBackground">@color/papercranes_scrim</item>
+        <item name="colorSurfaceBright">@color/papercranes_surfaceBright</item>
+        <item name="colorSurfaceDim">@color/papercranes_surfaceDim</item>
+        <item name="colorSurfaceContainer">@color/papercranes_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/papercranes_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/papercranes_surfaceContainerHighest</item>
+        <item name="colorSurfaceContainerLow">@color/papercranes_surfaceContainerLow</item>
+        <item name="colorSurfaceContainerLowest">@color/papercranes_surfaceContainerLowest</item>
+    </style>
+    <!--== OracleRead Tempest Theme ==-->
+    <style name="Theme.Tachiyomi.Tempest">
+        <!-- Theme Colors -->
+        <item name="colorPrimary">@color/tempest_primary</item>
+        <item name="colorOnPrimary">@color/tempest_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/tempest_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/tempest_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/tempest_inversePrimary</item>
+        <item name="colorSecondary">@color/tempest_secondary</item>
+        <item name="colorOnSecondary">@color/tempest_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/tempest_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/tempest_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/tempest_tertiary</item>
+        <item name="colorOnTertiary">@color/tempest_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/tempest_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/tempest_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/tempest_background</item>
+        <item name="colorOnBackground">@color/tempest_onBackground</item>
+        <item name="colorSurface">@color/tempest_surface</item>
+        <item name="colorOnSurface">@color/tempest_onSurface</item>
+        <item name="colorSurfaceVariant">@color/tempest_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/tempest_onSurfaceVariant</item>
+        <item name="colorSurfaceInverse">@color/tempest_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/tempest_inverseOnSurface</item>
+        <item name="colorError">@color/tempest_error</item>
+        <item name="colorOnError">@color/tempest_onError</item>
+        <item name="colorErrorContainer">@color/tempest_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/tempest_onErrorContainer</item>
+        <item name="colorOutline">@color/tempest_outline</item>
+        <item name="colorOutlineVariant">@color/tempest_outlineVariant</item>
+        <item name="scrimBackground">@color/tempest_scrim</item>
+        <item name="colorSurfaceBright">@color/tempest_surfaceBright</item>
+        <item name="colorSurfaceDim">@color/tempest_surfaceDim</item>
+        <item name="colorSurfaceContainer">@color/tempest_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/tempest_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/tempest_surfaceContainerHighest</item>
+        <item name="colorSurfaceContainerLow">@color/tempest_surfaceContainerLow</item>
+        <item name="colorSurfaceContainerLowest">@color/tempest_surfaceContainerLowest</item>
+    </style>
+    <!--== OracleRead Neon Alley Theme ==-->
+    <style name="Theme.Tachiyomi.NeonAlley">
+        <!-- Theme Colors -->
+        <item name="colorPrimary">@color/neonalley_primary</item>
+        <item name="colorOnPrimary">@color/neonalley_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/neonalley_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/neonalley_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/neonalley_inversePrimary</item>
+        <item name="colorSecondary">@color/neonalley_secondary</item>
+        <item name="colorOnSecondary">@color/neonalley_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/neonalley_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/neonalley_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/neonalley_tertiary</item>
+        <item name="colorOnTertiary">@color/neonalley_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/neonalley_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/neonalley_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/neonalley_background</item>
+        <item name="colorOnBackground">@color/neonalley_onBackground</item>
+        <item name="colorSurface">@color/neonalley_surface</item>
+        <item name="colorOnSurface">@color/neonalley_onSurface</item>
+        <item name="colorSurfaceVariant">@color/neonalley_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/neonalley_onSurfaceVariant</item>
+        <item name="colorSurfaceInverse">@color/neonalley_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/neonalley_inverseOnSurface</item>
+        <item name="colorError">@color/neonalley_error</item>
+        <item name="colorOnError">@color/neonalley_onError</item>
+        <item name="colorErrorContainer">@color/neonalley_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/neonalley_onErrorContainer</item>
+        <item name="colorOutline">@color/neonalley_outline</item>
+        <item name="colorOutlineVariant">@color/neonalley_outlineVariant</item>
+        <item name="scrimBackground">@color/neonalley_scrim</item>
+        <item name="colorSurfaceBright">@color/neonalley_surfaceBright</item>
+        <item name="colorSurfaceDim">@color/neonalley_surfaceDim</item>
+        <item name="colorSurfaceContainer">@color/neonalley_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/neonalley_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/neonalley_surfaceContainerHighest</item>
+        <item name="colorSurfaceContainerLow">@color/neonalley_surfaceContainerLow</item>
+        <item name="colorSurfaceContainerLowest">@color/neonalley_surfaceContainerLowest</item>
+    </style>
+    <!--== OracleRead Screentone Theme ==-->
+    <style name="Theme.Tachiyomi.Screentone">
+        <!-- Theme Colors -->
+        <item name="colorPrimary">@color/screentone_primary</item>
+        <item name="colorOnPrimary">@color/screentone_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/screentone_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/screentone_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/screentone_inversePrimary</item>
+        <item name="colorSecondary">@color/screentone_secondary</item>
+        <item name="colorOnSecondary">@color/screentone_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/screentone_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/screentone_onSecondaryContainer</item>
+        <item name="colorTertiary">@color/screentone_tertiary</item>
+        <item name="colorOnTertiary">@color/screentone_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/screentone_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/screentone_onTertiaryContainer</item>
+        <item name="android:colorBackground">@color/screentone_background</item>
+        <item name="colorOnBackground">@color/screentone_onBackground</item>
+        <item name="colorSurface">@color/screentone_surface</item>
+        <item name="colorOnSurface">@color/screentone_onSurface</item>
+        <item name="colorSurfaceVariant">@color/screentone_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/screentone_onSurfaceVariant</item>
+        <item name="colorSurfaceInverse">@color/screentone_inverseSurface</item>
+        <item name="colorOnSurfaceInverse">@color/screentone_inverseOnSurface</item>
+        <item name="colorError">@color/screentone_error</item>
+        <item name="colorOnError">@color/screentone_onError</item>
+        <item name="colorErrorContainer">@color/screentone_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/screentone_onErrorContainer</item>
+        <item name="colorOutline">@color/screentone_outline</item>
+        <item name="colorOutlineVariant">@color/screentone_outlineVariant</item>
+        <item name="scrimBackground">@color/screentone_scrim</item>
+        <item name="colorSurfaceBright">@color/screentone_surfaceBright</item>
+        <item name="colorSurfaceDim">@color/screentone_surfaceDim</item>
+        <item name="colorSurfaceContainer">@color/screentone_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/screentone_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/screentone_surfaceContainerHighest</item>
+        <item name="colorSurfaceContainerLow">@color/screentone_surfaceContainerLow</item>
+        <item name="colorSurfaceContainerLowest">@color/screentone_surfaceContainerLowest</item>
+    </style>
+
     <!--== Strawberry Daiquiri Theme ==-->
     <style name="Theme.Tachiyomi.StrawberryDaiquiri">
         <!-- Theme Colors -->

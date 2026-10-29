@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OracleRead Neon Alley (dark). Mirrors NeonAlleyColorScheme.kt -->
+<resources>
+    <color name="neonalley_primary">#FF62D0</color>
+    <color name="neonalley_onPrimary">#38162E</color>
+    <color name="neonalley_primaryContainer">#461D40</color>
+    <color name="neonalley_onPrimaryContainer">#FFC3ED</color>
+    <color name="neonalley_inversePrimary">#8C3672</color>
+    <color name="neonalley_secondary">#45E0FF</color>
+    <color name="neonalley_onSecondary">#0F3138</color>
+    <color name="neonalley_secondaryContainer">#193B4B</color>
+    <color name="neonalley_onSecondaryContainer">#B8F3FF</color>
+    <color name="neonalley_tertiary">#AE91FF</color>
+    <color name="neonalley_onTertiary">#262038</color>
+    <color name="neonalley_tertiaryContainer">#32284B</color>
+    <color name="neonalley_onTertiaryContainer">#E0D5FF</color>
+    <color name="neonalley_error">#FFB4AB</color>
+    <color name="neonalley_onError">#690005</color>
+    <color name="neonalley_errorContainer">#93000A</color>
+    <color name="neonalley_onErrorContainer">#FFDAD6</color>
+    <color name="neonalley_background">#0B0712</color>
+    <color name="neonalley_onBackground">#F3E6E7</color>
+    <color name="neonalley_surface">#0B0712</color>
+    <color name="neonalley_onSurface">#F3E6E7</color>
+    <color name="neonalley_surfaceVariant">#231025</color>
+    <color name="neonalley_onSurfaceVariant">#ADA3A7</color>
+    <color name="neonalley_inverseSurface">#F3E6E7</color>
+    <color name="neonalley_inverseOnSurface">#1F1B25</color>
+    <color name="neonalley_outline">#6C656B</color>
+    <color name="neonalley_outlineVariant">#302B34</color>
+    <color name="neonalley_scrim">#000000</color>
+    <color name="neonalley_surfaceDim">#0B0712</color>
+    <color name="neonalley_surfaceBright">#2E2832</color>
+    <color name="neonalley_surfaceContainerLowest">#07040B</color>
+    <color name="neonalley_surfaceContainerLow">#130F19</color>
+    <color name="neonalley_surfaceContainer">#18131E</color>
+    <color name="neonalley_surfaceContainerHigh">#1F1A24</color>
+    <color name="neonalley_surfaceContainerHighest">#27222C</color>
+</resources>

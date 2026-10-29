@@ -137,7 +137,7 @@ class MangaStateChaptersTest {
     }
 
     @Test
-    fun `latest opens the newest chapter in source order whatever the sorting, filters and read state`() {
+    fun `recent opens the chapter read most recently whatever the sorting, filters and read state`() {
         val state = state(
             chapters = listOf(
                 item(id = 1, number = 1.0, sourceOrder = 2),
@@ -145,36 +145,44 @@ class MangaStateChaptersTest {
                 item(id = 3, number = 2.0, sourceOrder = 1),
             ),
             chapterFlags = Manga.CHAPTER_SORTING_NUMBER or Manga.CHAPTER_SORT_ASC or Manga.CHAPTER_SHOW_UNREAD,
+            lastReadChapterId = 2,
         )
 
         assertEquals(listOf(1L, 3L), state.processedChapters.map { it.id })
-        assertEquals(2L, state.latestChapter?.id)
-        assertEquals(2L, state.copy(hideDecimalChapters = true).latestChapter?.id)
+        assertEquals(2L, state.recentChapter?.id)
+        assertEquals(1L, state.nextUnreadChapter?.id)
+        assertEquals(1L, state.copy(lastReadChapterId = 1).recentChapter?.id)
     }
 
     @Test
-    fun `latest opens the shown copy of the newest chapter when duplicates are hidden`() {
+    fun `recent opens the copy that was read even when duplicates or decimals are hidden`() {
         val state = state(
             chapters = listOf(
-                item(id = 1, number = 3.0, sourceOrder = 0),
-                item(id = 2, number = 3.0, sourceOrder = 1, downloadState = Download.State.DOWNLOADED),
-                item(id = 3, number = 2.0, sourceOrder = 2),
+                item(id = 1, number = 3.0, sourceOrder = 0, read = true),
+                item(id = 2, number = 3.0, sourceOrder = 1),
+                item(id = 3, number = 2.5, sourceOrder = 2),
             ),
+            hideDuplicateChapters = true,
+            lastReadChapterId = 2,
         )
 
-        assertEquals(1L, state.latestChapter?.id)
-        assertEquals(2L, state.copy(hideDuplicateChapters = true).latestChapter?.id)
+        assertEquals(2L, state.recentChapter?.id)
+        assertEquals(3L, state.copy(hideDecimalChapters = true, lastReadChapterId = 3).recentChapter?.id)
     }
 
     @Test
-    fun `latest is absent without chapters`() {
-        assertNull(state(chapters = emptyList()).latestChapter)
+    fun `recent is absent without reading history or when the chapter is gone`() {
+        val chapters = listOf(item(id = 1, number = 1.0, sourceOrder = 0))
+        assertNull(state(chapters = chapters).recentChapter)
+        assertNull(state(chapters = chapters, lastReadChapterId = 9).recentChapter)
+        assertNull(state(chapters = emptyList(), lastReadChapterId = 1).recentChapter)
     }
 
     private fun state(
         chapters: List<ChapterList.Item>,
         chapterFlags: Long = Manga.CHAPTER_SORTING_SOURCE or Manga.CHAPTER_SORT_DESC,
         hideDuplicateChapters: Boolean = false,
+        lastReadChapterId: Long? = null,
     ) = MangaViewModel.State.Success(
         manga = Manga.create().copy(id = 1, source = 1, chapterFlags = chapterFlags),
         source = StubSource(id = 1, lang = "en", name = "Test"),
@@ -184,6 +192,7 @@ class MangaStateChaptersTest {
         excludedScanlators = emptySet(),
         hideMissingChapters = true,
         hideDuplicateChapters = hideDuplicateChapters,
+        lastReadChapterId = lastReadChapterId,
     )
 
     private fun item(

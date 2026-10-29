@@ -10,6 +10,29 @@ The format is a modified version of [Keep a Changelog](https://keepachangelog.co
 - `Fixed` - for any bug fixes.
 - `Other` - for technical stuff.
 
+## OracleRead [1.4.2] - 2026-10-29
+OracleRead 1.4.2 updates in place over 1.4.1 and 1.4.0 (same signing key), so no backup and reinstall is needed.
+
+### Added
+- **Six new themes, each with a background effect of its own**: **Koi Garden** (koi circling a moonlit pond under
+  lily pads), **Abyssal Bloom** (bioluminescent jellyfish rising through marine snow), **Paper Cranes** (origami cranes
+  gliding on slow wingbeats), **Tempest** (rain, rolling clouds and a soft fork of lightning), **Neon Alley** (neon
+  katakana rain) and **Screentone** (a manga halftone swelling in waves, framed by speed lines). Each has its own dark
+  and light colors.
+- **Eight new folder backgrounds**: Koi Pond, Jellyfish, Paper Cranes, Thunderstorm, Glyph Rain, Screentone, Meteor
+  Shower and Fireflies.
+
+### Changed
+- The button above Resume is now **Last read**: it opens the chapter you read most recently, at the page you left,
+  instead of the newest chapter.
+- Tapping a folder's selected background again turns the background off (None).
+- Folders whose style you never changed now show the app theme's own background, so a new theme is visible right away.
+
+### Fixed
+- Reading no longer goes through hidden chapters: with **Hide decimal chapters** on, moving to the next or previous
+  chapter in the reader skips decimal chapters (e.g. 12.5) like the chapter list does, together with hidden duplicate
+  copies. The library's continue-reading button skips them too.
+
 ## OracleRead [1.4.1] - 2026-10-28
 OracleRead 1.4.1 updates in place over 1.4.0 (same signing key), so no backup and reinstall is needed.
 
@@ -19,7 +42,7 @@ OracleRead 1.4.1 updates in place over 1.4.0 (same signing key), so no backup an
   chapters without a number (extras, specials) alone. Turn it on per manga from the chapter menu (⋮), or for every
   manga in Settings → Library. Resume and the reader follow the same list.
 - **Latest** button above Resume on a manga's page: opens the newest chapter as the source lists it, whatever the
-  list's sorting, filters or read state.
+  list's sorting, filters or read state. (Replaced by Last read in 1.4.2.)
 - **Folder backgrounds**: a **None** option, which draws nothing and also holds the home aurora still behind that
   folder, and four new designs: **Ink Tide**, **Constellations**, **Eclipse Halo** and **Silk Ribbons**. Existing
   folder styles are kept.

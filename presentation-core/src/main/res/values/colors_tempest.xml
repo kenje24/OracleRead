@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OracleRead Tempest (light). Mirrors TempestColorScheme.kt -->
+<resources>
+    <color name="tempest_primary">#374DB6</color>
+    <color name="tempest_onPrimary">#FFFFFF</color>
+    <color name="tempest_primaryContainer">#DBDFF2</color>
+    <color name="tempest_onPrimaryContainer">#151D45</color>
+    <color name="tempest_inversePrimary">#A5AFDE</color>
+    <color name="tempest_secondary">#475B70</color>
+    <color name="tempest_onSecondary">#FFFFFF</color>
+    <color name="tempest_secondaryContainer">#DEE1E5</color>
+    <color name="tempest_onSecondaryContainer">#1B232B</color>
+    <color name="tempest_tertiary">#006777</color>
+    <color name="tempest_onTertiary">#FFFFFF</color>
+    <color name="tempest_tertiaryContainer">#D1E4E7</color>
+    <color name="tempest_onTertiaryContainer">#00272D</color>
+    <color name="tempest_error">#BA1A1A</color>
+    <color name="tempest_onError">#FFFFFF</color>
+    <color name="tempest_errorContainer">#FFDAD6</color>
+    <color name="tempest_onErrorContainer">#410002</color>
+    <color name="tempest_background">#F2F4F8</color>
+    <color name="tempest_onBackground">#1C1F2B</color>
+    <color name="tempest_surface">#F2F4F8</color>
+    <color name="tempest_onSurface">#1C1F2B</color>
+    <color name="tempest_surfaceVariant">#E3E7F3</color>
+    <color name="tempest_onSurfaceVariant">#585B64</color>
+    <color name="tempest_inverseSurface">#313440</color>
+    <color name="tempest_inverseOnSurface">#E7E9EE</color>
+    <color name="tempest_outline">#8B8E96</color>
+    <color name="tempest_outlineVariant">#C7C9CF</color>
+    <color name="tempest_scrim">#000000</color>
+    <color name="tempest_surfaceDim">#DDDFE4</color>
+    <color name="tempest_surfaceBright">#F8FAFC</color>
+    <color name="tempest_surfaceContainerLowest">#FFFFFF</color>
+    <color name="tempest_surfaceContainerLow">#ECEEF2</color>
+    <color name="tempest_surfaceContainer">#E7E9EE</color>
+    <color name="tempest_surfaceContainerHigh">#E2E4E9</color>
+    <color name="tempest_surfaceContainerHighest">#DDDFE4</color>
+</resources>

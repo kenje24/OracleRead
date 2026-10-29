@@ -31,32 +31,36 @@ OracleRead also adds:
 - folder styles with ambient backgrounds (or none)
 - source shortcuts
 - hiding decimal and duplicate chapters
-- a Latest button above Resume
+- a Last read button above Resume
+- themes with background effects of their own
 - a compact navigation mode
 
 It stays in sync with Mihon; the latest sync is described in [docs/sync-notes.md](docs/sync-notes.md).
 
-## What's new in 1.4.1
+## What's new in 1.4.2
 
-Full notes: [docs/releases/2026-10-28-v1.4.1.md](docs/releases/2026-10-28-v1.4.1.md).
+Full notes: [docs/releases/2026-10-29-v1.4.2.md](docs/releases/2026-10-29-v1.4.2.md).
 
-- **Hide duplicate chapters**, per manga or globally. Nothing is deleted; the copy you're reading or have read is kept.
-- **Latest** opens the newest chapter, right above Resume.
-- **Incognito and the reading streak** moved to the right of the greeting.
-- **Folder backgrounds**: None, plus Ink Tide, Constellations, Eclipse Halo and Silk Ribbons.
-- **Smoother home**: ambient motion shares one 30-per-second clock and stops when hidden.
+- **Six new themes**, each with its own colors and background effect: Koi Garden, Abyssal Bloom, Paper Cranes,
+  Tempest, Neon Alley and Screentone.
+- **Eight new folder backgrounds**: Koi Pond, Jellyfish, Paper Cranes, Thunderstorm, Glyph Rain, Screentone, Meteor
+  Shower and Fireflies. Tap the selected one again to turn it off.
+- **Last read** above Resume opens the chapter you read most recently.
+- **Reading skips hidden chapters**: with decimal or duplicate chapters hidden, next and previous chapter go past them.
 
-| Library | Latest + Resume | Duplicates hidden |
-|---|---|---|
-| ![Library](docs/screenshots/v1.4.1/library.png) | ![Latest and Resume](docs/screenshots/v1.4.1/latest-resume.png) | ![Duplicates hidden](docs/screenshots/v1.4.1/duplicates-hidden.png) |
+| Koi Garden | Abyssal Bloom | Paper Cranes | Tempest | Neon Alley | Screentone |
+|---|---|---|---|---|---|
+| ![Koi Garden](docs/screenshots/v1.4.2/theme-koi_garden.jpg) | ![Abyssal Bloom](docs/screenshots/v1.4.2/theme-abyssal_bloom.jpg) | ![Paper Cranes](docs/screenshots/v1.4.2/theme-paper_cranes.jpg) | ![Tempest](docs/screenshots/v1.4.2/theme-tempest.jpg) | ![Neon Alley](docs/screenshots/v1.4.2/theme-neon_alley.jpg) | ![Screentone](docs/screenshots/v1.4.2/theme-screentone.jpg) |
 
-| None | Ink Tide | Constellations | Eclipse Halo | Silk Ribbons |
-|---|---|---|---|---|
-| ![None](docs/screenshots/v1.4.1/ambience-none.png) | ![Ink Tide](docs/screenshots/v1.4.1/ambience-ink_tide.png) | ![Constellations](docs/screenshots/v1.4.1/ambience-constellations.png) | ![Eclipse Halo](docs/screenshots/v1.4.1/ambience-eclipse.png) | ![Silk Ribbons](docs/screenshots/v1.4.1/ambience-silk_ribbons.png) |
+| Last read + Resume | Hidden chapters | Glyph Rain | Fireflies |
+|---|---|---|---|
+| ![Last read](docs/screenshots/v1.4.2/last-read.jpg) | ![Hidden chapters](docs/screenshots/v1.4.2/hidden-chapters.jpg) | ![Glyph Rain](docs/screenshots/v1.4.2/effect-glyph_rain.jpg) | ![Fireflies](docs/screenshots/v1.4.2/effect-fireflies.jpg) |
 
-### Previous release
+### Previous releases
 
-1.4.0 synced with Mihon and introduced the cinematic redesign. See the 1.4.0 entry in [CHANGELOG.md](CHANGELOG.md).
+- 1.4.1: hide duplicate chapters, the greeting row, folder background None plus four designs, a smoother home.
+  [Notes](docs/releases/2026-10-28-v1.4.1.md).
+- 1.4.0: synced with Mihon and introduced the cinematic redesign. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Extension Repository
 

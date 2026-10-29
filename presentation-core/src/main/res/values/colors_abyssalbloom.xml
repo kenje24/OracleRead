@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OracleRead Abyssal Bloom (light). Mirrors AbyssalBloomColorScheme.kt -->
+<resources>
+    <color name="abyssalbloom_primary">#006A67</color>
+    <color name="abyssalbloom_onPrimary">#FFFFFF</color>
+    <color name="abyssalbloom_primaryContainer">#D1E4E4</color>
+    <color name="abyssalbloom_onPrimaryContainer">#002827</color>
+    <color name="abyssalbloom_inversePrimary">#8CBCBB</color>
+    <color name="abyssalbloom_secondary">#5A44B5</color>
+    <color name="abyssalbloom_onSecondary">#FFFFFF</color>
+    <color name="abyssalbloom_secondaryContainer">#E1DDF2</color>
+    <color name="abyssalbloom_onSecondaryContainer">#221A45</color>
+    <color name="abyssalbloom_tertiary">#A2317C</color>
+    <color name="abyssalbloom_onTertiary">#FFFFFF</color>
+    <color name="abyssalbloom_tertiaryContainer">#EEDAE7</color>
+    <color name="abyssalbloom_onTertiaryContainer">#3E132F</color>
+    <color name="abyssalbloom_error">#BA1A1A</color>
+    <color name="abyssalbloom_onError">#FFFFFF</color>
+    <color name="abyssalbloom_errorContainer">#FFDAD6</color>
+    <color name="abyssalbloom_onErrorContainer">#410002</color>
+    <color name="abyssalbloom_background">#F1F6FB</color>
+    <color name="abyssalbloom_onBackground">#182125</color>
+    <color name="abyssalbloom_surface">#F1F6FB</color>
+    <color name="abyssalbloom_onSurface">#182125</color>
+    <color name="abyssalbloom_surfaceVariant">#DEEBEF</color>
+    <color name="abyssalbloom_onSurfaceVariant">#555D61</color>
+    <color name="abyssalbloom_inverseSurface">#2E363A</color>
+    <color name="abyssalbloom_inverseOnSurface">#E6EBF0</color>
+    <color name="abyssalbloom_outline">#899094</color>
+    <color name="abyssalbloom_outlineVariant">#C6CBD0</color>
+    <color name="abyssalbloom_scrim">#000000</color>
+    <color name="abyssalbloom_surfaceDim">#DBE1E6</color>
+    <color name="abyssalbloom_surfaceBright">#F8FAFD</color>
+    <color name="abyssalbloom_surfaceContainerLowest">#FFFFFF</color>
+    <color name="abyssalbloom_surfaceContainerLow">#EAF0F5</color>
+    <color name="abyssalbloom_surfaceContainer">#E6EBF0</color>
+    <color name="abyssalbloom_surfaceContainerHigh">#E1E6EB</color>
+    <color name="abyssalbloom_surfaceContainerHighest">#DBE1E6</color>
+</resources>

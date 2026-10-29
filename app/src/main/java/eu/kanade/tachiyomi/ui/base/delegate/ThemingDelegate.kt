@@ -26,7 +26,8 @@ class ThemingDelegateImpl : ThemingDelegate {
     }
 }
 
-private val themeResources: Map<AppTheme, Int> = mapOf(
+// Internal so tests can check every theme has its own View style
+internal val themeResources: Map<AppTheme, Int> = mapOf(
     AppTheme.ORACLE to R.style.Theme_Tachiyomi_Oracle,
     AppTheme.MONET to R.style.Theme_Tachiyomi_Monet,
     AppTheme.CATPPUCCIN to R.style.Theme_Tachiyomi_Catppuccin,
@@ -44,6 +45,12 @@ private val themeResources: Map<AppTheme, Int> = mapOf(
     AppTheme.AURORA_MOTES to R.style.Theme_Tachiyomi_Nord,
     AppTheme.INK_RAIN to R.style.Theme_Tachiyomi_Monochrome,
     AppTheme.STAR_DUST to R.style.Theme_Tachiyomi_MidnightDusk,
+    AppTheme.KOI_GARDEN to R.style.Theme_Tachiyomi_KoiGarden,
+    AppTheme.ABYSSAL_BLOOM to R.style.Theme_Tachiyomi_AbyssalBloom,
+    AppTheme.PAPER_CRANES to R.style.Theme_Tachiyomi_PaperCranes,
+    AppTheme.TEMPEST to R.style.Theme_Tachiyomi_Tempest,
+    AppTheme.NEON_ALLEY to R.style.Theme_Tachiyomi_NeonAlley,
+    AppTheme.SCREENTONE to R.style.Theme_Tachiyomi_Screentone,
     AppTheme.TAKO to R.style.Theme_Tachiyomi_Tako,
     AppTheme.TEALTURQUOISE to R.style.Theme_Tachiyomi_TealTurquoise,
     AppTheme.YINYANG to R.style.Theme_Tachiyomi_YinYang,

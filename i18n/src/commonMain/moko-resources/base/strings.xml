@@ -268,6 +268,12 @@
     <string name="theme_aurora_motes">Aurora Motes</string>
     <string name="theme_ink_rain">Ink Rain</string>
     <string name="theme_star_dust">Star Dust</string>
+    <string name="theme_koigarden">Koi Garden</string>
+    <string name="theme_abyssalbloom">Abyssal Bloom</string>
+    <string name="theme_papercranes">Paper Cranes</string>
+    <string name="theme_tempest">Tempest</string>
+    <string name="theme_neonalley">Neon Alley</string>
+    <string name="theme_screentone">Screentone</string>
     <string name="pref_dark_theme_pure_black">Pure black dark mode</string>
     <string name="pref_relative_format">Relative timestamps</string>
     <!-- "Today" instead of "2023-12-31" -->
@@ -1227,8 +1233,8 @@
     <string name="oracle_pref_hide_chapters_override_summary">Manga can still override this from their chapter menu.</string>
     <string name="oracle_pref_hide_duplicate_chapters_summary">Lists one copy of each chapter number, keeping the one you\'re reading, have read, bookmarked or downloaded. Nothing is deleted. Manga can still override this from their chapter menu.</string>
     <!-- OracleRead: button above Resume on a manga's page that opens its newest chapter -->
-    <string name="oracle_action_latest_chapter">Latest</string>
-    <string name="oracle_action_latest_chapter_description">Open the latest chapter</string>
+    <string name="oracle_action_recent_chapter">Last read</string>
+    <string name="oracle_action_recent_chapter_description">Open the chapter you read most recently</string>
 
     <!-- OracleRead: folder ambient backgrounds -->
     <string name="folder_ambience_none">None</string>
@@ -1236,4 +1242,12 @@
     <string name="folder_ambience_constellations">Constellations</string>
     <string name="folder_ambience_eclipse">Eclipse Halo</string>
     <string name="folder_ambience_silk_ribbons">Silk Ribbons</string>
+    <string name="folder_ambience_koi_pond">Koi Pond</string>
+    <string name="folder_ambience_jellyfish">Jellyfish</string>
+    <string name="folder_ambience_paper_cranes">Paper Cranes</string>
+    <string name="folder_ambience_thunderstorm">Thunderstorm</string>
+    <string name="folder_ambience_glyph_rain">Glyph Rain</string>
+    <string name="folder_ambience_screentone">Screentone</string>
+    <string name="folder_ambience_meteor_shower">Meteor Shower</string>
+    <string name="folder_ambience_fireflies">Fireflies</string>
 </resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OracleRead Screentone (light). Mirrors ScreentoneColorScheme.kt -->
+<resources>
+    <color name="screentone_primary">#1B1B1E</color>
+    <color name="screentone_onPrimary">#FFFFFF</color>
+    <color name="screentone_primaryContainer">#D6D6D6</color>
+    <color name="screentone_onPrimaryContainer">#0A0A0B</color>
+    <color name="screentone_inversePrimary">#98989A</color>
+    <color name="screentone_secondary">#5B5B61</color>
+    <color name="screentone_onSecondary">#FFFFFF</color>
+    <color name="screentone_secondaryContainer">#E1E1E3</color>
+    <color name="screentone_onSecondaryContainer">#232325</color>
+    <color name="screentone_tertiary">#BF1E3E</color>
+    <color name="screentone_onTertiary">#FFFFFF</color>
+    <color name="screentone_tertiaryContainer">#F3D6DC</color>
+    <color name="screentone_onTertiaryContainer">#490B18</color>
+    <color name="screentone_error">#BA1A1A</color>
+    <color name="screentone_onError">#FFFFFF</color>
+    <color name="screentone_errorContainer">#FFDAD6</color>
+    <color name="screentone_onErrorContainer">#410002</color>
+    <color name="screentone_background">#FAF9F6</color>
+    <color name="screentone_onBackground">#1A1B1F</color>
+    <color name="screentone_surface">#FAF9F6</color>
+    <color name="screentone_onSurface">#1A1B1F</color>
+    <color name="screentone_surfaceVariant">#E8E7E5</color>
+    <color name="screentone_onSurfaceVariant">#59595B</color>
+    <color name="screentone_inverseSurface">#303134</color>
+    <color name="screentone_inverseOnSurface">#EFEEEB</color>
+    <color name="screentone_outline">#8E8E8F</color>
+    <color name="screentone_outlineVariant">#CDCDCB</color>
+    <color name="screentone_scrim">#000000</color>
+    <color name="screentone_surfaceDim">#E4E3E0</color>
+    <color name="screentone_surfaceBright">#FCFCFA</color>
+    <color name="screentone_surfaceContainerLowest">#FFFFFF</color>
+    <color name="screentone_surfaceContainerLow">#F3F2F0</color>
+    <color name="screentone_surfaceContainer">#EFEEEB</color>
+    <color name="screentone_surfaceContainerHigh">#E9E8E6</color>
+    <color name="screentone_surfaceContainerHighest">#E4E3E0</color>
+</resources>

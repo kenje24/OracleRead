@@ -67,11 +67,12 @@ fun LibraryContent(
     val showFeaturedManga by libraryPreferences.showFeaturedManga.collectAsState()
 
     val pagerState = rememberPagerState(currentPage) { categories.size }
-    // Each folder carries its own ambience; the library falls back to the app theme's
+    // Each folder carries its own ambience; folders never restyled, or no folder at all, use the app theme's
+    val themeAmbience = FolderAmbience.forAppTheme(appTheme)
     val ambience = categories
         .getOrNull(pagerState.currentPage.coerceIn(0, categories.lastIndex.coerceAtLeast(0)))
-        ?.folderAmbience(folderStyles)
-        ?: FolderAmbience.forAppTheme(appTheme)
+        ?.folderAmbience(folderStyles, themeAmbience)
+        ?: themeAmbience
     // None also stills the home aurora behind the library, leaving a calm, static backdrop
     CalmBackdropRequest(enabled = ambience == FolderAmbience.NONE)
 

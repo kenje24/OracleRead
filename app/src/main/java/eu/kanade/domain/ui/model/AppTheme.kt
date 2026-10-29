@@ -28,6 +28,14 @@ enum class AppTheme(val titleRes: StringResource?) {
     INK_RAIN(MR.strings.theme_ink_rain),
     STAR_DUST(MR.strings.theme_star_dust),
 
+    // OracleRead 1.4.2: themes with a folder effect of their own
+    KOI_GARDEN(MR.strings.theme_koigarden),
+    ABYSSAL_BLOOM(MR.strings.theme_abyssalbloom),
+    PAPER_CRANES(MR.strings.theme_papercranes),
+    TEMPEST(MR.strings.theme_tempest),
+    NEON_ALLEY(MR.strings.theme_neonalley),
+    SCREENTONE(MR.strings.theme_screentone),
+
     // Deprecated
     DARK_BLUE(null),
     HOT_PINK(null),

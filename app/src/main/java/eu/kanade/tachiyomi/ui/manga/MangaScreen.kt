@@ -162,7 +162,7 @@ class MangaScreen(
             onFilterButtonClicked = viewModel::showSettingsDialog,
             onRefresh = viewModel::fetchAllFromSource,
             onContinueReading = { continueReading(context, viewModel.getNextUnreadChapter()) },
-            onLatestChapter = { viewModel.getLatestChapter()?.let { openChapter(context, it) } },
+            onRecentChapter = { viewModel.getRecentChapter()?.let { openChapter(context, it) } },
             onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
             onCoverClicked = viewModel::showCoverDialog,
             onShareClicked = { shareManga(context, viewModel.manga, viewModel.source) }.takeIf { isHttpSource },
